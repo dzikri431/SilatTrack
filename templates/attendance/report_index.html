@@ -34,13 +34,13 @@
     <!-- Quick Action Export Buttons -->
     <div class="flex flex-wrap items-center gap-2">
       <!-- Button Cetak Dokumen / PDF -->
-      <a href="{% url 'attendance:report_print' %}?periode_tipe={{ periode_tipe }}&bulan={{ bulan }}&tahun={{ tahun }}&admin_id={{ admin_id }}&pelatih_id={{ pelatih_id }}&sekolah={{ selected_sekolah }}&kepala_sekolah={{ kepala_sekolah_nama|urlencode }}&kepala_sekolah_nip={{ kepala_sekolah_nip|urlencode }}&kepala_sekolah_jabatan={{ kepala_sekolah_jabatan|urlencode }}" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary hover:bg-primary-dark text-on-primary font-bold text-xs shadow-elevation-1 hover:scale-105 active:scale-95 transition-all">
+      <a href="{% url 'attendance:report_print' %}?periode_tipe={{ periode_tipe }}&bulan={{ bulan }}&tahun={{ tahun }}&admin_id={{ admin_id }}&pelatih_id={{ pelatih_id }}{% if selected_sekolah %}&sekolah={{ selected_sekolah }}{% endif %}&kepala_sekolah={{ kepala_sekolah_nama|urlencode }}&kepala_sekolah_nip={{ kepala_sekolah_nip|urlencode }}&kepala_sekolah_jabatan={{ kepala_sekolah_jabatan|urlencode }}" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary hover:bg-primary-dark text-on-primary font-bold text-xs shadow-elevation-1 hover:scale-105 active:scale-95 transition-all">
         <span class="material-symbols-outlined text-lg">print</span>
         <span>Buka Lembar Cetak / PDF</span>
       </a>
 
       <!-- Button Export Excel -->
-      <a href="{% url 'attendance:report_export_excel' %}?periode_tipe={{ periode_tipe }}&bulan={{ bulan }}&tahun={{ tahun }}&admin_id={{ admin_id }}&pelatih_id={{ pelatih_id }}&sekolah={{ selected_sekolah }}&kepala_sekolah={{ kepala_sekolah_nama|urlencode }}&kepala_sekolah_nip={{ kepala_sekolah_nip|urlencode }}&kepala_sekolah_jabatan={{ kepala_sekolah_jabatan|urlencode }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-elevation-1 hover:scale-105 active:scale-95 transition-all">
+      <a href="{% url 'attendance:report_export_excel' %}?periode_tipe={{ periode_tipe }}&bulan={{ bulan }}&tahun={{ tahun }}&admin_id={{ admin_id }}&pelatih_id={{ pelatih_id }}{% if selected_sekolah %}&sekolah={{ selected_sekolah }}{% endif %}&kepala_sekolah={{ kepala_sekolah_nama|urlencode }}&kepala_sekolah_nip={{ kepala_sekolah_nip|urlencode }}&kepala_sekolah_jabatan={{ kepala_sekolah_jabatan|urlencode }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-elevation-1 hover:scale-105 active:scale-95 transition-all">
         <span class="material-symbols-outlined text-lg">table_view</span>
         <span>Unduh File Excel (.xlsx)</span>
       </a>

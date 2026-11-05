@@ -194,8 +194,11 @@ def session_detail(request, session_id):
         status_keanggotaan=AnggotaProfile.MembershipStatus.AKTIF
     ).select_related('user', 'sabuk_saat_ini', 'kategori_fokus', 'sekolah').order_by('sekolah__nama_sekolah', 'kelas_sekolah', 'user__first_name')
 
-    if sekolah_id:
-        pesilat_list = pesilat_qs.filter(sekolah_id=sekolah_id)
+    if sekolah_id and sekolah_id.lower() not in ('none', 'null', 'undefined', ''):
+        if sekolah_id.isdigit():
+            pesilat_list = pesilat_qs.filter(sekolah_id=int(sekolah_id))
+        else:
+            pesilat_list = pesilat_qs.filter(sekolah__nama_sekolah__iexact=sekolah_id)
     else:
         pesilat_list = pesilat_qs
 
@@ -1167,8 +1170,11 @@ def _get_report_data(request):
     sekolah_id = (request.GET.get('sekolah_id') or request.GET.get('sekolah') or '').strip()
     sekolah_list = Sekolah.objects.filter(is_aktif=True).order_by('nama_sekolah')
     selected_sekolah = None
-    if sekolah_id:
-        selected_sekolah = sekolah_list.filter(id=sekolah_id).first()
+    if sekolah_id and sekolah_id.lower() not in ('none', 'null', 'undefined', ''):
+        if sekolah_id.isdigit():
+            selected_sekolah = sekolah_list.filter(id=int(sekolah_id)).first()
+        else:
+            selected_sekolah = sekolah_list.filter(nama_sekolah__iexact=sekolah_id).first()
 
     # Seluruh pesilat aktif (terfilter sekolah jika dipilih)
     members = AnggotaProfile.objects.filter(
@@ -1365,9 +1371,11 @@ def _get_report_data(request):
         'pelatih_jabatan': "Pelatih Utama Silat",
         # Data Asal Sekolah & Tanda Tangan Kepala Sekolah
         'sekolah_list': sekolah_list,
-        'selected_sekolah': selected_sekolah,
+        'selected_sekolah': str(selected_sekolah.id) if selected_sekolah else '',
+        'selected_sekolah_obj': selected_sekolah,
         'sekolah_id': str(selected_sekolah.id) if selected_sekolah else '',
         'sekolah_nama': selected_sekolah.nama_sekolah if selected_sekolah else 'Seluruh Sekolah',
+        'sekolah_alamat': selected_sekolah.alamat if selected_sekolah and selected_sekolah.alamat else '',
         'kepala_sekolah_nama': kepala_sekolah,
         'kepala_sekolah_nip': kepala_sekolah_nip,
         'kepala_sekolah_jabatan': kepala_sekolah_jabatan,

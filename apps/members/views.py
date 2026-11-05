@@ -29,8 +29,11 @@ def member_list(request):
 
     if sabuk_id:
         members = members.filter(sabuk_saat_ini_id=sabuk_id)
-    if sekolah_id:
-        members = members.filter(sekolah_id=sekolah_id)
+    if sekolah_id and sekolah_id.lower() not in ('none', 'null', 'undefined', ''):
+        if sekolah_id.isdigit():
+            members = members.filter(sekolah_id=int(sekolah_id))
+        else:
+            members = members.filter(sekolah__nama_sekolah__iexact=sekolah_id)
     if query:
         members = members.filter(
             user__first_name__icontains=query

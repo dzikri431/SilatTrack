@@ -63,7 +63,7 @@
   <div class="no-print sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 px-4 py-3 shadow-md mb-6" id="floatingToolbar">
     <div class="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-2">
-        <a href="{% url 'attendance:report_index' %}?periode_tipe={{ periode_tipe }}&bulan={{ bulan }}&tahun={{ tahun }}&sekolah={{ selected_sekolah }}" class="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors" title="Kembali ke Filter Laporan">
+        <a href="{% url 'attendance:report_index' %}?periode_tipe={{ periode_tipe }}&bulan={{ bulan }}&tahun={{ tahun }}{% if selected_sekolah %}&sekolah={{ selected_sekolah }}{% endif %}" class="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors" title="Kembali ke Filter Laporan">
           <span class="material-symbols-outlined text-xl">arrow_back</span>
         </a>
         <div>
@@ -79,7 +79,7 @@
           <span>Edit TTD Kepala Sekolah</span>
         </button>
 
-        <a href="{% url 'attendance:report_export_excel' %}?periode_tipe={{ periode_tipe }}&bulan={{ bulan }}&tahun={{ tahun }}&sekolah={{ selected_sekolah }}&admin_id={{ admin_id }}&pelatih_id={{ pelatih_id }}&kepala_sekolah={{ kepala_sekolah_nama|urlencode }}&kepala_sekolah_nip={{ kepala_sekolah_nip|urlencode }}&kepala_sekolah_jabatan={{ kepala_sekolah_jabatan|urlencode }}" class="px-4 py-2 rounded-full border border-emerald-600 text-emerald-700 hover:bg-emerald-50 text-xs font-bold transition-all flex items-center gap-1.5">
+        <a href="{% url 'attendance:report_export_excel' %}?periode_tipe={{ periode_tipe }}&bulan={{ bulan }}&tahun={{ tahun }}{% if selected_sekolah %}&sekolah={{ selected_sekolah }}{% endif %}&admin_id={{ admin_id }}&pelatih_id={{ pelatih_id }}&kepala_sekolah={{ kepala_sekolah_nama|urlencode }}&kepala_sekolah_nip={{ kepala_sekolah_nip|urlencode }}&kepala_sekolah_jabatan={{ kepala_sekolah_jabatan|urlencode }}" class="px-4 py-2 rounded-full border border-emerald-600 text-emerald-700 hover:bg-emerald-50 text-xs font-bold transition-all flex items-center gap-1.5">
           <span class="material-symbols-outlined text-base">table_view</span>
           <span>Unduh Excel</span>
         </a>
