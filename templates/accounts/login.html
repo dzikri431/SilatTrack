@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Masuk - SilatTrack{% endblock %}
+
+{% block content %}
+<div class="min-h-[75vh] flex items-center justify-center py-6 px-4">
+  <div class="w-full max-w-md">
+    
+    <!-- M3 Surface Card -->
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 sm:p-8 shadow-elevation-2">
+      
+      <!-- Brand Header -->
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-primary text-on-primary shadow-elevation-2 mb-3">
+          <span class="material-symbols-outlined text-3xl">sports_kabaddi</span>
+        </div>
+        <h2 class="text-2xl font-extrabold text-on-surface tracking-tight">SilatTrack</h2>
+        <p class="text-sm font-medium text-on-surface-variant mt-1">Sistem Absensi Ekstrakurikuler Pencak Silat</p>
+      </div>
+
+      <!-- Login Form -->
+      <form method="POST" action="{% url 'accounts:login' %}" class="space-y-4" x-data="{ username: '', password: '' }">
+        {% csrf_token %}
+
+        <!-- Username Input (M3 Outlined Style) -->
+        <div>
+          <label for="id_username" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 ml-1">
+            Username / NISN
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-outline">
+              <span class="material-symbols-outlined text-xl">person</span>
+            </span>
+            <input 
+              type="text" 
+              name="username" 
+              id="id_username" 
+              x-model="username"
+              required 
+              placeholder="Masukkan username/NISN"
+              class="w-full pl-11 pr-4 py-3 bg-surface-container-lowest border border-outline/40 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-2xl text-sm font-medium text-on-surface placeholder:text-outline/70 transition-all outline-none"
+            >
+          </div>
+        </div>
+
+        <!-- Password Input -->
+        <div>
+          <label for="id_password" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 ml-1">
+            Kata Sandi
+          </label>
+          <div class="relative" x-data="{ showPass: false }">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-outline">
+              <span class="material-symbols-outlined text-xl">lock</span>
+            </span>
+            <input 
+              :type="showPass ? 'text' : 'password'" 
+              name="password" 
+              id="id_password" 
+              x-model="password"
+              required 
+              placeholder="Masukkan kata sandi"
+              class="w-full pl-11 pr-11 py-3 bg-surface-container-lowest border border-outline/40 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-2xl text-sm font-medium text-on-surface placeholder:text-outline/70 transition-all outline-none"
+            >
+            <button 
+              type="button" 
+              @click="showPass = !showPass" 
+              class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-outline hover:text-on-surface focus:outline-none"
+            >
+              <span class="material-symbols-outlined text-xl" x-text="showPass ? 'visibility_off' : 'visibility'"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Submit Button (M3 Filled Button) -->
+        <button 
+          type="submit" 
+          class="w-full mt-2 py-3.5 px-6 rounded-full bg-primary hover:bg-primary-dark text-on-primary font-bold text-sm shadow-elevation-1 hover:shadow-elevation-2 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+        >
+          <span>Masuk Sistem</span>
+          <span class="material-symbols-outlined text-lg">arrow_forward</span>
+        </button>
+
+      </form>
+
+    </div>
+
+    <!-- Security info footer -->
+    <p class="text-center text-xs text-outline mt-6">
+      SilatTrack • DATH Stack & Google Material Design 3
+    </p>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+
+{% block title %}Jadwal Latihan Mingguan - SilatTrack{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data>
+
+  <!-- Header & Actions -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h2 class="text-2xl sm:text-3xl font-black text-on-surface">Jadwal Latihan Mingguan</h2>
+      <p class="text-xs sm:text-sm text-on-surface-variant">Jadwal rutin pembinaan ekstrakurikuler pencak silat dan titik lokasi dojo</p>
+    </div>
+
+    {% if request.user.is_admin_role or request.user.is_pelatih_role %}
+    <a href="{% url 'schedule:schedule_create' %}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary hover:bg-primary-dark text-on-primary text-xs font-bold shadow-elevation-1 hover:shadow-elevation-2 active:scale-95 transition-all self-start sm:self-auto">
+      <span class="material-symbols-outlined text-base">add</span>
+      {% if request.user.is_admin_role %}
+      <span>Tambah Jadwal Latihan</span>
+      {% else %}
+      <span>Ajukan Jadwal Latihan</span>
+      {% endif %}
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Pending Schedule Approvals Section (Khusus Admin / Pelatih Pengusul) -->
+  {% if pending_schedules %}
+  <div class="bg-amber-50 border border-amber-200/80 rounded-3xl p-5 shadow-elevation-1 space-y-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center flex-shrink-0">
+        <span class="material-symbols-outlined text-xl">pending_actions</span>
+      </div>
+      <div>
+        <h3 class="font-extrabold text-sm text-amber-950">
+          {% if request.user.is_admin_role %}
+          Pengajuan Jadwal Latihan Menunggu Persetujuan ({{ total_pending }})
+          {% else %}
+          Pengajuan Jadwal Latihan Anda (Menunggu Persetujuan Admin)
+          {% endif %}
+        </h3>
+        <p class="text-xs text-amber-800">
+          {% if request.user.is_admin_role %}
+          Berikut usulan jadwal latihan baru dari pelatih yang membutuhkan persetujuan Admin agar dapat aktif.
+          {% else %}
+          Usulan jadwal ini akan aktif di sistem setelah disetujui oleh Admin / Pembina eskul.
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      {% for p in pending_schedules %}
+      <div class="bg-white border border-amber-200 rounded-2xl p-4 flex flex-col justify-between shadow-xs">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
+              {{ p.get_hari_indeks_display }}
+            </span>
+            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700">
+              <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+              Menunggu Persetujuan
+            </span>
+          </div>
+
+          <h4 class="font-extrabold text-sm text-on-surface">{{ p.nama_jadwal }}</h4>
+          <p class="text-xs text-outline mt-1 font-medium">
+            {{ p.jam_mulai|time:"H:i" }} - {{ p.jam_selesai|time:"H:i" }} WIB • {{ p.nama_lokasi }}
+          </p>
+          {% if p.dibuat_oleh %}
+          <p class="text-[11px] text-amber-900 font-semibold mt-1">
+            Diusulkan oleh: {{ p.dibuat_oleh.get_full_name|default:p.dibuat_oleh.username }}
+          </p>
+          {% endif %}
+        </div>
+
+        {% if request.user.is_admin_role %}
+        <div class="pt-3 border-t border-amber-100 mt-3 flex items-center justify-end gap-2">
+          <!-- Form Tolak -->
+          <form id="form-reject-schedule-{{ p.id }}" method="POST" action="{% url 'schedule:schedule_approve' p.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="tolak">
+            <button 
+              type="button"
+              onclick="openConfirmModal({
+                title: 'Tolak Pengajuan Jadwal?',
+                message: 'Apakah Anda yakin ingin menolak usulan jadwal latihan {{ p.nama_jadwal|escapejs }} ({{ p.get_hari_indeks_display }})?',
+                confirmText: 'Ya, Tolak',
+                confirmColor: 'bg-red-700 hover:bg-red-800 text-white',
+                icon: 'cancel',
+                iconColor: 'bg-red-100 text-red-700',
+                formId: 'form-reject-schedule-{{ p.id }}'
+              })"
+              class="px-3 py-1.5 rounded-full bg-surface-container hover:bg-red-100 text-outline hover:text-red-700 text-xs font-bold transition-all cursor-pointer"
+            >
+              Tolak
+            </button>
+          </form>
+
+          <!-- Form Setujui -->
+          <form id="form-approve-schedule-{{ p.id }}" method="POST" action="{% url 'schedule:schedule_approve' p.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="setuju">
+            <button 
+              type="button"
+              onclick="openConfirmModal({
+                title: 'Setujui & Aktifkan Jadwal?',
+                message: 'Apakah Anda menyetujui jadwal latihan {{ p.nama_jadwal|escapejs }} ({{ p.get_hari_indeks_display }})? Jadwal akan langsung aktif dan pelatih dapat membuka sesi darinya.',
+                confirmText: 'Setujui & Aktifkan',
+                confirmColor: 'bg-emerald-700 hover:bg-emerald-800 text-white',
+                icon: 'check_circle',
+                iconColor: 'bg-emerald-100 text-emerald-700',
+                formId: 'form-approve-schedule-{{ p.id }}'
+              })"
+              class="px-4 py-1.5 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+            >
+              Setujui & Aktifkan
+            </button>
+          </form>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Schedules Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for j in jadwal_list %}
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1 hover:shadow-elevation-2 transition-all flex flex-col justify-between">
+      
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-primary-container text-on-primary-container">
+            {{ j.get_hari_indeks_display }}
+          </span>
+
+          <div class="flex items-center gap-1.5">
+            {% if j.status_persetujuan == 'MENUNGGU' %}
+            <span class="inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-100 px-2.5 py-0.5 rounded-full">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+              Menunggu Persetujuan
+            </span>
+            {% elif j.status_persetujuan == 'DITOLAK' %}
+            <span class="inline-flex items-center gap-1 text-xs font-bold text-red-700 bg-red-100 px-2.5 py-0.5 rounded-full">
+              Ditolak Admin
+            </span>
+            {% else %}
+            <span class="inline-flex items-center gap-1 text-xs font-bold {% if j.is_aktif %}text-emerald-700{% else %}text-outline{% endif %}">
+              <span class="w-2 h-2 rounded-full {% if j.is_aktif %}bg-emerald-500{% else %}bg-slate-400{% endif %}"></span>
+              {% if j.is_aktif %}Jadwal Aktif{% else %}Nonaktif{% endif %}
+            </span>
+            {% endif %}
+          </div>
+        </div>
+
+        <h3 class="text-lg font-black text-on-surface mb-1">
+          {{ j.nama_jadwal }}
+        </h3>
+
+        <div class="space-y-2 mt-4 text-xs text-on-surface-variant">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-base">schedule</span>
+            <span class="font-bold text-on-surface">{{ j.jam_mulai|time:"H:i" }} - {{ j.jam_selesai|time:"H:i" }} WIB</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-base">location_on</span>
+            <span>{{ j.nama_lokasi }}</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-outline text-base">radar</span>
+            <span>Radius Geofence: <strong>{{ j.radius_toleransi_meter }} Meter</strong></span>
+          </div>
+
+          {% if j.dibuat_oleh %}
+          <div class="flex items-center gap-2 text-outline pt-1 text-[11px]">
+            <span class="material-symbols-outlined text-sm">person</span>
+            <span>Diusulkan oleh: <strong>{{ j.dibuat_oleh.get_full_name|default:j.dibuat_oleh.username }}</strong></span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="pt-4 border-t border-outline-variant/30 mt-6 flex items-center justify-between gap-2">
+        {% if j.is_aktif and j.status_persetujuan == 'DISETUJUI' %}
+        <a href="{% url 'attendance:session_create' %}?jadwal_id={{ j.id }}" class="flex-1 py-2.5 rounded-full bg-surface-container-high hover:bg-primary hover:text-on-primary text-xs font-bold text-on-surface text-center transition-all flex items-center justify-center gap-1.5">
+          <span class="material-symbols-outlined text-base">add_circle</span>
+          <span>Buka Sesi dari Jadwal Ini</span>
+        </a>
+        {% else %}
+        <span class="text-xs text-outline italic">
+          {% if j.status_persetujuan == 'MENUNGGU' %}Menunggu persetujuan admin{% else %}Jadwal nonaktif{% endif %}
+        </span>
+        {% endif %}
+
+        <!-- Tombol Hapus Jadwal (Hanya untuk Admin) -->
+        {% if request.user.is_admin_role %}
+        <form id="form-delete-jadwal-{{ j.id }}" method="POST" action="{% url 'schedule:schedule_delete' j.id %}">
+          {% csrf_token %}
+          <button 
+            type="button" 
+            onclick="openConfirmModal({
+              title: 'Hapus Jadwal Latihan?',
+              message: 'Apakah Anda yakin ingin menghapus jadwal latihan {{ j.nama_jadwal|escapejs }} ({{ j.get_hari_indeks_display }})? Tindakan ini tidak dapat dibatalkan.',
+              confirmText: 'Ya, Hapus Jadwal',
+              confirmColor: 'bg-red-700 hover:bg-red-800 text-white',
+              icon: 'delete_forever',
+              iconColor: 'bg-red-100 text-red-700',
+              formId: 'form-delete-jadwal-{{ j.id }}'
+            })"
+            class="w-9 h-9 rounded-full bg-surface-container hover:bg-red-100 text-outline hover:text-red-700 flex items-center justify-center transition-all cursor-pointer flex-shrink-0"
+            title="Hapus Jadwal Latihan"
+          >
+            <span class="material-symbols-outlined text-base">delete</span>
+          </button>
+        </form>
+        {% endif %}
+      </div>
+
+    </div>
+    {% empty %}
+    <div class="col-span-full py-12 text-center text-outline">
+      Belum ada jadwal latihan rutin yang dikonfigurasi.
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

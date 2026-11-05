@@ -1,0 +1,624 @@
+{% extends 'base.html' %}
+
+{% block title %}Cockpit Presensi Sesi Latihan - SilatTrack{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data>
+
+  <!-- Persetujuan Sesi Alert Banner -->
+  {% if sesi.status_persetujuan == 'MENUNGGU' %}
+  <div class="bg-amber-50 border border-amber-300 rounded-3xl p-6 shadow-elevation-1">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div class="flex items-start gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center flex-shrink-0">
+          <span class="material-symbols-outlined text-2xl">pending_actions</span>
+        </div>
+        <div>
+          <h3 class="font-extrabold text-base text-amber-950">
+            {% if request.user.is_admin_role %}
+            Pengajuan Pembukaan Sesi Latihan Menunggu Persetujuan Anda
+            {% else %}
+            Sesi Menunggu Persetujuan Admin / Pembina Eskul
+            {% endif %}
+          </h3>
+          <p class="text-xs text-amber-800 mt-1">
+            {% if request.user.is_admin_role %}
+            Sesi ini diajukan oleh pelatih <strong>{{ sesi.pelatih.get_full_name|default:sesi.pelatih.username }}</strong>. Silakan verifikasi dan setujui untuk membuka sesi latihan dan mengaktifkan QR presensi bagi siswa.
+            {% else %}
+            Pengajuan sesi latihan Anda telah terkirim dan sedang menunggu verifikasi oleh Admin/Pembina. QR code presensi baru akan dapat dipindai oleh pesilat setelah disetujui.
+            {% endif %}
+          </p>
+          <div class="mt-2.5 flex flex-wrap items-center gap-3 text-xs font-semibold text-amber-900 bg-amber-100/70 py-1.5 px-3 rounded-xl border border-amber-300/60">
+            <span class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-sm">location_on</span>
+              <span>Lokasi: <strong>{{ sesi.lokasi_efektif }}</strong></span>
+            </span>
+            <span>•</span>
+            <span class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-sm">calendar_month</span>
+              <span>{{ sesi.tanggal|date:"d M Y" }}</span>
+            </span>
+            {% if sesi.jam_mulai_efektif %}
+            <span>•</span>
+            <span class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-sm">schedule</span>
+              <span>{{ sesi.jam_mulai_efektif|time:"H:i" }}{% if sesi.jam_selesai_efektif %} - {{ sesi.jam_selesai_efektif|time:"H:i" }}{% endif %} WIB</span>
+            </span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      {% if request.user.is_admin_role %}
+      <div class="flex items-center gap-2 self-end sm:self-auto">
+        <!-- Form Tolak -->
+        <form id="form-detail-reject" method="POST" action="{% url 'attendance:session_approve' sesi.id %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="tolak">
+          <button 
+            type="button"
+            onclick="openConfirmModal({
+              title: 'Tolak Pengajuan Sesi?',
+              message: 'Apakah Anda yakin ingin menolak pengajuan sesi latihan ini?',
+              confirmText: 'Ya, Tolak',
+              confirmColor: 'bg-red-700 hover:bg-red-800 text-white',
+              icon: 'cancel',
+              iconColor: 'bg-red-100 text-red-700',
+              formId: 'form-detail-reject'
+            })"
+            class="px-4 py-2.5 rounded-full bg-surface-container hover:bg-red-100 text-outline hover:text-red-700 text-xs font-bold transition-all cursor-pointer"
+          >
+            Tolak
+          </button>
+        </form>
+
+        <!-- Form Setujui -->
+        <form id="form-detail-approve" method="POST" action="{% url 'attendance:session_approve' sesi.id %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="setuju">
+          <button 
+            type="button"
+            onclick="openConfirmModal({
+              title: 'Setujui & Buka Sesi Latihan?',
+              message: 'Apakah Anda menyetujui pembukaan sesi latihan ini? Sesi akan langsung dibuka dan QR Presensi menjadi aktif untuk siswa.',
+              confirmText: 'Setujui & Buka Sesi',
+              confirmColor: 'bg-emerald-700 hover:bg-emerald-800 text-white',
+              icon: 'check_circle',
+              iconColor: 'bg-emerald-100 text-emerald-700',
+              formId: 'form-detail-approve'
+            })"
+            class="px-5 py-2.5 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+          >
+            <span class="material-symbols-outlined text-base">check_circle</span>
+            <span>Setujui & Buka Sesi</span>
+          </button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% elif sesi.status_persetujuan == 'DITOLAK' %}
+  <div class="bg-red-50 border border-red-300 rounded-3xl p-5 shadow-elevation-1 flex items-center gap-3">
+    <div class="w-10 h-10 rounded-2xl bg-red-100 text-red-800 flex items-center justify-center flex-shrink-0">
+      <span class="material-symbols-outlined text-xl">block</span>
+    </div>
+    <div>
+      <h3 class="font-extrabold text-sm text-red-950">Sesi Latihan Ini Ditolak oleh Admin</h3>
+      <p class="text-xs text-red-800 mt-0.5">Sesi latihan ini tidak disetujui untuk dibuka dan berstatus dibatalkan.</p>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Header & Cockpit Toolbar -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1">
+    <div>
+      <div class="flex flex-wrap items-center gap-2 mb-1">
+        <span class="px-3 py-0.5 rounded-full text-xs font-bold {% if sesi.status == 'DIBUKA' %}bg-emerald-100 text-emerald-800 border border-emerald-300{% else %}bg-slate-200 text-slate-800{% endif %}">
+          {{ sesi.get_status_display }}
+        </span>
+        {% if sesi.status_persetujuan == 'MENUNGGU' %}
+        <span class="px-3 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 inline-flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+          Menunggu Persetujuan Admin
+        </span>
+        {% elif sesi.status_persetujuan == 'DITOLAK' %}
+        <span class="px-3 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-300">
+          Ditolak Admin
+        </span>
+        {% endif %}
+        <span class="text-xs text-outline">• {{ sesi.tanggal|date:"l, d F Y" }}</span>
+        {% if sesi.jam_mulai_efektif %}
+        <span class="text-xs text-outline">• {{ sesi.jam_mulai_efektif|time:"H:i" }}{% if sesi.jam_selesai_efektif %} - {{ sesi.jam_selesai_efektif|time:"H:i" }}{% endif %} WIB</span>
+        {% endif %}
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-black text-on-surface tracking-tight">
+        {{ sesi.get_tipe_sesi_display }}
+      </h2>
+      <div class="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs text-on-surface-variant mt-1">
+        <span class="inline-flex items-center gap-1 text-primary font-bold">
+          <span class="material-symbols-outlined text-sm">location_on</span>
+          <span>{{ sesi.lokasi_efektif }}</span>
+        </span>
+        <span class="text-outline">•</span>
+        <span>Pelatih: <strong class="text-on-surface">{{ sesi.pelatih.get_full_name|default:sesi.pelatih.username }}</strong></span>
+        {% if sesi.materi_latihan %}
+        <span class="text-outline">•</span>
+        <span>Materi: {{ sesi.materi_latihan }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Actions Toolbar -->
+    <div class="flex flex-wrap items-center gap-2">
+      {% if request.user.is_admin_role or request.user.is_pelatih_role %}
+      <!-- Fullscreen Projector Screen -->
+      <a href="{% url 'attendance:qr_fullscreen' sesi.id %}" target="_blank" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-bold border border-outline-variant/40 shadow-xs transition-all">
+        <span class="material-symbols-outlined text-base">fullscreen</span>
+        <span>Layar Penuh TV/Dojo</span>
+      </a>
+
+      <!-- Export Excel -->
+      <a href="{% url 'attendance:export_attendance_excel' sesi.id %}" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-xs transition-all">
+        <span class="material-symbols-outlined text-base">download</span>
+        <span>Unduh Excel (.xlsx)</span>
+      </a>
+
+      <!-- Tandai Semua Hadir (Opsi Input Manual Pelatih) -->
+      {% if sesi.status == 'DIBUKA' %}
+      <form id="form-bulk-mark" method="POST" action="{% url 'attendance:bulk_mark_all' sesi.id %}">
+        {% csrf_token %}
+        <button 
+          type="button" 
+          onclick="openConfirmModal({ 
+            title: 'Tandai Semua Pesilat Hadir?', 
+            message: 'Apakah Anda yakin ingin menandai seluruh pesilat aktif sebagai HADIR secara manual pada sesi latihan ini?',
+            confirmText: 'Ya, Tandai Hadir',
+            confirmColor: 'bg-purple-700 hover:bg-purple-800 text-white',
+            icon: 'checklist_rtl',
+            iconColor: 'bg-purple-100 text-purple-800',
+            formId: 'form-bulk-mark'
+          })"
+          class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold shadow-xs hover:scale-105 active:scale-95 transition-all cursor-pointer" 
+          title="Input presensi manual seluruh pesilat"
+        >
+          <span class="material-symbols-outlined text-base">checklist_rtl</span>
+          <span>Tandai Semua Hadir (Manual)</span>
+        </button>
+      </form>
+      {% endif %}
+
+      <!-- Sesi Buka/Tutup Toggle Form -->
+      <form id="form-toggle-status" method="POST" action="{% url 'attendance:session_toggle_status' sesi.id %}">
+        {% csrf_token %}
+        <button 
+          type="button" 
+          onclick="openConfirmModal({ 
+            title: '{% if sesi.status == 'DIBUKA' %}Tutup Sesi Latihan?{% else %}Buka Kembali Sesi Latihan?{% endif %}', 
+            message: '{% if sesi.status == 'DIBUKA' %}Sesi latihan akan ditutup. Pesilat tidak akan dapat memindai barcode QR presensi setelah sesi ditutup.{% else %}Sesi latihan akan diaktifkan kembali dan kode barcode QR dinamis akan mulai berputar.{% endif %}',
+            confirmText: '{% if sesi.status == 'DIBUKA' %}Ya, Tutup Sesi{% else %}Ya, Buka Sesi{% endif %}',
+            confirmColor: '{% if sesi.status == 'DIBUKA' %}bg-amber-700 hover:bg-amber-800 text-white{% else %}bg-emerald-700 hover:bg-emerald-800 text-white{% endif %}',
+            icon: '{% if sesi.status == 'DIBUKA' %}lock{% else %}lock_open{% endif %}',
+            iconColor: '{% if sesi.status == 'DIBUKA' %}bg-amber-100 text-amber-800{% else %}bg-emerald-100 text-emerald-800{% endif %}',
+            formId: 'form-toggle-status'
+          })"
+          class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full {% if sesi.status == 'DIBUKA' %}bg-amber-700 hover:bg-amber-800 text-white{% else %}bg-primary hover:bg-primary-dark text-on-primary{% endif %} text-xs font-bold shadow-xs hover:scale-105 active:scale-95 transition-all cursor-pointer"
+        >
+          <span class="material-symbols-outlined text-base">{% if sesi.status == 'DIBUKA' %}lock{% else %}lock_open{% endif %}</span>
+          <span>{% if sesi.status == 'DIBUKA' %}Tutup Sesi{% else %}Buka Sesi Kembali{% endif %}</span>
+        </button>
+      </form>
+
+      <!-- Hapus Sesi Latihan -->
+      <form id="form-delete-session" method="POST" action="{% url 'attendance:session_delete' sesi.id %}">
+        {% csrf_token %}
+        <button 
+          type="button" 
+          onclick="openConfirmModal({ 
+            title: 'Hapus Sesi Latihan Ini?', 
+            message: 'Apakah Anda yakin ingin menghapus sesi latihan {{ sesi.get_tipe_sesi_display|escapejs }} ({{ sesi.tanggal|date:"d M Y" }})? Seluruh data presensi dan riwayat scan terkait akan dihapus permanen.',
+            confirmText: 'Ya, Hapus Sesi',
+            confirmColor: 'bg-red-700 hover:bg-red-800 text-white',
+            icon: 'delete_forever',
+            iconColor: 'bg-red-100 text-red-700',
+            formId: 'form-delete-session'
+          })"
+          class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-red-100 hover:bg-red-700 text-red-800 hover:text-white text-xs font-bold border border-red-200 shadow-xs hover:scale-105 active:scale-95 transition-all cursor-pointer" 
+          title="Hapus sesi latihan beserta seluruh data presensinya"
+        >
+          <span class="material-symbols-outlined text-base">delete</span>
+          <span>Hapus Sesi</span>
+        </button>
+      </form>
+      {% else %}
+      {% if sesi.status == 'DIBUKA' %}
+      <a href="{% url 'attendance:scanner' %}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary hover:bg-primary-dark text-on-primary text-xs font-bold shadow-elevation-1 hover:scale-105 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-base">qr_code_scanner</span>
+        <span>Scan Presensi Sesi Ini</span>
+      </a>
+      {% endif %}
+      {% endif %}
+
+    </div>
+  </div>
+
+  <!-- Main Grid: Cockpit (Left: QR Display, Right: Pesilat List) -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- Left Column: Dynamic QR Code & Live Summary (4 cols) -->
+    <div class="lg:col-span-5 space-y-6">
+      
+      <!-- Laporan Foto Kegiatan Sesi Latihan Panel -->
+      <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1" x-data="{ showPhotoModal: false, showPreviewModal: false }">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-extrabold text-on-surface flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">photo_camera</span>
+            <span>Laporan Foto Kegiatan Sesi</span>
+          </h3>
+          {% if sesi.foto_kegiatan %}
+          <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-[11px] font-bold">Foto Terekam</span>
+          {% else %}
+          <span class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[11px] font-bold">Belum Ada Foto</span>
+          {% endif %}
+        </div>
+
+        {% if sesi.foto_kegiatan %}
+        <!-- Tampilan Foto Dokumentasi yang Sudah Diunggah -->
+        <div class="space-y-3">
+          <div class="relative group rounded-2xl overflow-hidden border border-outline-variant/50 shadow-sm aspect-video bg-black/5 flex items-center justify-center">
+            <img 
+              src="{{ sesi.foto_kegiatan.url }}" 
+              alt="Foto Kegiatan Sesi Latihan" 
+              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
+              @click="showPreviewModal = true"
+            >
+            <div 
+              @click="showPreviewModal = true"
+              class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer text-white text-xs font-bold gap-1.5"
+            >
+              <span class="material-symbols-outlined text-xl">zoom_in</span>
+              <span>Lihat Ukuran Penuh</span>
+            </div>
+          </div>
+
+          {% if sesi.keterangan_foto %}
+          <p class="text-xs text-on-surface-variant font-medium italic bg-surface-container/70 p-3 rounded-2xl border border-outline-variant/20">
+            "{{ sesi.keterangan_foto }}"
+          </p>
+          {% endif %}
+
+          {% if request.user.is_admin_role or request.user.is_pelatih_role %}
+          <div class="flex items-center justify-between gap-2 pt-2 border-t border-outline-variant/30">
+            <button 
+              type="button" 
+              @click="showPhotoModal = true"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-bold border border-outline-variant/30 transition-all cursor-pointer"
+            >
+              <span class="material-symbols-outlined text-sm">edit</span>
+              <span>Ganti Foto</span>
+            </button>
+
+            <form id="form-delete-session-photo" method="POST" action="{% url 'attendance:session_upload_photo' sesi.id %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete">
+              <button 
+                type="button"
+                onclick="openConfirmModal({
+                  title: 'Hapus Foto Kegiatan?',
+                  message: 'Apakah Anda yakin ingin menghapus foto dokumentasi kegiatan sesi latihan ini?',
+                  confirmText: 'Ya, Hapus Foto',
+                  confirmColor: 'bg-red-700 hover:bg-red-800 text-white',
+                  icon: 'delete',
+                  iconColor: 'bg-red-100 text-red-700',
+                  formId: 'form-delete-session-photo'
+                })"
+                class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-red-700 hover:bg-red-50 text-xs font-bold transition-all cursor-pointer"
+              >
+                <span class="material-symbols-outlined text-sm">delete</span>
+                <span>Hapus Foto</span>
+              </button>
+            </form>
+          </div>
+          {% endif %}
+        </div>
+
+        {% else %}
+        <!-- Belum Ada Foto (Upload Box) -->
+        <div class="p-6 bg-surface-container rounded-3xl text-center border-2 border-dashed border-outline-variant/50 space-y-3">
+          <div class="w-12 h-12 rounded-2xl bg-primary-container text-primary flex items-center justify-center mx-auto">
+            <span class="material-symbols-outlined text-2xl">add_a_photo</span>
+          </div>
+          <div>
+            <p class="font-bold text-sm text-on-surface">Dokumentasi Foto Kegiatan</p>
+            <p class="text-xs text-outline mt-0.5">Unggah foto kegiatan sesi latihan ini sebagai bukti laporan pelaksanaan eskul.</p>
+          </div>
+
+          {% if request.user.is_admin_role or request.user.is_pelatih_role %}
+          <button 
+            type="button" 
+            @click="showPhotoModal = true"
+            class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-primary hover:bg-primary-dark text-on-primary text-xs font-bold shadow-xs active:scale-95 transition-all cursor-pointer"
+          >
+            <span class="material-symbols-outlined text-sm">upload</span>
+            <span>Unggah Foto Kegiatan</span>
+          </button>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Modal Upload Foto Kegiatan -->
+        <div 
+          x-show="showPhotoModal" 
+          x-cloak 
+          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+        >
+          <div 
+            @click.away="showPhotoModal = false"
+            class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 max-w-md w-full shadow-elevation-3 space-y-4"
+          >
+            <div class="flex items-center justify-between pb-3 border-b border-outline-variant/30">
+              <div class="flex items-center gap-2 text-primary">
+                <span class="material-symbols-outlined text-2xl">add_photo_alternate</span>
+                <h3 class="font-black text-base text-on-surface">Unggah Foto Kegiatan Sesi</h3>
+              </div>
+              <button type="button" @click="showPhotoModal = false" class="text-outline hover:text-on-surface">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <form method="POST" action="{% url 'attendance:session_upload_photo' sesi.id %}" enctype="multipart/form-data" class="space-y-4">
+              {% csrf_token %}
+              <div>
+                <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">
+                  Pilih Foto Kegiatan <span class="text-error">*</span>
+                </label>
+                <input 
+                  type="file" 
+                  name="foto_kegiatan" 
+                  accept="image/*" 
+                  required 
+                  class="w-full text-xs text-on-surface file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-primary file:text-on-primary hover:file:bg-primary-dark"
+                >
+                <p class="text-[10px] text-outline mt-1">Format gambar: JPG, PNG, atau WebP.</p>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">
+                  Keterangan Foto Kegiatan (Opsional)
+                </label>
+                <input 
+                  type="text" 
+                  name="keterangan_foto" 
+                  value="{{ sesi.keterangan_foto|default:'' }}"
+                  placeholder="Contoh: Latihan teknik tendangan samping & sambung 3 ronde"
+                  class="w-full px-3 py-2 bg-surface-container-lowest border border-outline/30 rounded-xl text-xs outline-none focus:border-primary font-medium"
+                >
+              </div>
+
+              <div class="flex items-center justify-end gap-2 pt-2 border-t border-outline-variant/30">
+                <button type="button" @click="showPhotoModal = false" class="px-4 py-2 rounded-full bg-surface-container text-xs font-bold text-outline hover:text-on-surface">
+                  Batal
+                </button>
+                <button type="submit" class="px-5 py-2 rounded-full bg-primary hover:bg-primary-dark text-on-primary text-xs font-bold shadow-xs">
+                  Simpan Foto Kegiatan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Modal Lightbox Preview Foto -->
+        {% if sesi.foto_kegiatan %}
+        <div 
+          x-show="showPreviewModal" 
+          x-cloak 
+          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm"
+          @click.self="showPreviewModal = false"
+        >
+          <div class="relative max-w-4xl w-full flex flex-col items-center">
+            <button 
+              type="button" 
+              @click="showPreviewModal = false"
+              class="absolute -top-10 right-0 text-white hover:text-primary-container p-2 flex items-center gap-1 text-xs font-bold cursor-pointer"
+            >
+              <span class="material-symbols-outlined text-2xl">close</span>
+              <span>Tutup</span>
+            </button>
+            <img 
+              src="{{ sesi.foto_kegiatan.url }}" 
+              alt="Foto Kegiatan Sesi Latihan" 
+              class="max-h-[80vh] w-auto rounded-3xl shadow-2xl object-contain border border-white/20"
+            >
+            {% if sesi.keterangan_foto %}
+            <p class="text-white text-xs text-center mt-3 bg-black/50 px-4 py-2 rounded-full backdrop-blur-md">
+              {{ sesi.keterangan_foto }}
+            </p>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
+
+      <!-- Live Attendance Summary Stats -->
+      <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-5 shadow-elevation-1">
+        <h4 class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3">Statistik Kehadiran Sesi</h4>
+        <div class="grid grid-cols-2 gap-3">
+          
+          <div class="p-3 bg-surface-container rounded-2xl border border-outline-variant/20 text-center">
+            <div id="stat-counter-hadir" class="text-2xl font-black text-emerald-700">{{ total_hadir }}</div>
+            <div class="text-[11px] font-bold text-on-surface-variant uppercase">Hadir</div>
+          </div>
+
+          <div class="p-3 bg-surface-container rounded-2xl border border-outline-variant/20 text-center">
+            <div id="stat-counter-izin" class="text-2xl font-black text-blue-700">{{ total_izin }}</div>
+            <div class="text-[11px] font-bold text-on-surface-variant uppercase">Izin</div>
+          </div>
+
+          <div class="p-3 bg-surface-container rounded-2xl border border-outline-variant/20 text-center">
+            <div id="stat-counter-sakit" class="text-2xl font-black text-amber-700">{{ total_sakit }}</div>
+            <div class="text-[11px] font-bold text-on-surface-variant uppercase">Sakit</div>
+          </div>
+
+          <div class="p-3 bg-surface-container rounded-2xl border border-outline-variant/20 text-center">
+            <div class="text-2xl font-black text-slate-700">{{ total_pesilat }}</div>
+            <div class="text-[11px] font-bold text-on-surface-variant uppercase">Total Siswa</div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Pesilat List & Quick Attendance Toggle (7 cols) -->
+    <div class="lg:col-span-7" x-data="{ 
+      searchQuery: '',
+      showFaceModal: false,
+      modalImgUrl: '',
+      modalName: '',
+      modalTime: '',
+      modalDist: '',
+      openFaceSnapshot(url, name, time, dist) {
+        this.modalImgUrl = url;
+        this.modalName = name;
+        this.modalTime = time;
+        this.modalDist = dist;
+        this.showFaceModal = true;
+      }
+    }">
+      <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1">
+        
+        <!-- Search & Info Bar -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div>
+            <h3 class="text-base font-extrabold text-on-surface">Daftar Anggota Pesilat</h3>
+            <p class="text-xs text-on-surface-variant">Klik thumbnail untuk lihat bukti foto wajah, tombol H/I/S/A untuk koreksi cepat</p>
+          </div>
+
+          <!-- Alpine.js Instant Search Filter -->
+          <div class="relative w-full sm:w-56">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-outline">
+              <span class="material-symbols-outlined text-lg">search</span>
+            </span>
+            <input 
+              type="text" 
+              x-model="searchQuery" 
+              placeholder="Cari pesilat / sekolah..." 
+              class="w-full pl-9 pr-3 py-1.5 text-xs bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-full outline-none font-medium text-on-surface"
+            >
+          </div>
+        </div>
+
+        <!-- Filter Sekolah Tabs / Pills -->
+        {% if sekolah_list %}
+        <div class="mb-4 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+          <span class="text-[10px] font-bold text-outline uppercase tracking-wider whitespace-nowrap mr-1">Filter Sekolah:</span>
+          <a href="?" 
+             class="px-3 py-1 rounded-full font-bold whitespace-nowrap transition-all text-[11px] {% if not selected_sekolah %}bg-primary text-on-primary shadow-xs{% else %}bg-surface-container text-on-surface-variant hover:bg-surface-container-high{% endif %}">
+            Semua Sekolah
+          </a>
+          {% for s in sekolah_list %}
+          <a href="?sekolah={{ s.id }}" 
+             class="px-3 py-1 rounded-full font-bold whitespace-nowrap transition-all text-[11px] {% if selected_sekolah == s.id|stringformat:'s' %}bg-primary text-on-primary shadow-xs{% else %}bg-surface-container text-on-surface-variant hover:bg-surface-container-high{% endif %}">
+            {{ s.nama_sekolah }}
+          </a>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Attendance Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="border-b border-outline-variant/40 text-xs font-bold text-on-surface-variant uppercase">
+                <th class="py-2.5 px-3">Pesilat</th>
+                <th class="py-2.5 px-3">Sabuk</th>
+                <th class="py-2.5 px-3 text-center">Status & Bukti</th>
+                {% if request.user.is_admin_role or request.user.is_pelatih_role %}
+                <th class="py-2.5 px-3 text-right">Tandai Cepat</th>
+                {% endif %}
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant/20">
+              {% for item in pesilat_rows %}
+              {% include 'attendance/partials/_pesilat_row.html' %}
+              {% empty %}
+              <tr>
+                <td colspan="4" class="text-center py-6 text-outline text-xs">
+                  Belum ada data anggota terdaftar.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <!-- Modal Lightbox Bukti Snapshot Wajah Biometrik Siswa -->
+      <div 
+        x-show="showFaceModal" 
+        x-transition 
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs" 
+        style="display: none;"
+      >
+        <div @click.away="showFaceModal = false" class="bg-surface-container-lowest rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-elevation-3 border border-outline-variant/40 text-center animate-scale-up">
+          <div class="flex items-center justify-between pb-2 border-b border-outline-variant/20">
+            <div class="flex items-center gap-2 text-left">
+              <span class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                <span class="material-symbols-outlined text-base">face</span>
+              </span>
+              <div>
+                <h4 class="font-extrabold text-xs text-on-surface">Snapshot Bukti Wajah</h4>
+                <p class="text-[10px] text-outline" x-text="modalName"></p>
+              </div>
+            </div>
+            <button type="button" @click="showFaceModal = false" class="text-outline hover:text-on-surface p-1 rounded-full cursor-pointer">
+              <span class="material-symbols-outlined text-lg">close</span>
+            </button>
+          </div>
+
+          <div class="relative overflow-hidden rounded-2xl border-2 border-emerald-500 shadow-inner aspect-square bg-black">
+            <img :src="modalImgUrl" alt="Snapshot Wajah" class="w-full h-full object-cover">
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-surface-container text-xs text-left space-y-1">
+            <div class="flex justify-between">
+              <span class="text-outline">Waktu Presensi:</span>
+              <strong class="text-on-surface" x-text="modalTime"></strong>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-outline">Jarak Euclidean:</span>
+              <strong class="text-emerald-700" x-text="parseFloat(modalDist).toFixed(3) + ' (Toleransi &le; 0.60)'"></strong>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-outline">Metode:</span>
+              <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">AI Biometric Match</span>
+            </div>
+          </div>
+
+          <button type="button" @click="showFaceModal = false" class="w-full py-2.5 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-bold text-xs cursor-pointer">
+            Tutup Bukti
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  document.body.addEventListener('updateAttendanceCounters', function(evt) {
+    const detail = evt.detail;
+    if (detail) {
+      const elHadir = document.getElementById('stat-counter-hadir');
+      const elIzin = document.getElementById('stat-counter-izin');
+      const elSakit = document.getElementById('stat-counter-sakit');
+      if (elHadir && detail.hadir !== undefined) elHadir.textContent = detail.hadir;
+      if (elIzin && detail.izin !== undefined) elIzin.textContent = detail.izin;
+      if (elSakit && detail.sakit !== undefined) elSakit.textContent = detail.sakit;
+    }
+  });
+</script>
+{% endblock %}

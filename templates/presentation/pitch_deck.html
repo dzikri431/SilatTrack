@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SilatTrack — Investor Pitch Deck 2026</title>
+  
+  <!-- Google Fonts & Tailwind CSS CDN -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fdf3f2',
+              100: '#fbe4e2',
+              200: '#f7cfcc',
+              300: '#e59a93',
+              400: '#d15d51',
+              500: '#b91c1c',
+              600: '#8A1C14',
+              700: '#6b120c',
+              800: '#4c0c08',
+              900: '#2b0604',
+            },
+            gold: {
+              100: '#fef9c3',
+              200: '#fef08a',
+              300: '#fde047',
+              400: '#facc15',
+              500: '#eab308',
+              600: '#ca8a04',
+              700: '#a16207',
+            },
+            dark: {
+              base: '#0B0F17',
+              card: '#111827',
+              surface: '#1E293B',
+              border: '#334155'
+            },
+            light: {
+              base: '#F8FAFC',
+              card: '#FFFFFF',
+              surface: '#F1F5F9',
+              border: '#E2E8F0'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Base Body Styling */
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #F8FAFC;
+      color: #0F172A;
+      overflow: hidden;
+      user-select: none;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    html.dark body {
+      background-color: #0B0F17;
+      color: #F8FAFC;
+    }
+
+    /* Ambient Glow Backgrounds */
+    .glow-crimson {
+      position: absolute;
+      width: 550px;
+      height: 550px;
+      background: radial-gradient(circle, rgba(138, 28, 20, 0.12) 0%, rgba(138, 28, 20, 0) 70%);
+      filter: blur(60px);
+      pointer-events: none;
+      z-index: 0;
+      transition: background 0.3s ease;
+    }
+    html.dark .glow-crimson {
+      background: radial-gradient(circle, rgba(138, 28, 20, 0.28) 0%, rgba(138, 28, 20, 0) 70%);
+      filter: blur(55px);
+    }
+    
+    .glow-gold {
+      position: absolute;
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, rgba(202, 138, 4, 0.10) 0%, rgba(202, 138, 4, 0) 70%);
+      filter: blur(70px);
+      pointer-events: none;
+      z-index: 0;
+      transition: background 0.3s ease;
+    }
+    html.dark .glow-gold {
+      background: radial-gradient(circle, rgba(202, 138, 4, 0.18) 0%, rgba(202, 138, 4, 0) 70%);
+      filter: blur(65px);
+    }
+
+    .slide {
+      display: none;
+      opacity: 0;
+      transform: translateY(18px) scale(0.99);
+      transition: opacity 0.38s cubic-bezier(0.16, 1, 0.3, 1), transform 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .slide.active {
+      display: flex;
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Glassmorphism Cards for Light & Dark */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+      transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.25s ease;
+    }
+    html.dark .glass-card {
+      background: rgba(17, 24, 39, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.6);
+    }
+
+    .glass-card-hover:hover {
+      border-color: rgba(202, 138, 4, 0.45);
+      transform: translateY(-3px);
+      box-shadow: 0 18px 30px -8px rgba(138, 28, 20, 0.12);
+    }
+    html.dark .glass-card-hover:hover {
+      border-color: rgba(202, 138, 4, 0.35);
+      box-shadow: 0 20px 40px -10px rgba(138, 28, 20, 0.25);
+    }
+
+    /* Scrollbar */
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.06);
+    }
+    html.dark .custom-scroll::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.2);
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 9999px;
+    }
+    html.dark .custom-scroll::-webkit-scrollbar-thumb {
+      background: #334155;
+    }
+
+    /* Print styling */
+    @media print {
+      body {
+        overflow: visible !important;
+        background-color: #FFFFFF !important;
+        color: #0F172A !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      #top-navbar, #bottom-controls, #notes-drawer, #grid-modal, .ambient-lights {
+        display: none !important;
+      }
+      .slide {
+        display: flex !important;
+        opacity: 1 !important;
+        transform: none !important;
+        page-break-after: always;
+        height: 100vh !important;
+        width: 100vw !important;
+        position: relative !important;
+        padding: 2.5rem !important;
+      }
+    }
+  </style>
+</head>
+<body class="h-screen w-screen flex flex-col justify-between relative select-none">
+
+  <!-- Ambient background glow elements -->
+  <div class="ambient-lights">
+    <div class="glow-crimson top-[-100px] left-[-100px]"></div>
+    <div class="glow-gold bottom-[-100px] right-[-100px]"></div>
+  </div>
+
+  <!-- TOP APP BAR -->
+  <header id="top-navbar" class="h-16 px-6 border-b border-slate-200 dark:border-slate-800/80 bg-white/85 dark:bg-dark-base/80 backdrop-blur-md flex items-center justify-between z-40 relative transition-colors duration-300">
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2.5 cursor-pointer" onclick="goToSlide(0)">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-amber-500 p-0.5 shadow-lg shadow-brand-600/30">
+          <div class="w-full h-full bg-white dark:bg-dark-base rounded-[10px] flex items-center justify-center">
+            <span class="material-symbols-outlined text-amber-500 dark:text-amber-400 text-xl font-bold">sports_kabaddi</span>
+          </div>
+        </div>
+        <div>
+          <span class="font-black text-lg tracking-wider text-slate-900 dark:text-white">SILAT<span class="text-amber-600 dark:text-amber-400">TRACK</span></span>
+          <span class="text-[10px] font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/80 px-2 py-0.5 rounded-full ml-2 border border-slate-200 dark:border-slate-700/50">INVESTOR DECK</span>
+        </div>
+      </div>
+      <div class="hidden md:flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 pl-4 border-l border-slate-200 dark:border-slate-800">
+        <span id="header-slide-title" class="text-slate-800 dark:text-slate-200">Modernisasi Ekosistem Olahraga Sekolah</span>
+      </div>
+    </div>
+
+    <!-- Header Actions -->
+    <div class="flex items-center gap-2 sm:gap-2.5">
+      <!-- Pitch Stopwatch Timer -->
+      <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-700/60 px-3 py-1.5 rounded-lg text-xs font-mono text-amber-600 dark:text-amber-400 shadow-inner" title="Waktu Presentasi">
+        <span class="material-symbols-outlined text-xs">timer</span>
+        <span id="timer-display">00:00</span>
+        <button id="timer-toggle-btn" class="text-slate-400 hover:text-slate-700 dark:hover:text-white ml-1" onclick="toggleTimer()">
+          <span class="material-symbols-outlined text-xs" id="timer-icon">pause</span>
+        </button>
+      </div>
+
+      <!-- Slide Counter -->
+      <div class="bg-slate-100 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-700/60 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300">
+        <span id="current-slide-num" class="text-slate-900 dark:text-white font-bold">01</span> <span class="text-slate-400 dark:text-slate-500">/</span> <span id="total-slide-num">11</span>
+      </div>
+
+      <!-- THEME TOGGLE BUTTON (Light/Dark Mode) -->
+      <button id="theme-toggle-btn" onclick="toggleTheme()" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition" title="Ganti Mode Terang / Gelap (Shortcut: M)">
+        <span class="material-symbols-outlined text-sm" id="theme-icon">light_mode</span>
+      </button>
+
+      <!-- Speaker Notes Toggle -->
+      <button onclick="toggleNotes()" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition" title="Speaker Notes (Shortcut: N)">
+        <span class="material-symbols-outlined text-sm">sticky_note_2</span>
+      </button>
+
+      <!-- Slide Overview Grid Toggle -->
+      <button onclick="toggleGridModal()" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition" title="Slide Overview (Shortcut: G)">
+        <span class="material-symbols-outlined text-sm">grid_view</span>
+      </button>
+
+      <!-- Fullscreen Toggle -->
+      <button onclick="toggleFullScreen()" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition" title="Layar Penuh (Shortcut: F)">
+        <span class="material-symbols-outlined text-sm" id="fullscreen-icon">fullscreen</span>
+      </button>
+
+      <!-- Print / PDF -->
+      <button onclick="window.print()" class="hidden sm:inline-flex p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition" title="Cetak / PDF (Shortcut: P)">
+        <span class="material-symbols-outlined text-sm">print</span>
+      </button>
+
+      <!-- Live App Demo Button -->
+      <a href="/" class="ml-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-500 hover:to-brand-600 text-white text-xs font-semibold shadow-md shadow-brand-900/30 transition">
+        <span class="material-symbols-outlined text-xs">rocket_launch</span>
+        <span>Demo Live</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- MAIN SLIDES STAGE -->
+  <main id="slide-stage" class="flex-1 overflow-hidden relative z-10 flex items-center justify-center p-4 sm:p-8 md:p-12">
+
+    <!-- ========================================================
+         SLIDE 1: COVER & ELEVATOR PITCH
+         ======================================================== -->
+    <section class="slide active w-full max-w-6xl h-full flex-col justify-center items-center text-center">
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-50 dark:bg-brand-950/80 border border-brand-200 dark:border-brand-700/50 text-brand-700 dark:text-amber-400 text-xs font-semibold mb-6 tracking-wide shadow-sm">
+        <span class="w-2 h-2 rounded-full bg-brand-600 dark:bg-amber-400 animate-pulse"></span>
+        SEED ROUND PITCH DECK 2026 • SPORTSTECH & EDTECH INDONESIA
+      </div>
+      
+      <h1 class="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight max-w-4xl">
+        Modernisasi Ekosistem <span class="bg-gradient-to-r from-brand-600 via-rose-600 to-amber-600 dark:from-amber-400 dark:via-rose-400 dark:to-brand-500 bg-clip-text text-transparent">Olahraga Sekolah</span>
+      </h1>
+      
+      <p class="mt-6 text-lg sm:text-xl text-slate-600 dark:text-slate-300 max-w-2xl font-light leading-relaxed">
+        Platform presensi presisi, pemantauan atlet, dan analitik talenta ekstrakurikuler sekolah untuk mencetak generasi berprestasi.
+      </p>
+
+      <!-- 3 Quick Value Highlights -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-10 w-full max-w-3xl text-left">
+        <div class="glass-card p-4 rounded-xl border-l-4 border-l-amber-500">
+          <div class="text-amber-600 dark:text-amber-400 text-xs font-bold uppercase tracking-wider mb-1">Presensi Presisi</div>
+          <div class="text-slate-900 dark:text-white font-semibold text-sm">Fast QR Scanning &lt; 2 Detik</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Anti titip absen, validasi real-time pelatih</div>
+        </div>
+        <div class="glass-card p-4 rounded-xl border-l-4 border-l-brand-600">
+          <div class="text-brand-600 dark:text-rose-400 text-xs font-bold uppercase tracking-wider mb-1">Talent Passport</div>
+          <div class="text-slate-900 dark:text-white font-semibold text-sm">Rekam Jejak Sabuk & Fisik</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Histori jam terbang & kesiapan turnamen</div>
+        </div>
+        <div class="glass-card p-4 rounded-xl border-l-4 border-l-emerald-500">
+          <div class="text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider mb-1">Transparansi BOS</div>
+          <div class="text-slate-900 dark:text-white font-semibold text-sm">Audit & SPJ Siap Pakai</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">1-Klik laporan otomatis untuk sekolah</div>
+        </div>
+      </div>
+
+      <div class="mt-10 flex items-center gap-6 text-xs text-slate-500 dark:text-slate-400">
+        <span>Founder & Tim SilatTrack</span>
+        <span class="w-1 h-1 rounded-full bg-slate-400 dark:bg-slate-600"></span>
+        <span>Target Raise: Rp 1.5 Miliar</span>
+        <span class="w-1 h-1 rounded-full bg-slate-400 dark:bg-slate-600"></span>
+        <span>Runway 18 Bulan</span>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SLIDE 2: THE PROBLEM
+         ======================================================== -->
+    <section class="slide w-full max-w-6xl h-full flex-col justify-center">
+      <div class="flex items-center gap-2 text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest mb-3">
+        <span class="material-symbols-outlined text-sm">error</span>
+        The Problem
+      </div>
+      <h2 class="text-3xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        Manajemen Eskul Tradisional: <span class="text-rose-600 dark:text-rose-400">Blindspot Besar</span> & Boros Waktu
+      </h2>
+      <p class="text-slate-600 dark:text-slate-400 text-base mt-2 max-w-3xl">
+        Di lebih dari 300.000 sekolah, kegiatan ekstrakurikuler masih dikelola secara manual dengan kertas dan grup chat yang kacau.
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-8">
+        <!-- Problem 1 -->
+        <div class="glass-card p-5 rounded-xl border border-rose-200 dark:border-rose-900/40 relative overflow-hidden">
+          <div class="flex items-start gap-4">
+            <div class="p-3 rounded-lg bg-rose-100 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40">
+              <span class="material-symbols-outlined">receipt_long</span>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white">1. Kertas Absen Basah & Titip Presensi</h3>
+              <p class="text-sm text-slate-600 dark:text-slate-300 mt-1.5 leading-relaxed">
+                Pelatih kehilangan 15-20 menit per sesi hanya untuk memanggil absen. Lembar kertas sering sobek, kehujanan, dan memicu manipulasi kehadiran.
+              </p>
+              <div class="mt-3 text-xs text-rose-700 dark:text-rose-400 font-semibold bg-rose-50 dark:bg-rose-950/40 border border-rose-200/60 dark:border-transparent px-2.5 py-1 rounded inline-block">
+                Dampak: 25% jam latihan terbuang untuk administrasi
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Problem 2 -->
+        <div class="glass-card p-5 rounded-xl border border-rose-200 dark:border-rose-900/40 relative overflow-hidden">
+          <div class="flex items-start gap-4">
+            <div class="p-3 rounded-lg bg-rose-100 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40">
+              <span class="material-symbols-outlined">visibility_off</span>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white">2. Blindspot Sekolah & Orang Tua</h3>
+              <p class="text-sm text-slate-600 dark:text-slate-300 mt-1.5 leading-relaxed">
+                Orang tua was-was tidak tahu apakah anaknya benar tiba di gelanggang latihan atau bolos. Sekolah tidak punya visibilitas real-time tingkat kehadiran.
+              </p>
+              <div class="mt-3 text-xs text-rose-700 dark:text-rose-400 font-semibold bg-rose-50 dark:bg-rose-950/40 border border-rose-200/60 dark:border-transparent px-2.5 py-1 rounded inline-block">
+                Dampak: Risiko keamanan siswa & komplain wali murid
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Problem 3 -->
+        <div class="glass-card p-5 rounded-xl border border-rose-200 dark:border-rose-900/40 relative overflow-hidden">
+          <div class="flex items-start gap-4">
+            <div class="p-3 rounded-lg bg-rose-100 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40">
+              <span class="material-symbols-outlined">sports_martial_arts</span>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white">3. Talent Data Blackhole (Bakat Tercecer)</h3>
+              <p class="text-sm text-slate-600 dark:text-slate-300 mt-1.5 leading-relaxed">
+                Tidak ada data tersentral untuk kenaikan sabuk, riwayat jam terbang fisik, dan catatan tanding. Atlet berpotensi gagal terjaring pembina cabor.
+              </p>
+              <div class="mt-3 text-xs text-rose-700 dark:text-rose-400 font-semibold bg-rose-50 dark:bg-rose-950/40 border border-rose-200/60 dark:border-transparent px-2.5 py-1 rounded inline-block">
+                Dampak: Regenerasi atlet nasional lambat & unmeasured
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Problem 4 -->
+        <div class="glass-card p-5 rounded-xl border border-rose-200 dark:border-rose-900/40 relative overflow-hidden">
+          <div class="flex items-start gap-4">
+            <div class="p-3 rounded-lg bg-rose-100 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40">
+              <span class="material-symbols-outlined">account_balance_wallet</span>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white">4. SPJ Anggaran & Honor Pelatih Rentan Masalah</h3>
+              <p class="text-sm text-slate-600 dark:text-slate-300 mt-1.5 leading-relaxed">
+                Pertanggungjawaban dana BOS/iuran eskul memerlukan verifikasi manual yang lambat. Data presensi yang diragukan menunda pencairan honor pelatih.
+              </p>
+              <div class="mt-3 text-xs text-rose-700 dark:text-rose-400 font-semibold bg-rose-50 dark:bg-rose-950/40 border border-rose-200/60 dark:border-transparent px-2.5 py-1 rounded inline-block">
+                Dampak: Friction administratif & pelatih demotivasi
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SLIDE 3: THE SOLUTION
+         ======================================================== -->
+    <section class="slide w-full max-w-6xl h-full flex-col justify-center">
+      <div class="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-3">
+        <span class="material-symbols-outlined text-sm">verified</span>
+        The Solution
+      </div>
+      <h2 class="text-3xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        <span class="text-brand-600 dark:text-amber-400">SilatTrack</span>: Single Source of Truth Olahraga Sekolah
+      </h2>
+      <p class="text-slate-600 dark:text-slate-400 text-base mt-2 max-w-3xl">
+        Aplikasi web terintegrasi yang menyatukan Pelatih, Siswa/Atlet, Admin Sekolah, dan Orang Tua dalam satu rantai digital presisi.
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+        <!-- Pillar 1 -->
+        <div class="glass-card glass-card-hover p-6 rounded-2xl border-t-4 border-t-amber-500 flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center mb-5">
+              <span class="material-symbols-outlined text-2xl">qr_code_scanner</span>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Presensi QR Tokenized Cepat</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              Siswa scan QR sesi latihan dengan kamera HP dalam 2 detik. Kode terenkripsi mencegah titip absen. Dilengkapi opsi manual cepat bagi pelatih.
+            </p>
+          </div>
+          <ul class="mt-6 space-y-2 text-xs text-slate-700 dark:text-slate-300 border-t border-slate-200 dark:border-slate-800 pt-4">
+            <li class="flex items-center gap-2"><span class="text-amber-600 dark:text-amber-400 font-bold">✓</span> Anti-manipulasi token</li>
+            <li class="flex items-center gap-2"><span class="text-amber-600 dark:text-amber-400 font-bold">✓</span> Mode Buka/Tutup sesi instan</li>
+            <li class="flex items-center gap-2"><span class="text-amber-600 dark:text-amber-400 font-bold">✓</span> Kategori Hadir, Izin, Sakit, Alpa</li>
+          </ul>
+        </div>
+
+        <!-- Pillar 2 -->
+        <div class="glass-card glass-card-hover p-6 rounded-2xl border-t-4 border-t-brand-600 dark:border-t-rose-500 flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-brand-500/10 text-brand-600 dark:text-rose-400 border border-brand-500/20 flex items-center justify-center mb-5">
+              <span class="material-symbols-outlined text-2xl">badge</span>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Paspor Digital & Tingkatan Atlet</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              Buku saku digital pesilat: riwayat kenaikan sabuk, log jam terbang fisik akumulatif, dan kesiapan kategori tanding (Tanding / Seni).
+            </p>
+          </div>
+          <ul class="mt-6 space-y-2 text-xs text-slate-700 dark:text-slate-300 border-t border-slate-200 dark:border-slate-800 pt-4">
+            <li class="flex items-center gap-2"><span class="text-brand-600 dark:text-rose-400 font-bold">✓</span> Profil sabuk & sertifikasi digital</li>
+            <li class="flex items-center gap-2"><span class="text-brand-600 dark:text-rose-400 font-bold">✓</span> Portofolio jalur prestasi (Japres)</li>
+            <li class="flex items-center gap-2"><span class="text-brand-600 dark:text-rose-400 font-bold">✓</span> Evaluasi kesiapan kejuaraan</li>
+          </ul>
+        </div>
+
+        <!-- Pillar 3 -->
+        <div class="glass-card glass-card-hover p-6 rounded-2xl border-t-4 border-t-emerald-500 dark:border-t-emerald-400 flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center mb-5">
+              <span class="material-symbols-outlined text-2xl">analytics</span>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Executive Analytics & SPJ</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              Dashboard visual untuk Kepala Sekolah & Pembina Eskul. Ekspor rekapitulasi kehadiran resmi dalam hitungan detik untuk SPJ dan evaluasi.
+            </p>
+          </div>
+          <ul class="mt-6 space-y-2 text-xs text-slate-700 dark:text-slate-300 border-t border-slate-200 dark:border-slate-800 pt-4">
+            <li class="flex items-center gap-2"><span class="text-emerald-600 dark:text-emerald-400 font-bold">✓</span> Visualisasi rasio & tren kehadiran</li>
+            <li class="flex items-center gap-2"><span class="text-emerald-600 dark:text-emerald-400 font-bold">✓</span> 1-Klik ekspor Excel/PDF</li>
+            <li class="flex items-center gap-2"><span class="text-emerald-600 dark:text-emerald-400 font-bold">✓</span> Notifikasi orang tua otomatis</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SLIDE 4: MARKET SIZE & OPPORTUNITY
+         ======================================================== -->
+    <section class="slide w-full max-w-6xl h-full flex-col justify-center">
+      <div class="flex items-center gap-2 text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-3">
+        <span class="material-symbols-outlined text-sm">public</span>
+        Market Size & Opportunity
+      </div>
+      <h2 class="text-3xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        Pasar Raksasa yang <span class="text-brand-600 dark:text-amber-400">Belum Terjamah</span> Software Khusus
+      </h2>
+      <p class="text-slate-600 dark:text-slate-400 text-base mt-2 max-w-3xl">
+        Indonesia memiliki ekosistem beladiri dan ekstrakurikuler sekolah terbesar di Asia Tenggara, didorong regulasi wajib minat bakat.
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+        <!-- TAM -->
+        <div class="glass-card p-6 rounded-2xl border-b-4 border-b-slate-400 dark:border-b-slate-600 relative overflow-hidden">
+          <div class="text-xs font-bold text-slate-500 dark:text-slate-400 tracking-wider">TOTAL ADDRESSABLE MARKET (TAM)</div>
+          <div class="text-4xl font-black text-slate-900 dark:text-white mt-2">Rp 4,8 Triliun</div>
+          <div class="text-xs text-slate-600 dark:text-slate-400 mt-3 leading-relaxed">
+            <strong class="text-slate-800 dark:text-slate-200">53.000.000+ Siswa</strong> di 300.000+ Sekolah (SD, SMP, SMA/SMK) & 4.500 Kampus di seluruh Indonesia dengan rata-rata 3-5 kegiatan ekstrakurikuler per institusi.
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+            Basis: SaaS sekolah & modul manajemen atletik
+          </div>
+        </div>
+
+        <!-- SAM -->
+        <div class="glass-card p-6 rounded-2xl border-b-4 border-b-amber-500 relative overflow-hidden">
+          <div class="text-xs font-bold text-amber-600 dark:text-amber-400 tracking-wider">SERVICEABLE ADDRESSABLE (SAM)</div>
+          <div class="text-4xl font-black text-amber-600 dark:text-amber-400 mt-2">Rp 920 Miliar</div>
+          <div class="text-xs text-slate-600 dark:text-slate-400 mt-3 leading-relaxed">
+            <strong class="text-slate-800 dark:text-slate-200">45.000 Sekolah & 8.500 Padepokan Beladiri</strong> di wilayah Tier 1 & Tier 2 dengan unit kegiatan beladiri aktif (Pencak Silat, Karate, Taekwondo).
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-amber-600 dark:text-amber-400/80 font-mono">
+            Wilayah utama: Jawa, Bali, Sumatera
+          </div>
+        </div>
+
+        <!-- SOM -->
+        <div class="glass-card p-6 rounded-2xl border-b-4 border-b-brand-600 dark:border-b-rose-500 relative overflow-hidden">
+          <div class="text-xs font-bold text-brand-600 dark:text-rose-400 tracking-wider">SERVICEABLE OBTAINABLE (SOM - 3 YR)</div>
+          <div class="text-4xl font-black text-brand-600 dark:text-rose-400 mt-2">Rp 45 Miliar</div>
+          <div class="text-xs text-slate-600 dark:text-slate-400 mt-3 leading-relaxed">
+            <strong class="text-slate-800 dark:text-slate-200">1.500 Sekolah Mitra & 350 Klub Mandiri</strong> dengan 300.000 Monthly Active Athletes dalam kurun 36 bulan ke depan.
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-brand-600 dark:text-rose-400/80 font-mono">
+            Penetrasi 3.3% dari SAM awal
+          </div>
+        </div>
+      </div>
+
+      <!-- Growth Drivers -->
+      <div class="glass-card p-4 rounded-xl mt-6 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-700 dark:text-slate-300">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-amber-600 dark:text-amber-400 text-sm">check_circle</span>
+          <span><strong>Kurikulum Merdeka:</strong> Wajib pengembangan bakat eskul</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-amber-600 dark:text-amber-400 text-sm">check_circle</span>
+          <span><strong>DBON Nasional:</strong> Program percepatan bibit atlet emas 2045</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-amber-600 dark:text-amber-400 text-sm">check_circle</span>
+          <span><strong>School SaaS Boom:</strong> Belanja digital sekolah naik +24% YoY</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SLIDE 5: PRODUCT ARCHITECTURE & TECH STACK
+         ======================================================== -->
+    <section class="slide w-full max-w-6xl h-full flex-col justify-center">
+      <div class="flex items-center gap-2 text-xs font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-widest mb-3">
+        <span class="material-symbols-outlined text-sm">developer_mode</span>
+        Product Architecture
+      </div>
+      <h2 class="text-3xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        Arsitektur <span class="text-cyan-600 dark:text-cyan-400">Enterprise-Grade</span>, Ringan & Siap Skala
+      </h2>
+      <p class="text-slate-600 dark:text-slate-400 text-base mt-2 max-w-3xl">
+        Dirancang dengan standar industri untuk performa sub-detik bahkan di jaringan sekolah berkecepatan rendah.
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-8">
+        <!-- Layer 1 -->
+        <div class="glass-card p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="text-[10px] font-bold text-cyan-600 dark:text-cyan-400 tracking-wider uppercase mb-1">CLIENT LAYER</div>
+          <div class="text-base font-bold text-slate-900 dark:text-white mb-2">Zero-Install Web PWA</div>
+          <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            Responsive mobile-first interface. Siswa tidak wajib install aplikasi berat, cukup buka via browser HP apa saja.
+          </p>
+          <div class="mt-4 space-y-1 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+            <div>• Tailwind CSS v3</div>
+            <div>• HTML5 QR Scanner</div>
+            <div>• Offline Cache Ready</div>
+          </div>
+        </div>
+
+        <!-- Layer 2 -->
+        <div class="glass-card p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="text-[10px] font-bold text-amber-600 dark:text-amber-400 tracking-wider uppercase mb-1">APPLICATION CORE</div>
+          <div class="text-base font-bold text-slate-900 dark:text-white mb-2">Django 5 High-Perf Engine</div>
+          <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            Backend tangguh berbasis Python dengan perlindungan CSRF, sanitasi ketat, dan Role-Based Access Control bertingkat.
+          </p>
+          <div class="mt-4 space-y-1 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+            <div>• Modular App Layout</div>
+            <div>• Custom User Model RBAC</div>
+            <div>• Django Rest / JSON API</div>
+          </div>
+        </div>
+
+        <!-- Layer 3 -->
+        <div class="glass-card p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 tracking-wider uppercase mb-1">DATA & SECURITY</div>
+          <div class="text-base font-bold text-slate-900 dark:text-white mb-2">Encrypted Session Tokens</div>
+          <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            Setiap sesi memiliki token unik bertanda tangan kriptografis untuk memblokir pemalsuan presensi secara real-time.
+          </p>
+          <div class="mt-4 space-y-1 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+            <div>• PostgreSQL / SQLite Multi</div>
+            <div>• Sub-200ms DB queries</div>
+            <div>• Immutable Audit Logs</div>
+          </div>
+        </div>
+
+        <!-- Layer 4 -->
+        <div class="glass-card p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="text-[10px] font-bold text-brand-600 dark:text-rose-400 tracking-wider uppercase mb-1">OUTPUT & GATEWAY</div>
+          <div class="text-base font-bold text-slate-900 dark:text-white mb-2">Instant School Reports</div>
+          <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            Engine laporan otomatis untuk SPJ dinas, visualisasi chart tren kehadiran, dan notifikasi gateway ke orang tua.
+          </p>
+          <div class="mt-4 space-y-1 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+            <div>• Chart.js Interactive</div>
+            <div>• Excel & PDF Generator</div>
+            <div>• WhatsApp API Ready</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card p-4 rounded-xl mt-6 flex items-center justify-between border border-cyan-200 dark:border-cyan-900/40">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-cyan-600 dark:text-cyan-400">speed</span>
+          <span class="text-xs text-slate-700 dark:text-slate-300"><strong>Benchmark Latensi:</strong> Waktu respons presensi rata-rata <span class="text-cyan-600 dark:text-cyan-400 font-mono font-bold">140 ms</span> pada koneksi 4G seluler standar.</span>
+        </div>
+        <span class="text-xs font-mono text-slate-500 dark:text-slate-400 hidden sm:inline">23 Automated Tests: 100% PASS</span>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SLIDE 6: TRACTION & PILOT VALIDATION
+         ======================================================== -->
+    <section class="slide w-full max-w-6xl h-full flex-col justify-center">
+      <div class="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-3">
+        <span class="material-symbols-outlined text-sm">trending_up</span>
+        Live Traction & Pilot Validation
+      </div>
+      <h2 class="text-3xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        Validasi Nyata: <span class="text-emerald-600 dark:text-emerald-400">Efisiensi Terbukti</span> di Lapangan
+      </h2>
+      <p class="text-slate-600 dark:text-slate-400 text-base mt-2 max-w-3xl">
+        Uji coba pilot bersama pelatih dan sekolah menunjukkan adopsi instan tanpa hambatan resistensi pengguna.
+      </p>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+        <div class="glass-card p-5 rounded-xl text-center border-b-4 border-b-emerald-500">
+          <div class="text-4xl sm:text-5xl font-black text-emerald-600 dark:text-emerald-400">&lt; 2 dtk</div>
+          <div class="text-xs font-semibold text-slate-900 dark:text-white mt-2">Rata-rata Waktu Presensi</div>
+          <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">90% lebih cepat dari absen manual</div>
+        </div>
+
+        <div class="glass-card p-5 rounded-xl text-center border-b-4 border-b-amber-500">
+          <div class="text-4xl sm:text-5xl font-black text-amber-600 dark:text-amber-400">99.4%</div>
+          <div class="text-xs font-semibold text-slate-900 dark:text-white mt-2">Akurasi Data Kehadiran</div>
+          <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">0 kasus titip absen terulang</div>
+        </div>
+
+        <div class="glass-card p-5 rounded-xl text-center border-b-4 border-b-cyan-500">
+          <div class="text-4xl sm:text-5xl font-black text-cyan-600 dark:text-cyan-400">+42%</div>
+          <div class="text-xs font-semibold text-slate-900 dark:text-white mt-2">Peningkatan Retensi Latihan</div>
+          <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Murid termotivasi melihat statistik</div>
+        </div>
+
+        <div class="glass-card p-5 rounded-xl text-center border-b-4 border-b-brand-600 dark:border-b-rose-400">
+          <div class="text-4xl sm:text-5xl font-black text-brand-600 dark:text-rose-400">15 Jam</div>
+          <div class="text-xs font-semibold text-slate-900 dark:text-white mt-2">Waktu Dihemat / Bulan</div>
+          <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Pelatih fokus 100% melatih teknik</div>
+        </div>
+      </div>
+
+      <!-- Testimonial Quote Box -->
+      <div class="glass-card p-6 rounded-2xl mt-6 border-l-4 border-l-amber-500 flex items-start gap-4">
+        <span class="material-symbols-outlined text-3xl text-amber-600 dark:text-amber-400">format_quote</span>
+        <div>
+          <blockquote class="text-sm sm:text-base text-slate-700 dark:text-slate-200 italic leading-relaxed">
+            "Dulu setiap akhir bulan saya pusing rekap kertas absen yang basah kena keringat untuk laporan SPJ pembina. Sekarang pakai SilatTrack, selesai latihan tinggal tutup sesi, rekapan otomatis jadi dan langsung bisa diserahkan ke kepala sekolah. Orang tua siswa juga jauh lebih tenang."
+          </blockquote>
+          <div class="mt-3 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center font-bold text-xs">PS</div>
+            <div>
+              <div class="text-xs font-bold text-slate-900 dark:text-white">Pelatih Utama & Pembina Ekstrakurikuler</div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">Mitra Pilot Eskul Pencak Silat Sekolah Menengah</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SLIDE 7: BUSINESS MODEL & MONETIZATION
+         ======================================================== -->
+    <section class="slide w-full max-w-6xl h-full flex-col justify-center">
+      <div class="flex items-center gap-2 text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-3">
+        <span class="material-symbols-outlined text-sm">payments</span>
+        Business Model & Monetization
+      </div>
+      <h2 class="text-3xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        Model Bisnis <span class="text-brand-600 dark:text-amber-400">B2B SaaS + B2C</span> Multi-Stream
+      </h2>
+      <p class="text-slate-600 dark:text-slate-400 text-base mt-2 max-w-3xl">
+        Aliran pendapatan yang berulang (recurring) dengan diversifikasi ke turnamen olahraga dan merchandise resmi.
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+        <!-- Stream 1 -->
+        <div class="glass-card p-5 rounded-xl border-t-4 border-t-emerald-500 flex flex-col justify-between">
+          <div>
+            <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60 uppercase">Primary B2B</span>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white mt-3">SaaS Langganan Sekolah</h3>
+            <div class="text-2xl font-black text-slate-900 dark:text-white mt-2">Rp 2,5 Jt <span class="text-xs text-slate-500 dark:text-slate-400 font-normal">/ thn</span></div>
+            <p class="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
+              Biaya tahunan per sekolah yang dibayarkan dari alokasi dana operasional/BOS untuk seluruh eskul & pelatih.
+            </p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
+            Margin: <strong>88%</strong> • Low Churn
+          </div>
+        </div>
+
+        <!-- Stream 2 -->
+        <div class="glass-card p-5 rounded-xl border-t-4 border-t-amber-500 flex flex-col justify-between">
+          <div>
+            <span class="text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/80 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800/60 uppercase">B2C Add-on</span>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white mt-3">Wali Murid Premium</h3>
+            <div class="text-2xl font-black text-slate-900 dark:text-white mt-2">Rp 15 Rb <span class="text-xs text-slate-500 dark:text-slate-400 font-normal">/ bln</span></div>
+            <p class="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
+              Paket notifikasi WhatsApp real-time kehadiran anak, rapor perkembangan fisik, dan sertifikat digital kenaikan sabuk.
+            </p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
+            Potensi: <strong>300k Siswa Aktif</strong>
+          </div>
+        </div>
+
+        <!-- Stream 3 -->
+        <div class="glass-card p-5 rounded-xl border-t-4 border-t-brand-600 dark:border-t-rose-400 flex flex-col justify-between">
+          <div>
+            <span class="text-[10px] font-bold text-brand-700 dark:text-rose-400 bg-brand-100 dark:bg-rose-950/80 px-2 py-0.5 rounded border border-brand-200 dark:border-rose-800/60 uppercase">Event SaaS</span>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white mt-3">Tournament Engine</h3>
+            <div class="text-2xl font-black text-slate-900 dark:text-white mt-2">3% - 5% <span class="text-xs text-slate-500 dark:text-slate-400 font-normal">take-rate</span></div>
+            <p class="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
+              Platform registrasi kejuaraan, pengundian bagan/bracket tanding beladiri, dan live score turnamen antar sekolah.
+            </p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
+            Event Size: <strong>500+ Pesilat/Event</strong>
+          </div>
+        </div>
+
+        <!-- Stream 4 -->
+        <div class="glass-card p-5 rounded-xl border-t-4 border-t-cyan-500 flex flex-col justify-between">
+          <div>
+            <span class="text-[10px] font-bold text-cyan-700 dark:text-cyan-400 bg-cyan-100 dark:bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-200 dark:border-cyan-800/60 uppercase">Marketplace</span>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white mt-3">Sports Equipment</h3>
+            <div class="text-2xl font-black text-slate-900 dark:text-white mt-2">10% <span class="text-xs text-slate-500 dark:text-slate-400 font-normal">komisi</span></div>
+            <p class="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
+              Penyediaan seragam resmi perguruan, sabuk berstandar, deker, dan perlengkapan tanding bermitra dengan produsen lokal.
+            </p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
+            High Repeat Purchase Tiap Ujian
+          </div>
+        </div>
+      </div>
+
+      <!-- Unit Economics Highlights -->
+      <div class="glass-card p-4 rounded-xl mt-6 flex items-center justify-around text-center border border-slate-200 dark:border-amber-900/30">
+        <div>
+          <div class="text-slate-500 dark:text-slate-400 text-xs font-semibold">CAC Sekolah Target</div>
+          <div class="text-lg font-bold text-slate-900 dark:text-white mt-0.5">Rp 450.000</div>
+        </div>
+        <div class="w-px h-8 bg-slate-200 dark:bg-slate-800"></div>
+        <div>
+          <div class="text-slate-500 dark:text-slate-400 text-xs font-semibold">LTV Sekolah (3 Tahun)</div>
+          <div class="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">Rp 7.500.000</div>
+        </div>
+        <div class="w-px h-8 bg-slate-200 dark:bg-slate-800"></div>
+        <div>
+          <div class="text-slate-500 dark:text-slate-400 text-xs font-semibold">LTV : CAC Ratio</div>
+          <div class="text-lg font-bold text-amber-600 dark:text-amber-400 mt-0.5">16.6x</div>
+        </div>
+        <div class="w-px h-8 bg-slate-200 dark:bg-slate-800"></div>
+        <div>
+          <div class="text-slate-500 dark:text-slate-400 text-xs font-semibold">Payback Period</div>
+          <div class="text-lg font-bold text-slate-900 dark:text-white mt-0.5">&lt; 2,5 Bulan</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SLIDE 8: COMPETITIVE ADVANTAGE & MOAT
+         ======================================================== -->
+    <section class="slide w-full max-w-6xl h-full flex-col justify-center">
+      <div class="flex items-center gap-2 text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-3">
+        <span class="material-symbols-outlined text-sm">shield</span>
+        Competitive Advantage & Moat
+      </div>
+      <h2 class="text-3xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        Mengapa SilatTrack <span class="text-brand-600 dark:text-amber-400">Sulit Ditiru</span> Solusi Umum
+      </h2>
+      <p class="text-slate-600 dark:text-slate-400 text-base mt-2 max-w-3xl">
+        Aplikasi absensi kantor biasa atau Google Forms tidak memahami kebutuhan spesifik hierarki beladiri dan dinamika lapangan outdoor.
+      </p>
+
+      <!-- Matrix Comparison -->
+      <div class="mt-6 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 glass-card">
+        <table class="w-full text-left text-xs sm:text-sm">
+          <thead class="bg-slate-100 dark:bg-slate-900/90 text-slate-700 dark:text-slate-400 uppercase text-[11px] tracking-wider border-b border-slate-200 dark:border-slate-800">
+            <tr>
+              <th class="py-3.5 px-4">Fitur / Kebutuhan Lapangan</th>
+              <th class="py-3.5 px-4 text-brand-700 dark:text-amber-400 font-bold bg-amber-500/10 dark:bg-amber-950/30 border-x border-amber-500/20 dark:border-amber-900/30">SILATTRACK</th>
+              <th class="py-3.5 px-4 text-slate-600 dark:text-slate-400">Mesin Fingerprint</th>
+              <th class="py-3.5 px-4 text-slate-600 dark:text-slate-400">Google Form / Sheets</th>
+              <th class="py-3.5 px-4 text-slate-600 dark:text-slate-400">SIAKAD Sekolah Umum</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800/60 text-slate-700 dark:text-slate-300">
+            <tr>
+              <td class="py-3 px-4 font-semibold">Khusus Alur Eskul & Beladiri (Sabuk & Jurus)</td>
+              <td class="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-bold bg-amber-500/5 dark:bg-amber-950/20 border-x border-amber-500/20 dark:border-amber-900/30">✓ Native Terintegrasi</td>
+              <td class="py-3 px-4 text-rose-600 dark:text-rose-400">✗ Tidak Ada</td>
+              <td class="py-3 px-4 text-rose-600 dark:text-rose-400">✗ Tidak Ada</td>
+              <td class="py-3 px-4 text-rose-600 dark:text-rose-400">✗ Hanya Nilai Teori</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-4 font-semibold">Biaya Hardware & Pemasangan</td>
+              <td class="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-bold bg-amber-500/5 dark:bg-amber-950/20 border-x border-amber-500/20 dark:border-amber-900/30">Rp 0 (Gunakan HP)</td>
+              <td class="py-3 px-4 text-rose-600 dark:text-rose-400">Jutaan (Mesin + Teknisi)</td>
+              <td class="py-3 px-4 text-slate-600 dark:text-slate-300">Rp 0</td>
+              <td class="py-3 px-4 text-slate-600 dark:text-slate-300">Termasuk Sistem</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-4 font-semibold">Portabilitas Lapangan (Outdoor / GOR)</td>
+              <td class="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-bold bg-amber-500/5 dark:bg-amber-950/20 border-x border-amber-500/20 dark:border-amber-900/30">✓ Sangat Mobile</td>
+              <td class="py-3 px-4 text-rose-600 dark:text-rose-400">✗ Terpasang di Dinding</td>
+              <td class="py-3 px-4 text-amber-600 dark:text-amber-400">△ Butuh Sinyal Kuat</td>
+              <td class="py-3 px-4 text-rose-600 dark:text-rose-400">✗ Kaku Desktop</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-4 font-semibold">Ketahanan Anti-Fraud / Titip Absen</td>
+              <td class="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-bold bg-amber-500/5 dark:bg-amber-950/20 border-x border-amber-500/20 dark:border-amber-900/30">✓ Dynamic QR & Validasi</td>
+              <td class="py-3 px-4 text-emerald-600 dark:text-emerald-400">✓ Biometrik</td>
+              <td class="py-3 px-4 text-rose-600 dark:text-rose-400">✗ Sangat Rawan Curang</td>
+              <td class="py-3 px-4 text-amber-600 dark:text-amber-400">△ Manual Guru</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-4 font-semibold">Paspor Rekam Prestasi & Jam Terbang Atlet</td>
+              <td class="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-bold bg-amber-500/5 dark:bg-amber-950/20 border-x border-amber-500/20 dark:border-amber-900/30">✓ Otomatis Tersimpan</td>
+              <td class="py-3 px-4 text-rose-600 dark:text-rose-400">✗ Tidak Ada</td>
+              <td class="py-3 px-4 text-rose-600 dark:text-rose-400">✗ File Berantakan</td>
+              <td class="py-3 px-4 text-rose-600 dark:text-rose-400">✗ Tidak Ada</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Moat Summary -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-5 text-xs">
+        <div class="glass-card p-3 rounded-xl flex items-center gap-3">
+          <span class="material-symbols-outlined text-amber-600 dark:text-amber-400">lock</span>
+          <span class="text-slate-700 dark:text-slate-300"><strong>High Switching Cost:</strong> Riwayat sabuk atlet menjadi CV permanen.</span>
+        </div>
+        <div class="glass-card p-3 rounded-xl flex items-center gap-3">
+          <span class="material-symbols-outlined text-brand-600 dark:text-rose-400">hub</span>
+          <span class="text-slate-700 dark:text-slate-300"><strong>Network Effects:</strong> Antar sekolah bertanding di sistem yang sama.</span>
+        </div>
+        <div class="glass-card p-3 rounded-xl flex items-center gap-3">
+          <span class="material-symbols-outlined text-emerald-600 dark:text-emerald-400">military_tech</span>
+          <span class="text-slate-700 dark:text-slate-300"><strong>Domain Expertise:</strong> Pemahaman mendalam aturan beladiri Indonesia.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SLIDE 9: 18-MONTH PRODUCT ROADMAP
+         ======================================================== -->
+    <section class="slide w-full max-w-6xl h-full flex-col justify-center">
+      <div class="flex items-center gap-2 text-xs font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-widest mb-3">
+        <span class="material-symbols-outlined text-sm">timeline</span>
+        18-Month Strategic Roadmap
+      </div>
+      <h2 class="text-3xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        Rencana Eksekusi: Dari Pilot Menjadi <span class="text-cyan-600 dark:text-cyan-400">Sports Grid Nasional</span>
+      </h2>
+      <p class="text-slate-600 dark:text-slate-400 text-base mt-2 max-w-3xl">
+        Tiga fase pertumbuhan terukur dengan target milestones yang jelas untuk memaksimalkan return investasi.
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+        <!-- Phase 1 -->
+        <div class="glass-card p-6 rounded-2xl border-t-4 border-t-amber-500 relative">
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-bold text-amber-600 dark:text-amber-400 font-mono">Q1 - Q2 2026</span>
+            <span class="text-[10px] bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-400 px-2.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800 font-semibold">Fase 1</span>
+          </div>
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">Pondasi & Product-Market Fit</h3>
+          <ul class="space-y-2.5 text-xs text-slate-600 dark:text-slate-300">
+            <li class="flex items-start gap-2">
+              <span class="text-amber-600 dark:text-amber-400 mt-0.5 font-bold">•</span>
+              <span>Onboarding <strong>50 sekolah pilot</strong> di area Jabodetabek & Bandung.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-amber-600 dark:text-amber-400 mt-0.5 font-bold">•</span>
+              <span>Integrasi WhatsApp Gateway untuk notifikasi otomatis ke orang tua.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-amber-600 dark:text-amber-400 mt-0.5 font-bold">•</span>
+              <span>Rilis Kartu Anggota Digital ber-QR untuk absensi offline.</span>
+            </li>
+          </ul>
+          <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+            Milestone: 50 Sekolah • 10.000 Atlet
+          </div>
+        </div>
+
+        <!-- Phase 2 -->
+        <div class="glass-card p-6 rounded-2xl border-t-4 border-t-brand-600 dark:border-t-rose-500 relative">
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-bold text-brand-600 dark:text-rose-400 font-mono">Q3 - Q4 2026</span>
+            <span class="text-[10px] bg-brand-100 dark:bg-rose-950/80 text-brand-800 dark:text-rose-400 px-2.5 py-0.5 rounded-full border border-brand-200 dark:border-rose-800 font-semibold">Fase 2</span>
+          </div>
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">Ekspansi Multi-Cabor & Skala B2B</h3>
+          <ul class="space-y-2.5 text-xs text-slate-600 dark:text-slate-300">
+            <li class="flex items-start gap-2">
+              <span class="text-brand-600 dark:text-rose-400 mt-0.5 font-bold">•</span>
+              <span>Ekspansi ke cabang beladiri lain: Karate, Taekwondo, Tarung Derajat.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-brand-600 dark:text-rose-400 mt-0.5 font-bold">•</span>
+              <span>Peluncuran modul Manajemen Turnamen & Bracket Tanding digital.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-brand-600 dark:text-rose-400 mt-0.5 font-bold">•</span>
+              <span>Peluncuran Native Mobile App untuk Android & iOS.</span>
+            </li>
+          </ul>
+          <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 text-[11px] font-semibold text-brand-600 dark:text-rose-400">
+            Milestone: 250 Sekolah • Rp 1 Miliar ARR
+          </div>
+        </div>
+
+        <!-- Phase 3 -->
+        <div class="glass-card p-6 rounded-2xl border-t-4 border-t-cyan-500 dark:border-t-cyan-400 relative">
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-bold text-cyan-600 dark:text-cyan-400 font-mono">Q1 - Q2 2027</span>
+            <span class="text-[10px] bg-cyan-100 dark:bg-cyan-950/80 text-cyan-800 dark:text-cyan-400 px-2.5 py-0.5 rounded-full border border-cyan-200 dark:border-cyan-800 font-semibold">Fase 3</span>
+          </div>
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">AI Talent Scouting & Federasi</h3>
+          <ul class="space-y-2.5 text-xs text-slate-600 dark:text-slate-300">
+            <li class="flex items-start gap-2">
+              <span class="text-cyan-600 dark:text-cyan-400 mt-0.5 font-bold">•</span>
+              <span>Algoritma AI pendeteksi bakat atlet potensial berdasarkan konsistensi & jam terbang.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-cyan-600 dark:text-cyan-400 mt-0.5 font-bold">•</span>
+              <span>Kemitraan resmi federasi olahraga (IPSI / KONI) untuk scouting atlet daerah.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-cyan-600 dark:text-cyan-400 mt-0.5 font-bold">•</span>
+              <span>Ekspansi pasar ke klub olahraga umum & universitas se-Indonesia.</span>
+            </li>
+          </ul>
+          <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 text-[11px] font-semibold text-cyan-600 dark:text-cyan-400">
+            Milestone: 500+ Sekolah • Rp 3,2 Miliar ARR
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SLIDE 10: THE ASK & USE OF FUNDS
+         ======================================================== -->
+    <section class="slide w-full max-w-6xl h-full flex-col justify-center">
+      <div class="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-3">
+        <span class="material-symbols-outlined text-sm">monetization_on</span>
+        The Investment Ask
+      </div>
+      <h2 class="text-3xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        Seed Round: <span class="text-emerald-600 dark:text-emerald-400">Rp 1.500.000.000</span>
+      </h2>
+      <p class="text-slate-600 dark:text-slate-400 text-base mt-2 max-w-3xl">
+        Pendanaan untuk 18 bulan runway guna mencapai dominasi pasar eskul di 5 provinsi kunci dan mencapai profitabilitas operasional.
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+        <!-- Alloc 1 -->
+        <div class="glass-card p-6 rounded-2xl border-l-4 border-l-cyan-500">
+          <div class="flex items-center justify-between">
+            <span class="text-3xl font-black text-cyan-600 dark:text-cyan-400">45%</span>
+            <span class="text-xs font-mono text-slate-500 dark:text-slate-400">Rp 675 Juta</span>
+          </div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white mt-3">Product, Mobile & AI</h3>
+          <p class="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
+            Perekrutan 2 Senior Fullstack & Mobile Engineers untuk merilis aplikasi iOS/Android dan menyempurnakan engine analitik atletik.
+          </p>
+        </div>
+
+        <!-- Alloc 2 -->
+        <div class="glass-card p-6 rounded-2xl border-l-4 border-l-amber-500">
+          <div class="flex items-center justify-between">
+            <span class="text-3xl font-black text-amber-600 dark:text-amber-400">35%</span>
+            <span class="text-xs font-mono text-slate-500 dark:text-slate-400">Rp 525 Juta</span>
+          </div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white mt-3">Go-To-Market & Kemitraan</h3>
+          <p class="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
+            Tim direct sales ke sekolah, roadshow kemitraan asosiasi kepala sekolah (MKKS), dan sponsorship turnamen beladiri pelajar.
+          </p>
+        </div>
+
+        <!-- Alloc 3 -->
+        <div class="glass-card p-6 rounded-2xl border-l-4 border-l-emerald-500">
+          <div class="flex items-center justify-between">
+            <span class="text-3xl font-black text-emerald-600 dark:text-emerald-400">20%</span>
+            <span class="text-xs font-mono text-slate-500 dark:text-slate-400">Rp 300 Juta</span>
+          </div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white mt-3">Operations, Cloud & Legal</h3>
+          <p class="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
+            Infrastruktur cloud berkeandalan 99.9%, sertifikasi kepatuhan privasi data siswa, dan legalitas kontrak institusi pendidikan.
+          </p>
+        </div>
+      </div>
+
+      <!-- Committed Target Milestones -->
+      <div class="glass-card p-6 rounded-2xl mt-6 border border-emerald-200 dark:border-emerald-900/40">
+        <h4 class="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-4">Milestone Target 18 Bulan Pasca Pendanaan:</h4>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+          <div>
+            <div class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">500+</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Sekolah Aktif Berlangganan</div>
+          </div>
+          <div>
+            <div class="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">150.000+</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Siswa & Atlet Terdaftar</div>
+          </div>
+          <div>
+            <div class="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400">Rp 3,2 M</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">ARR (Annual Recurring Rev)</div>
+          </div>
+          <div>
+            <div class="text-2xl sm:text-3xl font-black text-cyan-600 dark:text-cyan-400">EBITDA +</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Arus Kas Operasional Positif</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SLIDE 11: CLOSING, DEMO & CALL TO ACTION
+         ======================================================== -->
+    <section class="slide w-full max-w-6xl h-full flex-col justify-center items-center text-center">
+      <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-brand-600 to-amber-500 p-0.5 shadow-2xl shadow-brand-600/30 mb-6">
+        <div class="w-full h-full bg-white dark:bg-dark-base rounded-[14px] flex items-center justify-center">
+          <span class="material-symbols-outlined text-amber-500 dark:text-amber-400 text-3xl">sports_kabaddi</span>
+        </div>
+      </div>
+
+      <h2 class="text-3xl sm:text-5xl md:text-6xl font-extrabold text-slate-900 dark:text-white tracking-tight max-w-3xl">
+        Mari Bangun <span class="bg-gradient-to-r from-brand-600 via-rose-600 to-amber-500 dark:from-amber-400 dark:to-rose-400 bg-clip-text text-transparent">Generasi Juara</span> Bersama SilatTrack
+      </h2>
+
+      <p class="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-xl font-light leading-relaxed">
+        Mengubah ekstrakurikuler sekolah dari rutinitas manual menjadi pabrik prestasi yang terukur dan membanggakan.
+      </p>
+
+      <!-- Action Buttons -->
+      <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+        <a href="/" target="_blank" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-500 hover:to-brand-600 text-white font-bold text-sm shadow-xl shadow-brand-900/30 flex items-center gap-2 transition transform hover:scale-105">
+          <span class="material-symbols-outlined text-base">play_circle</span>
+          <span>Buka Demo Langsung (Live Prototype)</span>
+        </a>
+
+        <button onclick="window.print()" class="px-6 py-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-semibold text-sm border border-slate-300 dark:border-slate-700 flex items-center gap-2 transition shadow-xs">
+          <span class="material-symbols-outlined text-base">download</span>
+          <span>Unduh Deck PDF</span>
+        </button>
+
+        <button onclick="copyPitchLink()" id="copy-link-btn" class="px-5 py-3.5 rounded-xl bg-white hover:bg-slate-50 dark:bg-slate-800/80 dark:hover:bg-slate-700 text-amber-700 dark:text-amber-400 font-semibold text-sm border border-slate-300 dark:border-slate-700/80 flex items-center gap-2 transition shadow-xs">
+          <span class="material-symbols-outlined text-base">share</span>
+          <span id="copy-text">Salin Link Pitch</span>
+        </button>
+      </div>
+
+      <!-- Contact Info Card -->
+      <div class="glass-card p-5 rounded-2xl mt-10 max-w-lg w-full flex items-center justify-between text-left border border-slate-200 dark:border-slate-800">
+        <div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Hubungi Tim Founder</div>
+          <div class="text-sm font-bold text-slate-900 dark:text-white mt-1">Founder & CEO SilatTrack</div>
+          <div class="text-xs text-amber-700 dark:text-amber-400 font-medium mt-0.5">investor@silattrack.id • +62 812-XXXX-XXXX</div>
+        </div>
+        <div class="px-3 py-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-400 text-xs font-semibold">
+          Round Open
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- BOTTOM CONTROL BAR -->
+  <footer id="bottom-controls" class="h-16 px-6 border-t border-slate-200 dark:border-slate-800/80 bg-white/85 dark:bg-dark-base/80 backdrop-blur-md flex items-center justify-between z-40 relative transition-colors duration-300">
+    <!-- Progress Indicator Bar at Top of Footer -->
+    <div class="absolute top-0 left-0 h-1 bg-slate-200 dark:bg-slate-800 w-full">
+      <div id="progress-bar" class="h-full bg-gradient-to-r from-brand-600 via-rose-500 to-amber-500 dark:to-amber-400 transition-all duration-300" style="width: 9%;"></div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button id="prev-btn" onclick="prevSlide()" class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-300 dark:border-slate-700 transition disabled:opacity-30 disabled:cursor-not-allowed">
+        <span class="material-symbols-outlined text-sm">arrow_back</span>
+        <span class="hidden sm:inline">Sebelumnya</span>
+      </button>
+
+      <button id="next-btn" onclick="nextSlide()" class="flex items-center gap-1 px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-md shadow-amber-500/20 transition disabled:opacity-30 disabled:cursor-not-allowed">
+        <span>Berikutnya</span>
+        <span class="material-symbols-outlined text-sm">arrow_forward</span>
+      </button>
+    </div>
+
+    <div class="hidden md:flex items-center gap-3 text-xs text-slate-500 font-mono">
+      <span><kbd class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">◀</kbd> <kbd class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">▶</kbd> / <kbd class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">Space</kbd></span>
+      <span>•</span>
+      <span><kbd class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">M</kbd> Tema</span>
+      <span>•</span>
+      <span><kbd class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">N</kbd> Notes</span>
+      <span>•</span>
+      <span><kbd class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">F</kbd> Layar Penuh</span>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <div id="slide-dots" class="flex items-center gap-1.5">
+        <!-- 11 Dots dynamically generated -->
+      </div>
+    </div>
+  </footer>
+
+  <!-- SPEAKER NOTES DRAWER (Shortcut: N) -->
+  <aside id="notes-drawer" class="fixed right-0 top-16 bottom-16 w-80 sm:w-96 bg-white/95 dark:bg-slate-900/95 border-l border-slate-200 dark:border-slate-800 backdrop-blur-xl p-5 z-50 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col justify-between shadow-2xl">
+    <div>
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-2 text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+          <span class="material-symbols-outlined text-sm">sticky_note_2</span>
+          <span>Catatan Pembicara (Presenter Notes)</span>
+        </div>
+        <button onclick="toggleNotes()" class="text-slate-400 hover:text-slate-800 dark:hover:text-white">
+          <span class="material-symbols-outlined text-sm">close</span>
+        </button>
+      </div>
+
+      <div class="mt-4">
+        <div class="text-[11px] font-mono text-slate-500 uppercase">Slide <span id="notes-slide-num">01</span></div>
+        <h4 id="notes-slide-title" class="text-sm font-bold text-slate-900 dark:text-white mt-0.5">Judul Slide</h4>
+      </div>
+
+      <div id="notes-content" class="mt-4 text-xs text-slate-600 dark:text-slate-300 space-y-3 leading-relaxed custom-scroll overflow-y-auto max-h-[55vh] pr-2">
+        <!-- Content injected dynamically based on active slide -->
+      </div>
+    </div>
+
+    <div class="pt-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 flex items-center justify-between">
+      <span>Tekan <kbd class="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded border border-slate-200 dark:border-slate-700">N</kbd> untuk menutup</span>
+      <span class="text-amber-600 dark:text-amber-400 font-mono font-bold" id="notes-timer">00:00</span>
+    </div>
+  </aside>
+
+  <!-- SLIDE OVERVIEW GRID MODAL (Shortcut: G) -->
+  <div id="grid-modal" class="fixed inset-0 bg-slate-900/40 dark:bg-black/80 backdrop-blur-md z-50 hidden flex-col items-center justify-center p-6">
+    <div class="max-w-5xl w-full bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-2xl flex flex-col max-h-[85vh]">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+        <div>
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white">Navigasi Cepat Slide (Slide Overview)</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Pilih salah satu slide untuk melompat langsung</p>
+        </div>
+        <button onclick="toggleGridModal()" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+          <span class="material-symbols-outlined text-base">close</span>
+        </button>
+      </div>
+
+      <div id="grid-cards-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5 mt-5 overflow-y-auto custom-scroll p-1">
+        <!-- 11 Grid cards injected dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // Slide Metadata & Speaker Notes
+    const slidesData = [
+      {
+        title: "Modernisasi Ekosistem Olahraga Sekolah",
+        tag: "Cover & Hook",
+        notes: [
+          "<strong>Hook (15 Detik):</strong> Selamat pagi/siang Bapak/Ibu investor. Setiap minggu, ada lebih dari 50 juta siswa di Indonesia yang mengikuti ekstrakurikuler olahraga, namun 95% administrasinya masih dikelola dengan lembaran kertas basah di lapangan.",
+          "<strong>The Mission:</strong> Kami membangun SilatTrack bukan hanya sekadar aplikasi absensi, tapi infrastruktur digital untuk mencetak dan memantau bibit atlet generasi emas Indonesia.",
+          "<strong>Elevator Pitch:</strong> Menghubungkan pelatih, pihak sekolah, dan orang tua dalam sistem presensi presisi sub-2 detik dan paspor talenta digital."
+        ]
+      },
+      {
+        title: "Rasa Sakit Manajemen Eskul Tradisional",
+        tag: "The Problem",
+        notes: [
+          "<strong>Empathize with Pain:</strong> Ajak investor membayangkan pelatih di lapangan: memegang kertas absen lecek, memanggil 40 anak satu per satu, dan membuang 20 menit berharga.",
+          "<strong>Crucial Point (Titip Absen):</strong> Kertas absen mudah dipalsukan. Siswa titip tanda tangan, orang tua mengira anaknya latihan, padahal keluyuran.",
+          "<strong>School Blindspot:</strong> Kepala sekolah kesulitan mencairkan dana BOS dan honor pelatih karena laporan absensi diragukan keabsahannya."
+        ]
+      },
+      {
+        title: "Solusi SilatTrack: Ekosistem Terpadu",
+        tag: "The Solution",
+        notes: [
+          "<strong>Demonstrate Elegance:</strong> SilatTrack menyelesaikan ini dari hulu ke hilir. Siswa cukup scan QR dinamis lewat HP dalam waktu kurang dari 2 detik.",
+          "<strong>Key Differentiator:</strong> Fitur Paspor Digital Atlet: rekam jejak sabuk, jam terbang latihan fisik, dan kesiapan kategori tanding tersimpan rapi untuk bekal jalur prestasi (Japres).",
+          "<strong>Automatic Reports:</strong> Satu klik selesai sesi, rekapitulasi kehadiran langsung terbit otomatis tanpa pelatih harus lembur mengetik."
+        ]
+      },
+      {
+        title: "Peluang Pasar: TAM, SAM, SOM",
+        tag: "Market Size",
+        notes: [
+          "<strong>Justify TAM (Rp 4.8T):</strong> Indonesia memiliki 300.000+ sekolah dan 53 juta siswa. Belanja digital sekolah bertumbuh pesat pasca program digitalisasi pemerintah.",
+          "<strong>SAM Focus (Rp 920M):</strong> Kami memfokuskan awal pada 45.000 sekolah dan 8.500 klub beladiri di kota-kota besar yang memiliki kegiatan beladiri intensif.",
+          "<strong>Realistic SOM (Rp 45M):</strong> Dalam 3 tahun, target kami meraih 1.500 sekolah dan 350 padepokan dengan total 300.000 atlet aktif."
+        ]
+      },
+      {
+        title: "Arsitektur Produk & Performa",
+        tag: "Product Architecture",
+        notes: [
+          "<strong>Tech Highlights:</strong> Dibangun dengan Django 5 & SQLite/PostgreSQL yang tangguh dan ringan. PWA mobile-first tanpa mewajibkan unduh app berat.",
+          "<strong>Zero Infrastructure Friction:</strong> Sekolah tidak perlu beli mesin sidik jari mahal berharga jutaan yang mudah rusak terkena debu lapangan.",
+          "<strong>High Reliability:</strong> Latensi verifikasi < 200 ms. Kode token terenkripsi menjamin 0% kemungkinan pemalsuan scan."
+        ]
+      },
+      {
+        title: "Validasi Nyata & Metrik Pilot",
+        tag: "Live Traction",
+        notes: [
+          "<strong>Proof of Execution:</strong> Ini bukan sekadar ide di atas kertas. Kami telah menguji prototipe fungsional bersama pelatih pencak silat nyata.",
+          "<strong>Result Highlights:</strong> Waktu presensi < 2 detik per anak. Efisiensi menghemat 15 jam waktu administratif pelatih per bulan.",
+          "<strong>User Retention:</strong> Siswa jauh lebih antusias dan disiplin karena ada motivasi melihat persentase kehadiran mereka di dashboard."
+        ]
+      },
+      {
+        title: "Model Bisnis & Monetisasi",
+        tag: "Business Model",
+        notes: [
+          "<strong>B2B SaaS Engine:</strong> Rp 2,5 Juta/tahun per sekolah. Sangat terjangkau untuk alokasi dana operasional sekolah (BOS) namun memiliki margin 88%.",
+          "<strong>B2C Parent Revenue:</strong> Micro-subscription Rp 15.000/bulan untuk orang tua yang ingin notifikasi WhatsApp real-time dan kartu sertifikat digital anak.",
+          "<strong>Future Expansion:</strong> Fee turnamen kejuaraan beladiri (take rate 3-5%) dan komisi apparel/peralatan beladiri resmi."
+        ]
+      },
+      {
+        title: "Keunggulan Kompetitif & Moat",
+        tag: "Competitive Advantage",
+        notes: [
+          "<strong>Why Not Google Form?</strong> Google form tidak ada verifikasi token, gampang di-copy link-nya, dan tidak ada hierarki sabuk.",
+          "<strong>Why Not Fingerprint?</strong> Mesin fingerprint harganya jutaan, butuh colokan listrik, dan tidak bisa dibawa ke lapangan outdoor atau GOR latihan.",
+          "<strong>Defensible Moat:</strong> Data rekam jejak atletik dan kenaikan tingkat tersimpan di SilatTrack, menciptakan switching cost yang sangat tinggi bagi sekolah dan perguruan."
+        ]
+      },
+      {
+        title: "Roadmap Strategis 18 Bulan",
+        tag: "Roadmap",
+        notes: [
+          "<strong>Phase 1:</strong> 50 sekolah pilot di Jabodetabek & Jawa Barat, WhatsApp Gateway, dan aplikasi Android.",
+          "<strong>Phase 2:</strong> Ekspansi multi-cabang (Karate, Taekwondo, Basket) dan rilis modul turnamen digital.",
+          "<strong>Phase 3:</strong> Talent Scouting platform bekerjasama dengan federasi resmi olahraga (IPSI/KONI) untuk menjaring atlet nasional."
+        ]
+      },
+      {
+        title: "Penawaran Investasi & Alokasi Dana",
+        tag: "The Ask",
+        notes: [
+          "<strong>The Ask:</strong> Kami menggalang Seed Funding sebesar Rp 1.500.000.000 untuk 18 bulan runway.",
+          "<strong>Use of Funds:</strong> 45% Engineering & Mobile, 35% B2B School Sales & GTM, 20% Legal, Cloud Security & Ops.",
+          "<strong>Expected Milestones:</strong> 500+ Sekolah mitra aktif, Rp 3,2 Miliar ARR, dan mencapai break-even operasional dalam 18 bulan."
+        ]
+      },
+      {
+        title: "Penutup & Ajakan Kolaborasi",
+        tag: "Closing & Demo",
+        notes: [
+          "<strong>Closing Hook:</strong> Ekstrakurikuler olahraga adalah pembentuk karakter dan fisik pemuda Indonesia. Dengan SilatTrack, kita mendigitisasi masa depan mereka.",
+          "<strong>Action:</strong> Kami mengundang Bapak/Ibu untuk melihat langsung live demo sistem di browser ini dan menjadwalkan diskusi lanjutan.",
+          "<strong>Open Q&A:</strong> Buka sesi tanya jawab dengan antusias."
+        ]
+      }
+    ];
+
+    let currentSlide = 0;
+    const totalSlides = slidesData.length;
+    const slides = document.querySelectorAll('.slide');
+
+    // UI Elements
+    const progressBar = document.getElementById('progress-bar');
+    const currentSlideNum = document.getElementById('current-slide-num');
+    const headerSlideTitle = document.getElementById('header-slide-title');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const slideDotsContainer = document.getElementById('slide-dots');
+    const notesDrawer = document.getElementById('notes-drawer');
+    const notesSlideNum = document.getElementById('notes-slide-num');
+    const notesSlideTitle = document.getElementById('notes-slide-title');
+    const notesContent = document.getElementById('notes-content');
+    const gridModal = document.getElementById('grid-modal');
+    const gridCardsContainer = document.getElementById('grid-cards-container');
+
+    // Theme Management (Light / Dark)
+    function initTheme() {
+      const savedTheme = localStorage.getItem('silattrack_deck_theme') || 'dark';
+      applyTheme(savedTheme);
+    }
+
+    function applyTheme(theme) {
+      const themeIcon = document.getElementById('theme-icon');
+      if (theme === 'light') {
+        document.documentElement.classList.remove('dark');
+        themeIcon.textContent = 'dark_mode';
+        localStorage.setItem('silattrack_deck_theme', 'light');
+      } else {
+        document.documentElement.classList.add('dark');
+        themeIcon.textContent = 'light_mode';
+        localStorage.setItem('silattrack_deck_theme', 'dark');
+      }
+      initGrid();
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.contains('dark');
+      applyTheme(isDark ? 'light' : 'dark');
+    }
+
+    // Initialize Dots
+    function initDots() {
+      slideDotsContainer.innerHTML = '';
+      for (let i = 0; i < totalSlides; i++) {
+        const dot = document.createElement('button');
+        dot.className = `w-2 h-2 rounded-full transition-all duration-300 ${i === 0 ? 'w-6 bg-amber-500' : 'bg-slate-300 dark:bg-slate-700 hover:bg-slate-400 dark:hover:bg-slate-500'}`;
+        dot.title = `Slide ${i + 1}: ${slidesData[i].title}`;
+        dot.onclick = () => goToSlide(i);
+        slideDotsContainer.appendChild(dot);
+      }
+    }
+
+    // Initialize Grid Overview Cards
+    function initGrid() {
+      gridCardsContainer.innerHTML = '';
+      const isDark = document.documentElement.classList.contains('dark');
+      slidesData.forEach((s, idx) => {
+        const card = document.createElement('div');
+        const activeClass = isDark
+          ? (idx === currentSlide ? 'bg-amber-950/40 border-amber-500' : 'bg-slate-800/60 border-slate-700/60 hover:border-slate-500')
+          : (idx === currentSlide ? 'bg-amber-50 border-amber-500 shadow-sm' : 'bg-slate-50 border-slate-200 hover:border-slate-400');
+        
+        card.className = `p-3 rounded-xl border text-left cursor-pointer transition flex flex-col justify-between ${activeClass}`;
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between text-[10px] font-mono text-slate-500">
+              <span>SLIDE ${(idx + 1).toString().padStart(2, '0')}</span>
+              <span class="text-amber-600 dark:text-amber-400 font-semibold">${s.tag}</span>
+            </div>
+            <div class="text-xs font-bold text-slate-900 dark:text-white mt-1.5 line-clamp-2">${s.title}</div>
+          </div>
+          <div class="mt-3 text-[10px] text-slate-400 flex items-center justify-between">
+            <span>Pilih slide</span>
+            <span class="material-symbols-outlined text-xs text-slate-400">arrow_forward</span>
+          </div>
+        `;
+        card.onclick = () => {
+          goToSlide(idx);
+          toggleGridModal(false);
+        };
+        gridCardsContainer.appendChild(card);
+      });
+    }
+
+    // Update Slide
+    function goToSlide(index) {
+      if (index < 0 || index >= totalSlides) return;
+      
+      slides[currentSlide].classList.remove('active');
+      currentSlide = index;
+      slides[currentSlide].classList.add('active');
+
+      // Update Header & Footer
+      currentSlideNum.textContent = (currentSlide + 1).toString().padStart(2, '0');
+      headerSlideTitle.textContent = slidesData[currentSlide].title;
+      
+      // Update Progress
+      const progressPercent = ((currentSlide + 1) / totalSlides) * 100;
+      progressBar.style.width = `${progressPercent}%`;
+
+      // Update Nav Buttons
+      prevBtn.disabled = currentSlide === 0;
+      nextBtn.disabled = currentSlide === totalSlides - 1;
+
+      // Update Dots
+      const dots = slideDotsContainer.children;
+      for (let i = 0; i < dots.length; i++) {
+        if (i === currentSlide) {
+          dots[i].className = 'w-6 h-2 rounded-full bg-amber-500 transition-all duration-300';
+        } else {
+          dots[i].className = 'w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-700 hover:bg-slate-400 dark:hover:bg-slate-500 transition-all duration-300';
+        }
+      }
+
+      // Update Notes Drawer
+      notesSlideNum.textContent = (currentSlide + 1).toString().padStart(2, '0');
+      notesSlideTitle.textContent = slidesData[currentSlide].title;
+      notesContent.innerHTML = slidesData[currentSlide].notes.map(note => `<div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50">${note}</div>`).join('');
+
+      // Refresh Grid selection if open
+      initGrid();
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) {
+        goToSlide(currentSlide + 1);
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        goToSlide(currentSlide - 1);
+      }
+    }
+
+    // Toggle Notes
+    function toggleNotes(force) {
+      const isOpen = notesDrawer.classList.contains('translate-x-0');
+      if (force !== undefined) {
+        if (force) {
+          notesDrawer.classList.remove('translate-x-full');
+          notesDrawer.classList.add('translate-x-0');
+        } else {
+          notesDrawer.classList.remove('translate-x-0');
+          notesDrawer.classList.add('translate-x-full');
+        }
+      } else {
+        notesDrawer.classList.toggle('translate-x-full');
+        notesDrawer.classList.toggle('translate-x-0');
+      }
+    }
+
+    // Toggle Grid
+    function toggleGridModal(force) {
+      if (force !== undefined) {
+        gridModal.classList.toggle('hidden', !force);
+        gridModal.classList.toggle('flex', force);
+      } else {
+        gridModal.classList.toggle('hidden');
+        gridModal.classList.toggle('flex');
+      }
+    }
+
+    // Fullscreen Toggle
+    function toggleFullScreen() {
+      const icon = document.getElementById('fullscreen-icon');
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().then(() => {
+          icon.textContent = 'fullscreen_exit';
+        }).catch(err => {
+          console.warn('Fullscreen error:', err);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().then(() => {
+            icon.textContent = 'fullscreen';
+          });
+        }
+      }
+    }
+
+    // Presentation Timer
+    let timerSeconds = 0;
+    let timerInterval = null;
+    let timerRunning = true;
+
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        if (timerRunning) {
+          timerSeconds++;
+          const mins = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
+          const secs = (timerSeconds % 60).toString().padStart(2, '0');
+          document.getElementById('timer-display').textContent = `${mins}:${secs}`;
+          document.getElementById('notes-timer').textContent = `${mins}:${secs}`;
+        }
+      }, 1000);
+    }
+
+    function toggleTimer() {
+      timerRunning = !timerRunning;
+      const icon = document.getElementById('timer-icon');
+      icon.textContent = timerRunning ? 'pause' : 'play_arrow';
+    }
+
+    // Copy Deck Link
+    function copyPitchLink() {
+      navigator.clipboard.writeText(window.location.href).then(() => {
+        const text = document.getElementById('copy-text');
+        const prev = text.textContent;
+        text.textContent = 'Tersalin ke Clipboard!';
+        setTimeout(() => { text.textContent = prev; }, 2000);
+      });
+    }
+
+    // Keyboard Shortcuts Navigation
+    window.addEventListener('keydown', (e) => {
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+      switch (e.key) {
+        case 'ArrowRight':
+        case 'ArrowDown':
+        case ' ':
+        case 'PageDown':
+          e.preventDefault();
+          nextSlide();
+          break;
+        case 'ArrowLeft':
+        case 'ArrowUp':
+        case 'PageUp':
+        case 'Backspace':
+          e.preventDefault();
+          prevSlide();
+          break;
+        case 'Home':
+          e.preventDefault();
+          goToSlide(0);
+          break;
+        case 'End':
+          e.preventDefault();
+          goToSlide(totalSlides - 1);
+          break;
+        case 'm':
+        case 'M':
+          e.preventDefault();
+          toggleTheme();
+          break;
+        case 'n':
+        case 'N':
+          e.preventDefault();
+          toggleNotes();
+          break;
+        case 'g':
+        case 'G':
+          e.preventDefault();
+          toggleGridModal();
+          break;
+        case 'f':
+        case 'F':
+          e.preventDefault();
+          toggleFullScreen();
+          break;
+        case 'p':
+        case 'P':
+          e.preventDefault();
+          window.print();
+          break;
+        case 'Escape':
+          toggleGridModal(false);
+          toggleNotes(false);
+          break;
+      }
+    });
+
+    // Touch Swipe Support for Mobile / Tablets
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    window.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, false);
+
+    window.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    }, false);
+
+    function handleSwipe() {
+      const threshold = 50;
+      if (touchEndX < touchStartX - threshold) {
+        nextSlide();
+      }
+      if (touchEndX > touchStartX + threshold) {
+        prevSlide();
+      }
+    }
+
+    // Initialize Presentation
+    initTheme();
+    initDots();
+    initGrid();
+    goToSlide(0);
+    startTimer();
+  </script>
+</body>
+</html>

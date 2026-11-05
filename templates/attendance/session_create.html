@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if request.user.is_admin_role %}Buka Sesi Latihan Baru{% else %}Ajukan Pembukaan Sesi Latihan{% endif %} - SilatTrack{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto space-y-6">
+
+  <div>
+    <a href="{% url 'attendance:session_list' %}" class="inline-flex items-center gap-1 text-xs font-bold text-on-surface-variant hover:text-primary mb-2">
+      <span class="material-symbols-outlined text-sm">arrow_back</span>
+      <span>Kembali ke Daftar Sesi</span>
+    </a>
+    <h2 class="text-2xl font-black text-on-surface">
+      {% if request.user.is_admin_role %}
+      Buka Sesi Latihan Baru
+      {% else %}
+      Ajukan Pembukaan Sesi Latihan
+      {% endif %}
+    </h2>
+    <p class="text-xs text-on-surface-variant">
+      {% if request.user.is_admin_role %}
+      Inisialisasi sesi latihan hari ini dan langsung aktifkan scanner dynamic QR code untuk presensi pesilat.
+      {% else %}
+      Ajukan pembukaan sesi latihan hari ini. Sesi membutuhkan persetujuan Admin / Pembina eskul sebelum QR presensi diaktifkan.
+      {% endif %}
+    </p>
+  </div>
+
+  <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 sm:p-8 shadow-elevation-1">
+    <form method="POST" class="space-y-4">
+      {% csrf_token %}
+
+      <!-- Tipe Sesi & Jadwal Rutin (Acuan) -->
+      <div x-data="{
+        schedules: {
+          {% for j in jadwal_list %}
+          '{{ j.id }}': {
+            lokasi: '{{ j.nama_lokasi|escapejs }}',
+            jamMulai: '{{ j.jam_mulai|time:"H:i" }}',
+            jamSelesai: '{{ j.jam_selesai|time:"H:i" }}'
+          },
+          {% endfor %}
+        },
+        selectedJadwal: '',
+        onJadwalChange(jadwalId) {
+          if (jadwalId && this.schedules[jadwalId]) {
+            const data = this.schedules[jadwalId];
+            document.getElementById('id_lokasi').value = data.lokasi;
+            document.getElementById('id_jam_mulai').value = data.jamMulai;
+            document.getElementById('id_jam_selesai').value = data.jamSelesai;
+          }
+        },
+        setLocation(val) {
+          document.getElementById('id_lokasi').value = val;
+        }
+      }" class="space-y-4">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Tipe Sesi -->
+          <div>
+            <label for="id_tipe" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 ml-1">
+              Tipe Sesi Latihan <span class="text-error">*</span>
+            </label>
+            <select name="tipe_sesi" id="id_tipe" required class="w-full px-4 py-2.5 bg-surface-container-lowest border border-outline/40 focus:border-primary rounded-2xl text-xs font-semibold text-on-surface outline-none">
+              {% for val, label in tipe_choices %}
+              <option value="{{ val }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Jadwal Rutin Acuan (Opsional) -->
+          <div>
+            <label for="id_jadwal" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 ml-1">
+              Dasar Jadwal Rutin (Preset)
+            </label>
+            <select name="jadwal_id" id="id_jadwal" x-model="selectedJadwal" @change="onJadwalChange($event.target.value)" class="w-full px-4 py-2.5 bg-surface-container-lowest border border-outline/40 focus:border-primary rounded-2xl text-xs font-semibold text-on-surface outline-none">
+              <option value="">-- Latihan Fleksibel / Non-Rutin --</option>
+              {% for j in jadwal_list %}
+              <option value="{{ j.id }}">{{ j.nama_jadwal }} ({{ j.get_hari_indeks_display }}, {{ j.jam_mulai|time:"H:i" }} WIB)</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Lokasi Latihan Fleksibel -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5 ml-1">
+            <label for="id_lokasi" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+              Tempat / Lokasi Latihan <span class="text-error">*</span>
+            </label>
+            <span class="text-[11px] text-outline">Bisa pilih sekolah atau ketik bebas</span>
+          </div>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-outline">
+              <span class="material-symbols-outlined text-lg">location_on</span>
+            </span>
+            <input 
+              type="text" 
+              name="nama_lokasi" 
+              id="id_lokasi" 
+              list="lokasi_session_suggestions"
+              required
+              placeholder="Contoh: Lapangan Utama SMKN 1 Rongga atau Dojo SMAN 1 Rongga"
+              class="w-full pl-10 pr-4 py-2.5 bg-surface-container-lowest border border-outline/40 focus:border-primary rounded-2xl text-xs font-medium text-on-surface outline-none"
+            >
+            <datalist id="lokasi_session_suggestions">
+              {% for s in sekolah_list %}
+              <option value="Lapangan Utama {{ s.nama_sekolah }}"></option>
+              <option value="Dojo / Aula {{ s.nama_sekolah }}"></option>
+              <option value="{{ s.nama_sekolah }}"></option>
+              {% endfor %}
+              <option value="Dojo SilatTrack Pusat"></option>
+              <option value="Gedung Olahraga Serbaguna"></option>
+            </datalist>
+          </div>
+          {% if sekolah_list %}
+          <div class="mt-2 flex flex-wrap items-center gap-1.5 ml-1">
+            <span class="text-[10px] text-outline font-semibold">Pilih Cepat:</span>
+            {% for s in sekolah_list %}
+            <button type="button" @click="setLocation('Lapangan {{ s.nama_sekolah|escapejs }}')" class="text-[10px] px-2.5 py-1 rounded-full bg-surface-container-high hover:bg-primary-container hover:text-on-primary-container text-on-surface-variant font-medium transition-colors border border-outline-variant/30">
+              {{ s.nama_sekolah }}
+            </button>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Tanggal & Waktu Fleksibel -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label for="id_tanggal" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 ml-1">
+              Tanggal Latihan <span class="text-error">*</span>
+            </label>
+            <input 
+              type="date" 
+              name="tanggal" 
+              id="id_tanggal" 
+              required
+              value="{{ default_date }}"
+              class="w-full px-4 py-2 bg-surface-container-lowest border border-outline/40 focus:border-primary rounded-2xl text-xs font-semibold text-on-surface outline-none"
+            >
+          </div>
+
+          <div>
+            <label for="id_jam_mulai" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 ml-1">
+              Jam Mulai
+            </label>
+            <input 
+              type="time" 
+              name="jam_mulai" 
+              id="id_jam_mulai" 
+              value="{{ default_time }}"
+              class="w-full px-4 py-2 bg-surface-container-lowest border border-outline/40 focus:border-primary rounded-2xl text-xs font-semibold text-on-surface outline-none"
+            >
+          </div>
+
+          <div>
+            <label for="id_jam_selesai" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 ml-1">
+              Jam Selesai
+            </label>
+            <input 
+              type="time" 
+              name="jam_selesai" 
+              id="id_jam_selesai" 
+              class="w-full px-4 py-2 bg-surface-container-lowest border border-outline/40 focus:border-primary rounded-2xl text-xs font-semibold text-on-surface outline-none"
+            >
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Menu Materi Latihan -->
+      <div>
+        <label for="id_materi" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 ml-1">
+          Rencana Materi Latihan Hari Ini
+        </label>
+        <textarea 
+          name="materi_latihan" 
+          id="id_materi" 
+          rows="3" 
+          placeholder="Contoh: Pemantapan Kuda-kuda, Pasang 1-4, Pola Langkah Segitiga, dan Sambung Bebas."
+          class="w-full px-4 py-2.5 bg-surface-container-lowest border border-outline/40 focus:border-primary rounded-2xl text-xs font-medium text-on-surface outline-none placeholder:text-outline/70"
+        ></textarea>
+      </div>
+
+      <div class="pt-4 flex items-center justify-end gap-3">
+        <a href="{% url 'attendance:session_list' %}" class="px-5 py-2.5 rounded-full bg-surface-container-high text-xs font-bold text-on-surface hover:bg-surface-container-highest transition-all">
+          Batal
+        </a>
+        <button type="submit" class="px-6 py-2.5 rounded-full bg-primary hover:bg-primary-dark text-on-primary text-xs font-bold shadow-elevation-1 flex items-center gap-1.5 transition-all">
+          {% if request.user.is_admin_role %}
+          <span class="material-symbols-outlined text-base">play_arrow</span>
+          <span>Buka Sesi & QR</span>
+          {% else %}
+          <span class="material-symbols-outlined text-base">send</span>
+          <span>Kirim Pengajuan Sesi ke Admin</span>
+          {% endif %}
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+{% endblock %}

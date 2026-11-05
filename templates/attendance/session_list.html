@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+
+{% block title %}Daftar Sesi Latihan - SilatTrack{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data>
+
+  <!-- Page Header & Action -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h2 class="text-2xl sm:text-3xl font-black text-on-surface">Daftar Sesi Latihan</h2>
+      <p class="text-xs sm:text-sm text-on-surface-variant">Arsip seluruh pertemuan, evaluasi kehadiran, dan laporan latihan</p>
+    </div>
+
+    {% if request.user.is_admin_role or request.user.is_pelatih_role %}
+    <a href="{% url 'attendance:session_create' %}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary hover:bg-primary-dark text-on-primary text-xs font-bold shadow-elevation-1 transition-all self-start sm:self-auto">
+      <span class="material-symbols-outlined text-base">add</span>
+      {% if request.user.is_admin_role %}
+      <span>Buka Sesi Baru</span>
+      {% else %}
+      <span>Ajukan Sesi Latihan</span>
+      {% endif %}
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Pending Approvals Banner (Khusus Admin / Pelatih Pengusul) -->
+  {% if pending_sessions %}
+  <div class="bg-amber-50 border border-amber-200/80 rounded-3xl p-5 shadow-elevation-1 space-y-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center flex-shrink-0">
+        <span class="material-symbols-outlined text-xl">pending_actions</span>
+      </div>
+      <div>
+        <h3 class="font-extrabold text-sm text-amber-950">
+          {% if request.user.is_admin_role %}
+          Pengajuan Sesi Latihan Menunggu Persetujuan Admin ({{ total_pending }})
+          {% else %}
+          Sesi Latihan Anda Menunggu Persetujuan Admin
+          {% endif %}
+        </h3>
+        <p class="text-xs text-amber-800">
+          {% if request.user.is_admin_role %}
+          Pelatih telah mengajukan pembukaan sesi latihan. Sesi dan QR Presensi baru akan aktif setelah Anda setujui.
+          {% else %}
+          Sesi latihan yang Anda buat sedang dalam antrean verifikasi Admin / Pembina eskul.
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      {% for p in pending_sessions %}
+      <div class="bg-white border border-amber-200 rounded-2xl p-4 flex flex-col justify-between shadow-xs">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
+              {{ p.get_tipe_sesi_display }}
+            </span>
+            <span class="text-[11px] text-outline font-semibold">
+              {{ p.tanggal|date:"d M Y" }}
+            </span>
+          </div>
+
+          <p class="text-xs text-outline line-clamp-2 mt-1">
+            {{ p.materi_latihan|default:"Materi latihan belum diisi." }}
+          </p>
+
+          <p class="text-[11px] text-amber-900 font-semibold mt-2">
+            Pelatih Pengampu: {{ p.pelatih.get_full_name|default:p.pelatih.username }}
+          </p>
+        </div>
+
+        <div class="pt-3 border-t border-amber-100 mt-3 flex items-center justify-between gap-2">
+          <a href="{% url 'attendance:session_detail' p.id %}" class="text-xs font-bold text-primary hover:underline">
+            Lihat Detail
+          </a>
+
+          {% if request.user.is_admin_role %}
+          <div class="flex items-center gap-1.5">
+            <!-- Form Tolak -->
+            <form id="form-reject-session-{{ p.id }}" method="POST" action="{% url 'attendance:session_approve' p.id %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="tolak">
+              <button 
+                type="button"
+                onclick="openConfirmModal({
+                  title: 'Tolak Pengajuan Sesi?',
+                  message: 'Apakah Anda yakin ingin menolak pengajuan sesi latihan {{ p.get_tipe_sesi_display|escapejs }} dari pelatih {{ p.pelatih.get_full_name|escapejs }}?',
+                  confirmText: 'Ya, Tolak',
+                  confirmColor: 'bg-red-700 hover:bg-red-800 text-white',
+                  icon: 'cancel',
+                  iconColor: 'bg-red-100 text-red-700',
+                  formId: 'form-reject-session-{{ p.id }}'
+                })"
+                class="px-2.5 py-1 rounded-full bg-surface-container hover:bg-red-100 text-outline hover:text-red-700 text-xs font-bold transition-all cursor-pointer"
+              >
+                Tolak
+              </button>
+            </form>
+
+            <!-- Form Setujui -->
+            <form id="form-approve-session-{{ p.id }}" method="POST" action="{% url 'attendance:session_approve' p.id %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="setuju">
+              <button 
+                type="button"
+                onclick="openConfirmModal({
+                  title: 'Setujui & Buka Sesi Latihan?',
+                  message: 'Apakah Anda menyetujui sesi latihan {{ p.get_tipe_sesi_display|escapejs }} dari pelatih {{ p.pelatih.get_full_name|escapejs }}? Sesi akan langsung dibuka dan QR Presensi menjadi aktif untuk siswa.',
+                  confirmText: 'Setujui & Buka Sesi',
+                  confirmColor: 'bg-emerald-700 hover:bg-emerald-800 text-white',
+                  icon: 'check_circle',
+                  iconColor: 'bg-emerald-100 text-emerald-700',
+                  formId: 'form-approve-session-{{ p.id }}'
+                })"
+                class="px-3 py-1 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+              >
+                Setujui & Buka
+              </button>
+            </form>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Filters Bar -->
+  <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-4 shadow-elevation-1">
+    <form method="GET" class="flex flex-wrap items-center gap-3">
+      
+      <!-- Tipe Filter -->
+      <div class="flex items-center gap-2">
+        <label class="text-xs font-bold text-on-surface-variant uppercase">Tipe:</label>
+        <select name="tipe" onchange="this.form.submit()" class="px-3 py-1.5 rounded-xl bg-surface-container-lowest border border-outline/30 text-xs font-semibold text-on-surface outline-none">
+          <option value="">Semua Tipe</option>
+          {% for val, label in tipe_choices %}
+          <option value="{{ val }}" {% if tipe_filter == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Status Filter -->
+      <div class="flex items-center gap-2">
+        <label class="text-xs font-bold text-on-surface-variant uppercase">Status:</label>
+        <select name="status" onchange="this.form.submit()" class="px-3 py-1.5 rounded-xl bg-surface-container-lowest border border-outline/30 text-xs font-semibold text-on-surface outline-none">
+          <option value="">Semua Status</option>
+          {% for val, label in status_choices %}
+          <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      {% if tipe_filter or status_filter %}
+      <a href="{% url 'attendance:session_list' %}" class="text-xs font-bold text-primary hover:underline ml-auto">Reset Filter</a>
+      {% endif %}
+
+    </form>
+  </div>
+
+  <!-- Sessions List Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for sesi in sessions %}
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-5 shadow-elevation-1 hover:shadow-elevation-2 transition-all flex flex-col justify-between">
+      
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-1.5">
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider {% if sesi.status == 'DIBUKA' %}bg-emerald-100 text-emerald-800 border border-emerald-300{% elif sesi.status == 'SELESAI' %}bg-slate-100 text-slate-700{% else %}bg-amber-100 text-amber-800{% endif %}">
+              {{ sesi.get_status_display }}
+            </span>
+
+            {% if sesi.status_persetujuan == 'MENUNGGU' %}
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 inline-flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+              Menunggu Admin
+            </span>
+            {% elif sesi.status_persetujuan == 'DITOLAK' %}
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800 border border-red-300">
+              Ditolak Admin
+            </span>
+            {% endif %}
+          </div>
+
+          <span class="text-xs text-outline font-semibold">
+            {{ sesi.tanggal|date:"d M Y" }}
+          </span>
+        </div>
+
+        <h3 class="text-base font-extrabold text-on-surface leading-tight">
+          {{ sesi.get_tipe_sesi_display }}
+        </h3>
+        
+        <p class="text-xs text-on-surface-variant mt-2 line-clamp-2">
+          {{ sesi.materi_latihan|default:"Materi latihan belum diisi." }}
+        </p>
+
+        <p class="text-[11px] text-outline font-medium mt-2">
+          Pelatih: <strong class="text-on-surface">{{ sesi.pelatih.get_full_name|default:sesi.pelatih.username }}</strong>
+        </p>
+      </div>
+
+      <div class="pt-4 border-t border-outline-variant/30 mt-4 flex items-center justify-between">
+        <div class="text-xs">
+          <span class="text-outline">Hadir:</span>
+          <strong class="text-primary font-bold ml-1">{{ sesi.total_hadir }} Pesilat</strong>
+        </div>
+
+        <div class="flex items-center gap-2">
+          {% if request.user.is_admin_role or request.user.is_pelatih_role %}
+          <!-- Tombol Hapus Sesi -->
+          <form id="form-delete-sesi-{{ sesi.id }}" method="POST" action="{% url 'attendance:session_delete' sesi.id %}">
+            {% csrf_token %}
+            <button 
+              type="button"
+              onclick="openConfirmModal({
+                title: 'Hapus Sesi Latihan?',
+                message: 'Apakah Anda yakin ingin menghapus sesi latihan {{ sesi.get_tipe_sesi_display|escapejs }} ({{ sesi.tanggal|date:"d M Y" }})? Seluruh riwayat presensi yang terkait akan dihapus permanen.',
+                confirmText: 'Ya, Hapus Sesi',
+                confirmColor: 'bg-red-700 hover:bg-red-800 text-white',
+                icon: 'delete_forever',
+                iconColor: 'bg-red-100 text-red-700',
+                formId: 'form-delete-sesi-{{ sesi.id }}'
+              })"
+              class="w-8 h-8 rounded-full bg-surface-container hover:bg-red-100 text-outline hover:text-red-700 flex items-center justify-center transition-all cursor-pointer"
+              title="Hapus Sesi Latihan"
+            >
+              <span class="material-symbols-outlined text-base">delete</span>
+            </button>
+          </form>
+          {% endif %}
+
+          <a href="{% url 'attendance:session_detail' sesi.id %}" class="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-full bg-primary-container text-on-primary-container hover:bg-primary hover:text-on-primary text-xs font-bold transition-all">
+            <span>Cockpit</span>
+            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          </a>
+        </div>
+      </div>
+
+    </div>
+    {% empty %}
+    <div class="col-span-full py-12 text-center text-outline">
+      Tidak ada sesi latihan yang cocok dengan filter.
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

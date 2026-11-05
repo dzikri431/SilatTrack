@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+
+{% block title %}Portal Transparansi Kehadiran Siswa - SilatTrack{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6 py-4">
+
+  <!-- Header Section -->
+  <div class="text-center space-y-2">
+    <div class="inline-flex items-center justify-center w-14 h-14 rounded-3xl bg-primary-container text-on-primary-container shadow-elevation-1 mb-1">
+      <span class="material-symbols-outlined text-3xl">family_restroom</span>
+    </div>
+    <h1 class="text-2xl sm:text-3xl font-black text-on-surface tracking-tight">Portal Transparansi Wali Murid</h1>
+    <p class="text-xs sm:text-sm text-on-surface-variant max-w-md mx-auto">
+      Pantau keaktifan, rekapitulasi presensi, dan kelayakan Ujian Kenaikan Tingkat (UKT) putra/putri Anda secara transparan dan real-time.
+    </p>
+  </div>
+
+  <!-- Search Card -->
+  <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1">
+    <form method="GET" action="{% url 'members:public_parent_portal' %}" class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 ml-1">
+            Nomor Induk Siswa Nasional (NISN) <span class="text-primary">*</span>
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-outline">
+              <span class="material-symbols-outlined text-lg">badge</span>
+            </span>
+            <input 
+              type="text" 
+              name="nisn" 
+              value="{{ query_nisn }}" 
+              placeholder="Contoh: 0081234567" 
+              required
+              class="w-full pl-10 pr-4 py-2.5 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-semibold text-on-surface outline-none"
+            >
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 ml-1">
+            Tanggal Lahir Siswa (Opsional)
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-outline">
+              <span class="material-symbols-outlined text-lg">calendar_month</span>
+            </span>
+            <input 
+              type="date" 
+              name="tanggal_lahir" 
+              value="{{ query_tgl }}" 
+              class="w-full pl-10 pr-4 py-2.5 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-semibold text-on-surface outline-none"
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-2 flex justify-end">
+        <button 
+          type="submit" 
+          class="w-full sm:w-auto px-6 py-3 rounded-full bg-primary hover:bg-primary-dark text-on-primary font-bold text-xs shadow-elevation-1 hover:shadow-elevation-2 flex items-center justify-center gap-2 transition-all cursor-pointer"
+        >
+          <span class="material-symbols-outlined text-base">search</span>
+          <span>Cari Data Kehadiran Pesilat</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Search Results -->
+  {% if searched %}
+    {% if anggota %}
+    <div class="space-y-5 animate-fade-in">
+      
+      <!-- Profile Header Card -->
+      <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-2 relative overflow-hidden">
+        <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+          
+          <div class="relative flex-shrink-0">
+            {% if anggota.user.avatar %}
+            <img src="{{ anggota.user.avatar.url }}" alt="{{ anggota.user.get_full_name }}" class="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl object-cover border-2 border-primary/30 shadow-md">
+            {% else %}
+            <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-primary text-on-primary flex items-center justify-center text-3xl font-black shadow-md">
+              {{ anggota.user.first_name|first|default:anggota.user.username|first }}
+            </div>
+            {% endif %}
+            
+            {% if anggota.has_face_registered %}
+            <div class="absolute -bottom-1 -right-1 bg-emerald-600 text-white p-1 rounded-full shadow-xs" title="Biometrik Wajah Terdaftar">
+              <span class="material-symbols-outlined text-sm block">verified_user</span>
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="flex-1 text-center sm:text-left space-y-1.5">
+            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+              <h2 class="text-xl sm:text-2xl font-black text-on-surface">{{ anggota.user.get_full_name|default:anggota.user.username }}</h2>
+              
+              {% if anggota.sabuk_saat_ini %}
+              <span class="px-3 py-0.5 rounded-full text-[11px] font-bold border" style="background-color: {{ anggota.sabuk_saat_ini.warna_hex }}20; border-color: {{ anggota.sabuk_saat_ini.warna_hex }}; color: {{ anggota.sabuk_saat_ini.warna_hex }};">
+                Sabuk {{ anggota.sabuk_saat_ini.nama_sabuk }}
+              </span>
+              {% endif %}
+            </div>
+
+            <p class="text-xs text-on-surface-variant font-medium">
+              NISN: <strong class="font-mono text-on-surface">{{ anggota.nisn }}</strong> • Kelas: <strong>{{ anggota.kelas_sekolah }}</strong>
+            </p>
+
+            <!-- Badges Bar -->
+            <div class="pt-2 flex flex-wrap items-center justify-center sm:justify-start gap-2">
+              <!-- Streak Badge -->
+              {% if stats.streak > 0 %}
+              <span class="px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-xs font-black flex items-center gap-1 shadow-xs">
+                <span>🔥</span>
+                <span>Streak {{ stats.streak }} Sesi Berturut-turut</span>
+              </span>
+              {% endif %}
+
+              <!-- UKT Eligibility Badge -->
+              {% if stats.is_eligible_ukt %}
+              <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-black flex items-center gap-1 shadow-xs">
+                <span class="material-symbols-outlined text-sm text-emerald-700">verified</span>
+                <span>Siap Ujian Sabuk (UKT)</span>
+              </span>
+              {% else %}
+              <span class="px-3 py-1 rounded-full bg-rose-100 text-rose-900 border border-rose-300 text-xs font-bold flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm text-rose-700">pending</span>
+                <span>Belum Memenuhi Syarat UKT (Min. {{ stats.min_ukt }}%)</span>
+              </span>
+              {% endif %}
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Key Attendance Metrics -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 text-center shadow-xs">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-outline block">Persentase Kehadiran</span>
+          <span class="text-2xl font-black text-primary block mt-1">{{ stats.persentase }}%</span>
+          <span class="text-[10px] text-outline block mt-0.5">Target UKT: {{ stats.min_ukt }}%</span>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 text-center shadow-xs">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-outline block">Hadir</span>
+          <span class="text-2xl font-black text-emerald-700 block mt-1">{{ stats.hadir }}</span>
+          <span class="text-[10px] text-emerald-800 font-semibold block mt-0.5">Sesi Latihan</span>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 text-center shadow-xs">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-outline block">Izin / Sakit</span>
+          <span class="text-2xl font-black text-blue-700 block mt-1">{{ stats.izin|add:stats.sakit }}</span>
+          <span class="text-[10px] text-blue-800 font-semibold block mt-0.5">Dengan Keterangan</span>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 text-center shadow-xs">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-outline block">Alpa / Absen</span>
+          <span class="text-2xl font-black text-red-700 block mt-1">{{ stats.alpa }}</span>
+          <span class="text-[10px] text-red-800 font-semibold block mt-0.5">Tanpa Keterangan</span>
+        </div>
+      </div>
+
+      <!-- Attendance History Table -->
+      <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-5 shadow-elevation-1 space-y-3">
+        <div class="flex items-center justify-between pb-2 border-b border-outline-variant/30">
+          <h3 class="font-extrabold text-sm text-on-surface flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-primary text-base">history</span>
+            <span>10 Riwayat Presensi Latihan Terakhir</span>
+          </h3>
+          <span class="text-[11px] text-outline">Total Sesi Diikuti: <strong>{{ stats.hadir }}</strong></span>
+        </div>
+
+        {% if presensi_list %}
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="text-outline border-b border-outline-variant/30 text-[10px] uppercase tracking-wider font-extrabold">
+                <th class="py-2.5 px-3">Tanggal & Sesi</th>
+                <th class="py-2.5 px-3">Status</th>
+                <th class="py-2.5 px-3">Metode Presensi</th>
+                <th class="py-2.5 px-3">Jam Masuk</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant/20">
+              {% for p in presensi_list %}
+              <tr class="hover:bg-surface-container transition-colors">
+                <td class="py-3 px-3">
+                  <strong class="text-on-surface block">{{ p.sesi.tanggal|date:"d M Y" }}</strong>
+                  <span class="text-[11px] text-outline">{{ p.sesi.get_tipe_sesi_display }}</span>
+                </td>
+                <td class="py-3 px-3">
+                  {% if p.status == 'HADIR' %}
+                  <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 font-extrabold text-[10px]">
+                    HADIR
+                  </span>
+                  {% elif p.status == 'IZIN' %}
+                  <span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-900 border border-blue-300 font-bold text-[10px]">
+                    IZIN
+                  </span>
+                  {% elif p.status == 'SAKIT' %}
+                  <span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[10px]">
+                    SAKIT
+                  </span>
+                  {% else %}
+                  <span class="px-2.5 py-1 rounded-full bg-red-100 text-red-900 border border-red-300 font-bold text-[10px]">
+                    ALPA
+                  </span>
+                  {% endif %}
+                </td>
+                <td class="py-3 px-3">
+                  <span class="text-[11px] text-on-surface-variant flex items-center gap-1">
+                    {% if p.metode_presensi == 'FACE_SCAN' %}
+                    <span class="material-symbols-outlined text-sm text-primary">face</span>
+                    {% elif p.metode_presensi == 'QR_DYNAMIC' %}
+                    <span class="material-symbols-outlined text-sm text-outline">qr_code_scanner</span>
+                    {% else %}
+                    <span class="material-symbols-outlined text-sm text-outline">edit_note</span>
+                    {% endif %}
+                    <span>{{ p.get_metode_presensi_display }}</span>
+                  </span>
+                </td>
+                <td class="py-3 px-3 font-mono text-[11px] text-on-surface-variant">
+                  {{ p.waktu_presensi|time:"H:i" }} WIB
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-xs text-outline text-center py-4 italic">Belum ada catatan riwayat kehadiran untuk siswa ini.</p>
+        {% endif %}
+      </div>
+
+    </div>
+    {% else %}
+    <!-- Not Found State -->
+    <div class="bg-surface-container-low border border-red-200 rounded-3xl p-8 text-center space-y-3">
+      <div class="w-14 h-14 rounded-2xl bg-red-100 text-red-800 flex items-center justify-center mx-auto">
+        <span class="material-symbols-outlined text-2xl">person_off</span>
+      </div>
+      <h3 class="text-base font-bold text-on-surface">Data Pesilat Tidak Ditemukan</h3>
+      <p class="text-xs text-on-surface-variant max-w-sm mx-auto">
+        Tidak ditemukan anggota silat dengan NISN <strong>"{{ query_nisn }}"</strong>. Pastikan nomor NISN yang dimasukkan sudah terdaftar di administrasi ekstrakurikuler.
+      </p>
+    </div>
+    {% endif %}
+  {% endif %}
+
+</div>
+{% endblock %}

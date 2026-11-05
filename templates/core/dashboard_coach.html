@@ -1,0 +1,559 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard Pelatih - SilatTrack{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header & Greeting -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-container/60 text-primary text-xs font-bold mb-1">
+        <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+        {{ today|date:"l, d F Y" }}
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight">
+        Salam Pendekar, {{ request.user.get_full_name|default:request.user.username }}!
+      </h2>
+      <p class="text-sm text-on-surface-variant">
+        Kelola absensi dan pantau keaktifan pesilat eskul pencak silat secara real-time.
+      </p>
+    </div>
+
+    <!-- Quick Action Button -->
+    <div class="flex flex-wrap items-center gap-2">
+      {% if request.user.is_admin_role %}
+      <a href="{% url 'accounts:admin_create_user' %}" class="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-bold shadow-elevation-1 hover:shadow-elevation-2 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-lg">person_add</span>
+        <span>Buat Akun Pelatih / Anggota</span>
+      </a>
+      {% endif %}
+      <a href="{% url 'attendance:report_index' %}" class="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-surface-container-highest hover:bg-primary-container text-on-surface text-sm font-bold border border-outline-variant/40 shadow-elevation-1 hover:scale-105 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-lg">print</span>
+        <span>Cetak Laporan</span>
+      </a>
+      <a href="{% url 'attendance:session_create' %}" class="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-primary hover:bg-primary-dark text-on-primary text-sm font-bold shadow-elevation-1 hover:shadow-elevation-2 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-lg">add_circle</span>
+        <span>Buka Sesi Baru</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Pending Approvals Alert Banner -->
+  {% if pending_total_count > 0 %}
+  <div class="relative overflow-hidden bg-amber-500/10 border-2 border-amber-500/30 rounded-3xl p-5 sm:p-6 shadow-elevation-1">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div class="flex items-start gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+          <span class="material-symbols-outlined text-2xl">pending_actions</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white">
+              {{ pending_total_count }} Permohonan
+            </span>
+            <h3 class="text-base sm:text-lg font-black text-on-surface">
+              {% if request.user.is_admin_role %}
+              Persetujuan Diperlukan
+              {% else %}
+              Permohonan Menunggu Persetujuan Admin
+              {% endif %}
+            </h3>
+          </div>
+          <p class="text-xs sm:text-sm text-on-surface-variant mt-1">
+            {% if request.user.is_admin_role %}
+            Terdapat permohonan sesi latihan atau jadwal latihan baru dari pelatih yang membutuhkan persetujuan Admin agar dapat aktif/dibuka.
+            {% else %}
+            Sesi latihan atau jadwal baru yang Anda ajukan sedang menunggu verifikasi dan persetujuan dari Admin sebelum dapat dibuka presensinya.
+            {% endif %}
+          </p>
+          <div class="flex flex-wrap gap-2 mt-3">
+            {% if pending_sessions %}
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
+              <span class="material-symbols-outlined text-xs">sports_kabaddi</span>
+              {{ pending_sessions.count }} Sesi Latihan
+            </span>
+            {% endif %}
+            {% if pending_schedules %}
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
+              <span class="material-symbols-outlined text-xs">calendar_month</span>
+              {{ pending_schedules.count }} Jadwal Latihan
+            </span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto shrink-0 justify-end">
+        {% if pending_sessions %}
+        <a href="{% url 'attendance:session_list' %}" class="px-4 py-2 rounded-full bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-base">fact_check</span>
+          <span>Periksa Sesi</span>
+        </a>
+        {% endif %}
+        {% if pending_schedules %}
+        <a href="{% url 'schedule:schedule_list' %}" class="px-4 py-2 rounded-full bg-surface-container-highest hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold shadow-sm transition-all flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-base">event_note</span>
+          <span>Periksa Jadwal</span>
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Active Session Live Alert Banner (M3 Elevated Hero) -->
+  {% if active_session %}
+  <div class="relative overflow-hidden bg-gradient-to-r from-primary to-primary-dark text-on-primary rounded-3xl p-6 sm:p-8 shadow-elevation-3">
+    <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      <div class="space-y-2">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold tracking-wide uppercase">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          Sesi Latihan Aktif
+        </div>
+        <h3 class="text-xl sm:text-2xl font-black">
+          {{ active_session.get_tipe_sesi_display }}
+        </h3>
+        <p class="text-sm text-primary-container max-w-xl line-clamp-2">
+          {{ active_session.materi_latihan|default:"Materi latihan belum diisi." }}
+        </p>
+        <div class="flex flex-wrap items-center gap-4 text-xs text-white/90 pt-1">
+          <span class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">schedule</span>
+            Dibuka: {{ active_session.jam_buka|time:"H:i" }} WIB
+          </span>
+          <span class="flex items-center gap-1 font-bold text-amber-300">
+            <span class="material-symbols-outlined text-sm">groups</span>
+            {{ active_session.total_hadir }} Pesilat Telah Hadir
+          </span>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <a href="{% url 'attendance:session_detail' active_session.id %}" class="px-6 py-3.5 rounded-full bg-white text-primary hover:bg-primary-container font-extrabold text-sm shadow-md hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-xl">qr_code_2</span>
+          <span>Buka Cockpit Presensi & QR</span>
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Metric Statistics Cards (M3 Surface Containers) -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    
+    <!-- Total Pesilat -->
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-5 shadow-elevation-1 hover:shadow-elevation-2 transition-shadow">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Pesilat Aktif</span>
+        <div class="w-10 h-10 rounded-2xl bg-secondary-container text-on-secondary-container flex items-center justify-center">
+          <span class="material-symbols-outlined text-xl">sports_martial_arts</span>
+        </div>
+      </div>
+      <div class="text-3xl font-extrabold text-on-surface">{{ total_pesilat }}</div>
+      <p class="text-xs text-on-surface-variant mt-1">Siswa terdaftar dalam pembinaan</p>
+    </div>
+
+    <!-- Total Sesi Latihan -->
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-5 shadow-elevation-1 hover:shadow-elevation-2 transition-shadow">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Total Sesi Latihan</span>
+        <div class="w-10 h-10 rounded-2xl bg-tertiary-container text-on-tertiary-container flex items-center justify-center">
+          <span class="material-symbols-outlined text-xl">event_available</span>
+        </div>
+      </div>
+      <div class="text-3xl font-extrabold text-on-surface">{{ total_sesi }}</div>
+      <p class="text-xs text-on-surface-variant mt-1">Sesi pertemuan terlaksana</p>
+    </div>
+
+    <!-- Tingkat Kehadiran -->
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-5 shadow-elevation-1 hover:shadow-elevation-2 transition-shadow">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Tingkat Kehadiran</span>
+        <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
+          <span class="material-symbols-outlined text-xl">analytics</span>
+        </div>
+      </div>
+      <div class="text-3xl font-extrabold text-on-surface">{{ presence_rate }}%</div>
+      <p class="text-xs text-on-surface-variant mt-1">Rasio kehadiran eskul keseluruhan</p>
+    </div>
+
+  </div>
+
+  <!-- Grafik Analitik Kehadiran Eskul -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- Donut Chart: Komposisi Presensi Eskul -->
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+              <span class="material-symbols-outlined text-lg">pie_chart</span>
+            </span>
+            <div>
+              <h3 class="text-base font-extrabold text-on-surface">Distribusi Status Presensi</h3>
+              <p class="text-xs text-on-surface-variant">Akumulasi seluruh catatan presensi pesilat</p>
+            </div>
+          </div>
+          <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface">
+            Total {{ total_sesi }} Sesi
+          </span>
+        </div>
+
+        <div class="relative flex items-center justify-center my-4 h-52">
+          <canvas id="coachDonutChart"></canvas>
+          <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <span class="text-2xl font-black text-primary">{{ presence_rate }}%</span>
+            <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Hadir</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Breakdown Badges -->
+      <div class="grid grid-cols-4 gap-2 pt-3 border-t border-outline-variant/30 text-center">
+        <div class="p-2 rounded-2xl bg-emerald-50 border border-emerald-200">
+          <div class="text-[11px] font-bold text-emerald-800">Hadir</div>
+          <div class="text-lg font-black text-emerald-700">{{ hadir_count }}</div>
+        </div>
+        <div class="p-2 rounded-2xl bg-blue-50 border border-blue-200">
+          <div class="text-[11px] font-bold text-blue-800">Izin</div>
+          <div class="text-lg font-black text-blue-700">{{ izin_count }}</div>
+        </div>
+        <div class="p-2 rounded-2xl bg-amber-50 border border-amber-200">
+          <div class="text-[11px] font-bold text-amber-800">Sakit</div>
+          <div class="text-lg font-black text-amber-700">{{ sakit_count }}</div>
+        </div>
+        <div class="p-2 rounded-2xl bg-red-50 border border-red-200">
+          <div class="text-[11px] font-bold text-red-800">Alpa</div>
+          <div class="text-lg font-black text-red-700">{{ alpa_count }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bar/Line Chart: Tren Kehadiran per Sesi -->
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="w-8 h-8 rounded-xl bg-secondary/15 text-secondary flex items-center justify-center">
+              <span class="material-symbols-outlined text-lg">bar_chart</span>
+            </span>
+            <div>
+              <h3 class="text-base font-extrabold text-on-surface">Tren Kehadiran Sesi Latihan</h3>
+              <p class="text-xs text-on-surface-variant">Jumlah pesilat hadir per sesi latihan terakhir</p>
+            </div>
+          </div>
+          <span class="text-xs font-bold text-outline">7 Sesi Terakhir</span>
+        </div>
+
+        <div class="h-56 mt-3">
+          <canvas id="coachTrendChart"></canvas>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-on-surface-variant text-center pt-2 border-t border-outline-variant/30">
+        Grafik menunjukkan perbandingan pesilat hadir dan pesilat izin/sakit tiap sesi latihan.
+      </p>
+    </div>
+
+  </div>
+
+  <!-- Tabel Pemantauan Kehadiran & Status UKT Pesilat (Monitoring Admin) -->
+  <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="w-8 h-8 rounded-xl bg-primary-container text-primary flex items-center justify-center">
+            <span class="material-symbols-outlined text-lg">fact_check</span>
+          </span>
+          <h3 class="text-lg font-extrabold text-on-surface">Pemantauan Kehadiran & Kualifikasi UKT Pesilat</h3>
+        </div>
+        <p class="text-xs text-on-surface-variant mt-0.5">Pantau persentase kehadiran setiap siswa dan kesiapannya mengikuti Ujian Kenaikan Sabuk</p>
+      </div>
+      <span class="text-xs font-bold px-3 py-1.5 rounded-full bg-surface-container-high text-on-surface self-start sm:self-center">
+        {{ member_monitoring|length }} Pesilat Aktif
+      </span>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead>
+          <tr class="border-b border-outline-variant/40 text-xs font-bold text-on-surface-variant uppercase">
+            <th class="py-3 px-3">Pesilat</th>
+            <th class="py-3 px-3">Tingkat Sabuk</th>
+            <th class="py-3 px-3 text-center">Kehadiran</th>
+            <th class="py-3 px-3">Persentase & Progres</th>
+            <th class="py-3 px-3 text-center">Status UKT</th>
+            <th class="py-3 px-3 text-right">Aksi</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-outline-variant/20">
+          {% for m in member_monitoring %}
+          <tr class="hover:bg-surface-container transition-colors">
+            <!-- Pesilat Info -->
+            <td class="py-3.5 px-3">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-2xl bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs shadow-xs">
+                  {{ m.anggota.user.first_name|first|default:m.anggota.user.username|first }}
+                </div>
+                <div>
+                  <a href="{% url 'members:member_detail' m.anggota.user.id %}" class="font-bold text-on-surface hover:text-primary hover:underline block leading-tight">
+                    {{ m.anggota.user.get_full_name|default:m.anggota.user.username }}
+                  </a>
+                  <span class="text-[11px] text-outline">NISN: {{ m.anggota.nisn|default:"-" }} • {{ m.anggota.kelas_sekolah|default:"-" }}</span>
+                </div>
+              </div>
+            </td>
+
+            <!-- Sabuk -->
+            <td class="py-3.5 px-3">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border border-outline-variant/40" style="background-color: {{ m.anggota.sabuk_saat_ini.warna_hex }}; color: {% if m.anggota.sabuk_saat_ini.nama_sabuk == 'Putih' or m.anggota.sabuk_saat_ini.nama_sabuk == 'Kuning' %}#000000{% else %}#FFFFFF{% endif %};">
+                <span class="w-2 h-2 rounded-full border border-black/30" style="background-color: {{ m.anggota.sabuk_saat_ini.warna_hex }};"></span>
+                {{ m.anggota.sabuk_saat_ini.nama_sabuk|default:"Sabuk Dasar" }}
+              </span>
+            </td>
+
+            <!-- Hadir / Sesi -->
+            <td class="py-3.5 px-3 text-center">
+              <span class="font-black text-on-surface">{{ m.hadir }}</span>
+              <span class="text-xs text-outline">/ {{ total_sesi }} sesi</span>
+            </td>
+
+            <!-- Persentase & Linear Progress Bar -->
+            <td class="py-3.5 px-3 min-w-[160px]">
+              <div class="flex items-center justify-between text-xs mb-1">
+                <span class="font-black text-primary">{{ m.persentase }}%</span>
+                <span class="text-[10px] text-outline">Target: {{ m.min_ukt }}%</span>
+              </div>
+              <div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-500 {% if m.status_ukt == 'AMAN' %}bg-emerald-500{% elif m.status_ukt == 'PERINGATAN' %}bg-amber-500{% else %}bg-red-500{% endif %}" style="width: {{ m.persentase }}%"></div>
+              </div>
+            </td>
+
+            <!-- Status UKT Badge -->
+            <td class="py-3.5 px-3 text-center">
+              {% if m.status_ukt == 'AMAN' %}
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                <span class="material-symbols-outlined text-sm">verified</span>
+                <span>{{ m.status_label }}</span>
+              </span>
+              {% elif m.status_ukt == 'PERINGATAN' %}
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                <span class="material-symbols-outlined text-sm">warning</span>
+                <span>{{ m.status_label }}</span>
+              </span>
+              {% else %}
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-200">
+                <span class="material-symbols-outlined text-sm">error</span>
+                <span>{{ m.status_label }}</span>
+              </span>
+              {% endif %}
+            </td>
+
+            <!-- Aksi -->
+            <td class="py-3.5 px-3 text-right">
+              <a href="{% url 'members:member_detail' m.anggota.user.id %}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-surface-container-high hover:bg-primary hover:text-on-primary text-xs font-bold text-on-surface transition-all" title="Lihat Profil & Grafik Kehadiran Siswa">
+                <span>Grafik</span>
+                <span class="material-symbols-outlined text-sm">monitoring</span>
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="text-center py-8 text-outline">
+              Belum ada data anggota aktif.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent Training Sessions Table -->
+  <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h3 class="text-lg font-extrabold text-on-surface">Riwayat Sesi Latihan Terakhir</h3>
+        <p class="text-xs text-on-surface-variant">Klik sesi untuk melihat daftar kehadiran atau ekspor laporan</p>
+      </div>
+      <a href="{% url 'attendance:session_list' %}" class="text-xs font-bold text-primary hover:underline flex items-center gap-1">
+        <span>Semua Sesi</span>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+      </a>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead>
+          <tr class="border-b border-outline-variant/40 text-xs font-bold text-on-surface-variant uppercase">
+            <th class="py-3 px-3">Tanggal & Waktu</th>
+            <th class="py-3 px-3">Tipe Sesi</th>
+            <th class="py-3 px-3">Pelatih</th>
+            <th class="py-3 px-3 text-center">Status</th>
+            <th class="py-3 px-3 text-center">Pesilat Hadir</th>
+            <th class="py-3 px-3 text-right">Aksi</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-outline-variant/20">
+          {% for sesi in recent_sessions %}
+          <tr class="hover:bg-surface-container transition-colors">
+            <td class="py-3 px-3">
+              <div class="font-bold text-on-surface">{{ sesi.tanggal|date:"d M Y" }}</div>
+              <div class="text-xs text-outline">{{ sesi.jam_buka|time:"H:i" }} WIB</div>
+            </td>
+            <td class="py-3 px-3 font-semibold text-on-surface">{{ sesi.get_tipe_sesi_display }}</td>
+            <td class="py-3 px-3 text-on-surface-variant">{{ sesi.pelatih.get_full_name|default:sesi.pelatih.username }}</td>
+            <td class="py-3 px-3 text-center">
+              <span class="inline-block px-3 py-1 rounded-full text-xs font-bold {% if sesi.status == 'DIBUKA' %}bg-emerald-100 text-emerald-800{% elif sesi.status == 'SELESAI' %}bg-slate-100 text-slate-700{% else %}bg-amber-100 text-amber-800{% endif %}">
+                {{ sesi.get_status_display }}
+              </span>
+            </td>
+            <td class="py-3 px-3 text-center font-bold text-primary">
+              {{ sesi.total_hadir }}
+            </td>
+            <td class="py-3 px-3 text-right">
+              <a href="{% url 'attendance:session_detail' sesi.id %}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-surface-container-high hover:bg-primary hover:text-on-primary text-xs font-bold text-on-surface transition-all">
+                <span>Detail</span>
+                <span class="material-symbols-outlined text-sm">open_in_new</span>
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="text-center py-8 text-outline">
+              Belum ada sesi latihan yang dibuat.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // 1. Coach Donut Chart
+    const donutCtx = document.getElementById('coachDonutChart');
+    if (donutCtx) {
+      const donutData = {{ coach_donut_json|safe }};
+      new Chart(donutCtx, {
+        type: 'doughnut',
+        data: {
+          labels: donutData.labels,
+          datasets: [{
+            data: donutData.data,
+            backgroundColor: [
+              '#10B981', // Hadir
+              '#3B82F6', // Izin
+              '#F59E0B', // Sakit
+              '#EF4444', // Alpa
+            ],
+            borderWidth: 2,
+            borderColor: '#FFF8F6',
+            hoverOffset: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '72%',
+          plugins: {
+            legend: {
+              display: false,
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.parsed || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                  return ` ${label}: ${value} presensi (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 2. Coach Trend Chart (Bar Chart)
+    const trendCtx = document.getElementById('coachTrendChart');
+    if (trendCtx) {
+      const trendData = {{ coach_trend_json|safe }};
+      new Chart(trendCtx, {
+        type: 'bar',
+        data: {
+          labels: trendData.labels.length > 0 ? trendData.labels : ['Belum ada sesi'],
+          datasets: [
+            {
+              label: 'Pesilat Hadir',
+              data: trendData.hadir.length > 0 ? trendData.hadir : [0],
+              backgroundColor: '#10B981',
+              borderRadius: 8,
+            },
+            {
+              label: 'Izin / Sakit',
+              data: trendData.izin_sakit.length > 0 ? trendData.izin_sakit : [0],
+              backgroundColor: '#3B82F6',
+              borderRadius: 8,
+            },
+            {
+              label: 'Alpa / Tidak Hadir',
+              data: trendData.alpa.length > 0 ? trendData.alpa : [0],
+              backgroundColor: '#EF4444',
+              borderRadius: 8,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0,
+                font: { size: 10 }
+              },
+              grid: {
+                color: 'rgba(133, 115, 113, 0.15)',
+              }
+            },
+            x: {
+              ticks: {
+                font: { size: 10 }
+              },
+              grid: {
+                display: false
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                boxWidth: 12,
+                font: { size: 11, weight: 'bold' }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return ` ${context.dataset.label}: ${context.parsed.y} pesilat`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

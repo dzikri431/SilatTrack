@@ -1,0 +1,466 @@
+{% extends 'base.html' %}
+
+{% block title %}Daftar Pendekar & Pelatih Silat - SilatTrack{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="{
+  currentTab: '{{ active_tab|default:'anggota' }}',
+  showDeleteReqModal: false,
+  targetMemberName: '',
+  targetMemberReason: '',
+  deleteReqActionUrl: '',
+  openReqModal(userId, name, pct) {
+    this.targetMemberName = name;
+    this.targetMemberReason = 'Anggota kurang aktif berlatih (Tingkat kehadiran: ' + pct + '% dari total {{ total_sesi }} sesi).';
+    this.deleteReqActionUrl = '/members/' + userId + '/delete/';
+    this.showDeleteReqModal = true;
+  }
+}">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h2 class="text-2xl sm:text-3xl font-black text-on-surface">Direktori Pendekar Silat & Pelatih</h2>
+      <p class="text-xs sm:text-sm text-on-surface-variant">Daftar seluruh siswa pesilat aktif, tingkatan sabuk, dan pelatih pembina eskul</p>
+    </div>
+
+    <!-- Admin Action Button -->
+    {% if request.user.is_admin_role %}
+    <a href="{% url 'accounts:admin_create_user' %}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary hover:bg-primary-dark text-on-primary text-xs sm:text-sm font-bold shadow-elevation-1 hover:shadow-elevation-2 active:scale-95 transition-all self-start sm:self-auto">
+      <span class="material-symbols-outlined text-base">person_add</span>
+      <span>Buat Akun Pelatih & Anggota</span>
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Pengajuan Izin Hapus Anggota Banner (Admin & Pelatih) -->
+  {% if pending_delete_requests %}
+  <div class="bg-amber-50 border border-amber-300 rounded-3xl p-5 sm:p-6 shadow-elevation-1 space-y-3">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center flex-shrink-0">
+        <span class="material-symbols-outlined text-xl">person_remove</span>
+      </div>
+      <div>
+        <h3 class="font-extrabold text-sm sm:text-base text-amber-950">
+          {% if request.user.is_admin_role %}
+          Permohonan Izin Hapus Anggota Menunggu Tindakan Anda ({{ total_pending_deletes }})
+          {% else %}
+          Permohonan Izin Hapus Anggota Diajukan ({{ total_pending_deletes }})
+          {% endif %}
+        </h3>
+        <p class="text-xs text-amber-800">
+          {% if request.user.is_admin_role %}
+          Pelatih telah mengajukan permohonan penghapusan pesilat. Silakan tinjau dan tentukan persetujuan Anda.
+          {% else %}
+          Permohonan penghapusan anggota Anda sedang dalam antrean persetujuan Admin / Pembina eskul.
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <div class="divide-y divide-amber-200/60 bg-white/70 rounded-2xl border border-amber-200 overflow-hidden">
+      {% for req in pending_delete_requests %}
+      <div class="p-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-xs text-slate-900">{{ req.anggota.user.get_full_name|default:req.anggota.user.username }}</span>
+            <span class="text-[11px] font-mono text-outline">NISN: {{ req.anggota.nisn }} • {{ req.anggota.kelas_sekolah }}</span>
+          </div>
+          <p class="text-xs text-slate-700 mt-1">
+            <strong>Alasan:</strong> "{{ req.alasan }}"
+          </p>
+          <p class="text-[10px] text-outline mt-0.5">
+            Diajukan oleh Pelatih {{ req.diajukan_oleh.get_full_name|default:req.diajukan_oleh.username }} • {{ req.created_at|date:"d M Y H:i" }}
+          </p>
+        </div>
+
+        {% if request.user.is_admin_role %}
+        <div class="flex items-center gap-2 self-end sm:self-auto">
+          <!-- Tolak -->
+          <form id="form-list-reject-{{ req.id }}" method="POST" action="{% url 'members:approve_delete_request' req.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="tolak">
+            <button 
+              type="button"
+              onclick="openConfirmModal({
+                title: 'Tolak Permohonan Hapus?',
+                message: 'Apakah Anda yakin ingin menolak permohonan izin hapus anggota {{ req.anggota.user.get_full_name|escapejs }}?',
+                confirmText: 'Ya, Tolak',
+                confirmColor: 'bg-slate-700 hover:bg-slate-800 text-white',
+                icon: 'close',
+                iconColor: 'bg-slate-100 text-slate-700',
+                formId: 'form-list-reject-{{ req.id }}'
+              })"
+              class="px-3.5 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high text-outline text-xs font-bold transition-all cursor-pointer"
+            >
+              Tolak
+            </button>
+          </form>
+
+          <!-- Setujui Hapus -->
+          <form id="form-list-approve-{{ req.id }}" method="POST" action="{% url 'members:approve_delete_request' req.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="setuju">
+            <button 
+              type="button"
+              onclick="openConfirmModal({
+                title: 'Setujui Hapus Anggota?',
+                message: 'Apakah Anda menyetujui penghapusan {{ req.anggota.user.get_full_name|escapejs }} secara permanen? Akun dan data presensi terkait akan dihapus.',
+                confirmText: 'Setujui & Hapus',
+                confirmColor: 'bg-red-700 hover:bg-red-800 text-white',
+                icon: 'person_remove',
+                iconColor: 'bg-red-100 text-red-700',
+                formId: 'form-list-approve-{{ req.id }}'
+              })"
+              class="px-4 py-1.5 rounded-full bg-red-700 hover:bg-red-800 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1 cursor-pointer"
+            >
+              <span class="material-symbols-outlined text-sm">check</span>
+              <span>Setujui Hapus</span>
+            </button>
+          </form>
+        </div>
+        {% else %}
+        <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+          Menunggu Izin Admin
+        </span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Tab Switcher: Anggota Pesilat vs Kurang Aktif vs Pelatih -->
+  <div class="flex flex-wrap items-center gap-2 border-b border-outline-variant/30 pb-2">
+    <a 
+      href="{% url 'members:member_list' %}?tab=anggota{% if query %}&q={{ query }}{% endif %}{% if selected_sabuk %}&sabuk={{ selected_sabuk }}{% endif %}{% if selected_sekolah %}&sekolah={{ selected_sekolah }}{% endif %}"
+      class="px-4 py-2 rounded-full text-xs sm:text-sm transition-all flex items-center gap-2 {% if active_tab == 'anggota' %}bg-primary text-on-primary font-bold shadow-xs{% else %}bg-surface-container-high text-on-surface-variant hover:text-on-surface font-semibold{% endif %}"
+    >
+      <span class="material-symbols-outlined text-base">groups</span>
+      <span>Semua Anggota</span>
+      <span class="px-2 py-0.5 rounded-full text-[10px] bg-white/20">{{ total_members }}</span>
+    </a>
+
+    <a 
+      href="{% url 'members:member_list' %}?tab=kurang_aktif{% if query %}&q={{ query }}{% endif %}{% if selected_sabuk %}&sabuk={{ selected_sabuk }}{% endif %}{% if selected_sekolah %}&sekolah={{ selected_sekolah }}{% endif %}"
+      class="px-4 py-2 rounded-full text-xs sm:text-sm transition-all flex items-center gap-2 {% if active_tab == 'kurang_aktif' %}bg-rose-700 text-white font-bold shadow-xs{% else %}bg-surface-container-high text-on-surface-variant hover:text-rose-700 font-semibold{% endif %}"
+    >
+      <span class="material-symbols-outlined text-base">person_alert</span>
+      <span>Kurang Aktif (&lt; 50%)</span>
+      <span class="px-2 py-0.5 rounded-full text-[10px] {% if total_kurang_aktif > 0 %}bg-rose-100 text-rose-900 font-black{% else %}bg-white/20{% endif %}">{{ total_kurang_aktif }}</span>
+    </a>
+
+    <a 
+      href="{% url 'members:member_list' %}?tab=pelatih{% if query %}&q={{ query }}{% endif %}{% if selected_sekolah %}&sekolah={{ selected_sekolah }}{% endif %}"
+      class="px-4 py-2 rounded-full text-xs sm:text-sm transition-all flex items-center gap-2 {% if active_tab == 'pelatih' %}bg-primary text-on-primary font-bold shadow-xs{% else %}bg-surface-container-high text-on-surface-variant hover:text-on-surface font-semibold{% endif %}"
+    >
+      <span class="material-symbols-outlined text-base">sports</span>
+      <span>Dewan Pelatih</span>
+      <span class="px-2 py-0.5 rounded-full text-[10px] bg-white/20">{{ total_coaches }}</span>
+    </a>
+  </div>
+
+  <!-- Search & Filter Bar (Khusus Anggota) -->
+  <div x-show="currentTab === 'anggota' || currentTab === 'kurang_aktif'" class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-4 shadow-elevation-1">
+    <form method="GET" class="flex flex-wrap items-center gap-3">
+      <input type="hidden" name="tab" value="{{ active_tab|default:'anggota' }}">
+      
+      <!-- Search Input -->
+      <div class="relative flex-1 min-w-[220px]">
+        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-outline">
+          <span class="material-symbols-outlined text-lg">search</span>
+        </span>
+        <input 
+          type="text" 
+          name="q" 
+          value="{{ query }}" 
+          placeholder="Cari nama, NISN, atau kelas pesilat..." 
+          class="w-full pl-10 pr-4 py-2 text-xs bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-full outline-none font-medium text-on-surface"
+        >
+      </div>
+
+      <!-- Filter Sekolah -->
+      <div class="flex items-center gap-2">
+        <label class="text-xs font-bold text-on-surface-variant uppercase">Sekolah:</label>
+        <select name="sekolah" onchange="this.form.submit()" class="px-3 py-2 rounded-full bg-surface-container-lowest border border-outline/30 text-xs font-semibold text-on-surface outline-none">
+          <option value="">Semua Sekolah</option>
+          {% for s in sekolah_list %}
+          <option value="{{ s.id }}" {% if selected_sekolah == s.id|stringformat:"s" %}selected{% endif %}>{{ s.nama_sekolah }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Filter Sabuk -->
+      <div class="flex items-center gap-2">
+        <label class="text-xs font-bold text-on-surface-variant uppercase">Sabuk:</label>
+        <select name="sabuk" onchange="this.form.submit()" class="px-3 py-2 rounded-full bg-surface-container-lowest border border-outline/30 text-xs font-semibold text-on-surface outline-none">
+          <option value="">Semua Sabuk</option>
+          {% for s in sabuk_list %}
+          <option value="{{ s.id }}" {% if selected_sabuk == s.id|stringformat:"s" %}selected{% endif %}>{{ s.nama_sabuk }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <button type="submit" class="px-4 py-2 rounded-full bg-primary text-on-primary text-xs font-bold shadow-xs">
+        Filter
+      </button>
+
+      {% if query or selected_sabuk or selected_sekolah %}
+      <a href="{% url 'members:member_list' %}?tab={{ active_tab|default:'anggota' }}" class="text-xs font-bold text-primary hover:underline ml-auto">Reset</a>
+      {% endif %}
+
+    </form>
+  </div>
+
+  <!-- Members (Anggota) Grid Cards -->
+  <div x-show="currentTab === 'anggota' || currentTab === 'kurang_aktif'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for m in members %}
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-5 shadow-elevation-1 hover:shadow-elevation-2 transition-all flex flex-col justify-between">
+      
+      <div class="flex items-start gap-4">
+        <!-- Avatar Initial with Belt Accent -->
+        <div class="relative flex-shrink-0">
+          {% if m.user.avatar %}
+          <img src="{{ m.user.avatar.url }}" alt="{{ m.user.get_full_name }}" class="w-12 h-12 rounded-2xl object-cover border border-outline-variant/40">
+          {% else %}
+          <div class="w-12 h-12 rounded-2xl bg-surface-container-high text-on-surface flex items-center justify-center font-bold text-lg border border-outline-variant/40">
+            {{ m.user.first_name|first|default:m.user.username|first }}
+          </div>
+          {% endif %}
+
+          {% if m.sabuk_saat_ini %}
+          <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border border-white shadow-xs" style="background-color: {{ m.sabuk_saat_ini.warna_hex }};"></span>
+          {% endif %}
+        </div>
+
+        <div class="flex-1 min-w-0">
+          <h3 class="font-extrabold text-sm text-on-surface truncate">
+            {{ m.user.get_full_name|default:m.user.username }}
+          </h3>
+          <p class="text-xs text-outline font-mono">{{ m.nisn }} • {{ m.kelas_sekolah }}</p>
+          {% if m.sekolah %}
+          <div class="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary-container/30 text-primary font-bold text-[10px] border border-primary/20 truncate max-w-full" title="{{ m.sekolah.nama_sekolah }}">
+            <span class="material-symbols-outlined text-xs">school</span>
+            <span class="truncate">{{ m.sekolah.nama_sekolah }}</span>
+          </div>
+          {% endif %}
+
+          <div class="flex flex-wrap items-center gap-1.5 mt-2">
+            {% if m.sabuk_saat_ini %}
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black border shadow-xs" style="background-color: {{ m.sabuk_saat_ini.warna_hex }}; color: {% if m.sabuk_saat_ini.nama_sabuk == 'Putih' or m.sabuk_saat_ini.nama_sabuk == 'Kuning' %}#0f172a{% else %}#ffffff{% endif %};">
+              {{ m.sabuk_saat_ini.nama_sabuk }}
+            </span>
+            {% endif %}
+
+            {% if m.kategori_fokus %}
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-surface-container-high text-on-surface-variant truncate max-w-[130px]">
+              {{ m.kategori_fokus.nama }}
+            </span>
+            {% endif %}
+          </div>
+
+          {% if m.is_kurang_aktif %}
+          <div class="mt-2.5">
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-300">
+              <span class="material-symbols-outlined text-xs">person_alert</span>
+              <span>Kurang Aktif: {{ m.persentase_hadir }}% Hadir</span>
+            </span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-outline-variant/30 mt-4 flex items-center justify-between gap-2">
+        <span class="text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full">
+          {{ m.get_status_keanggotaan_display }}
+        </span>
+
+        <div class="flex items-center gap-1.5">
+          {% if m.is_kurang_aktif %}
+            {% if request.user.is_admin_role %}
+              <!-- Admin Hapus Langsung -->
+              <form id="form-del-list-{{ m.user_id }}" method="POST" action="{% url 'members:member_delete' m.user_id %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button 
+                  type="button"
+                  onclick="openConfirmModal({
+                    title: 'Hapus Anggota Kurang Aktif?',
+                    message: 'Apakah Anda yakin ingin menghapus pesilat {{ m.user.get_full_name|default:m.user.username|escapejs }} secara permanen? Tingkat kehadirannya hanya {{ m.persentase_hadir }}% ({{ m.hadir_count }}/{{ total_sesi }} sesi).',
+                    confirmText: 'Ya, Hapus Permanen',
+                    confirmColor: 'bg-red-700 hover:bg-red-800 text-white',
+                    icon: 'person_remove',
+                    iconColor: 'bg-red-100 text-red-700',
+                    formId: 'form-del-list-{{ m.user_id }}'
+                  })"
+                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-50 hover:bg-red-700 text-red-700 hover:text-white border border-red-200 text-[10px] font-bold transition-all cursor-pointer"
+                  title="Hapus langsung (Wewenang Admin)"
+                >
+                  <span class="material-symbols-outlined text-xs">delete</span>
+                  <span>Hapus</span>
+                </button>
+              </form>
+            {% elif request.user.is_pelatih_role %}
+              <!-- Pelatih Ajukan Izin ke Admin -->
+              {% if m.has_pending_delete %}
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                  <span class="material-symbols-outlined text-xs animate-pulse">hourglass_top</span>
+                  <span>Menunggu Izin</span>
+                </span>
+              {% else %}
+                <button 
+                  type="button"
+                  @click="openReqModal('{{ m.user_id }}', '{{ m.user.get_full_name|default:m.user.username|escapejs }}', '{{ m.persentase_hadir }}')"
+                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-50 hover:bg-red-100 text-red-700 border border-red-300 text-[10px] font-bold transition-all cursor-pointer"
+                  title="Ajukan izin penghapusan ke Admin"
+                >
+                  <span class="material-symbols-outlined text-xs">person_remove</span>
+                  <span>Ajukan Hapus</span>
+                </button>
+              {% endif %}
+            {% endif %}
+          {% endif %}
+
+          <a href="{% url 'members:member_detail' m.user_id %}" class="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline">
+            <span>Profil</span>
+            <span class="material-symbols-outlined text-sm">chevron_right</span>
+          </a>
+        </div>
+      </div>
+
+    </div>
+    {% empty %}
+    <div class="col-span-full py-12 text-center text-outline">
+      Tidak ada anggota yang ditemukan pada kategori ini.
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Coaches (Pelatih) Grid Cards -->
+  <div x-show="currentTab === 'pelatih'" x-cloak class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for c in coaches %}
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-5 shadow-elevation-1 hover:shadow-elevation-2 transition-all flex flex-col justify-between">
+      
+      <div class="flex items-start gap-4">
+        <!-- Avatar Initial for Coach -->
+        <div class="relative flex-shrink-0">
+          {% if c.user.avatar %}
+          <img src="{{ c.user.avatar.url }}" alt="{{ c.user.get_full_name }}" class="w-12 h-12 rounded-2xl object-cover border border-amber-300">
+          {% else %}
+          <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center font-black text-lg border border-amber-300">
+            {{ c.user.first_name|first|default:c.user.username|first }}
+          </div>
+          {% endif %}
+          <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-amber-500 border border-white shadow-xs"></span>
+        </div>
+
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-1.5">
+            <h3 class="font-extrabold text-sm text-on-surface truncate">
+              {{ c.user.get_full_name|default:c.user.username }}
+            </h3>
+            <span class="px-2 py-0.2 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
+              Pelatih
+            </span>
+          </div>
+          
+          <p class="text-xs text-outline font-mono mt-0.5">No. Reg: {{ c.nomor_registrasi }}</p>
+
+          <div class="space-y-1 mt-2 text-xs">
+            {% if c.tingkatan_pendekar %}
+            <div class="flex items-center gap-1.5 text-on-surface-variant font-medium">
+              <span class="material-symbols-outlined text-sm text-amber-700">military_tech</span>
+              <span class="truncate">{{ c.tingkatan_pendekar }}</span>
+            </div>
+            {% endif %}
+
+            {% if c.spesialisasi %}
+            <div class="flex items-center gap-1.5 text-on-surface-variant font-medium">
+              <span class="material-symbols-outlined text-sm text-primary">sports_kabaddi</span>
+              <span class="truncate">{{ c.spesialisasi }}</span>
+            </div>
+            {% endif %}
+
+            {% if c.user.phone_number %}
+            <div class="flex items-center gap-1.5 text-outline">
+              <span class="material-symbols-outlined text-sm">call</span>
+              <span class="font-mono text-[11px]">{{ c.user.phone_number }}</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-outline-variant/30 mt-4 flex items-center justify-between text-xs">
+        <span class="text-[10px] font-semibold text-outline font-mono">
+          {{ c.sertifikasi_sk|default:"Lisensi Resmi" }}
+        </span>
+
+        <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-900 bg-amber-50 px-2 py-0.5 rounded-full">
+          <span class="material-symbols-outlined text-xs">verified</span>
+          <span>Aktif Melatih</span>
+        </span>
+      </div>
+
+    </div>
+    {% empty %}
+    <div class="col-span-full py-12 text-center text-outline">
+      Tidak ada pelatih yang terdaftar.
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Modal Ajukan Izin Hapus Anggota (Khusus Pelatih) -->
+  <div 
+    x-show="showDeleteReqModal" 
+    x-cloak 
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+  >
+    <div 
+      @click.away="showDeleteReqModal = false"
+      class="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-6 max-w-md w-full shadow-elevation-3 space-y-4"
+    >
+      <div class="flex items-center justify-between border-b border-outline-variant/30 pb-3">
+        <div class="flex items-center gap-2 text-red-700">
+          <span class="material-symbols-outlined text-xl">person_remove</span>
+          <h3 class="font-extrabold text-sm text-on-surface">Ajukan Izin Hapus Anggota Kurang Aktif</h3>
+        </div>
+        <button type="button" @click="showDeleteReqModal = false" class="text-outline hover:text-on-surface">
+          <span class="material-symbols-outlined text-lg">close</span>
+        </button>
+      </div>
+
+      <p class="text-xs text-on-surface-variant">
+        Sebagai Pelatih, Anda wajib mendapatkan persetujuan Admin sebelum menghapus anggota: <strong class="text-on-surface" x-text="targetMemberName"></strong>.
+      </p>
+
+      <form :action="deleteReqActionUrl" method="POST" class="space-y-3">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <div>
+          <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">
+            Alasan Penghapusan Anggota <span class="text-error">*</span>
+          </label>
+          <textarea 
+            name="alasan_penghapusan" 
+            required 
+            rows="3" 
+            x-model="targetMemberReason"
+            class="w-full px-3 py-2 bg-surface-container-lowest border border-outline/30 rounded-2xl text-xs font-medium outline-none focus:border-primary"
+          ></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-outline-variant/30">
+          <button type="button" @click="showDeleteReqModal = false" class="px-4 py-2 rounded-full bg-surface-container text-xs font-bold text-outline hover:text-on-surface">
+            Batal
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-full bg-red-700 hover:bg-red-800 text-white text-xs font-bold shadow-xs">
+            Kirim Pengajuan ke Admin
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

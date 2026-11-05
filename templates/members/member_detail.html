@@ -1,0 +1,687 @@
+{% extends 'base.html' %}
+
+{% block title %}Profil Pesilat - {{ profile.user.get_full_name|default:profile.user.username }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="{ showEditModal: false, showDeleteReqModal: false }">
+
+  <!-- Back Link & Action Bar -->
+  <div class="flex items-center justify-between">
+    <a href="{% url 'members:member_list' %}" class="inline-flex items-center gap-1 text-xs font-bold text-on-surface-variant hover:text-primary">
+      <span class="material-symbols-outlined text-sm">arrow_back</span>
+      <span>Kembali ke Direktori Anggota</span>
+    </a>
+
+    <!-- Actions for Admin & Coach -->
+    {% if request.user.is_admin_role or request.user.is_pelatih_role %}
+    <div class="flex items-center gap-2">
+      <!-- Edit Member Button -->
+      <button 
+        type="button" 
+        @click="showEditModal = true"
+        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-on-surface text-xs font-bold transition-all shadow-xs"
+      >
+        <span class="material-symbols-outlined text-base">edit</span>
+        <span>Edit Data</span>
+      </button>
+
+      <!-- Delete Member Button -->
+      {% if request.user.is_admin_role %}
+      <!-- Admin directly deletes -->
+      <form id="form-delete-member-direct" method="POST" action="{% url 'members:member_delete' profile.user_id %}">
+        {% csrf_token %}
+        <button 
+          type="button" 
+          onclick="openConfirmModal({
+            title: 'Hapus Anggota Pesilat?',
+            message: 'Apakah Anda yakin ingin menghapus anggota {{ profile.user.get_full_name|default:profile.user.username|escapejs }} secara permanen? Akun login dan riwayat presensinya akan terhapus.',
+            confirmText: 'Ya, Hapus Permanen',
+            confirmColor: 'bg-red-700 hover:bg-red-800 text-white',
+            icon: 'person_remove',
+            iconColor: 'bg-red-100 text-red-700',
+            formId: 'form-delete-member-direct'
+          })"
+          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-red-50 hover:bg-red-700 text-red-700 hover:text-white border border-red-200 text-xs font-bold transition-all shadow-xs cursor-pointer"
+        >
+          <span class="material-symbols-outlined text-base">delete</span>
+          <span>Hapus Anggota</span>
+        </button>
+      </form>
+      {% elif request.user.is_pelatih_role %}
+      <!-- Coach requests permission from Admin -->
+      {% if pending_delete %}
+      <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold">
+        <span class="material-symbols-outlined text-base animate-pulse">hourglass_top</span>
+        <span>Izin Hapus Sedang Diajukan</span>
+      </span>
+      {% else %}
+      <button 
+        type="button" 
+        @click="showDeleteReqModal = true"
+        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold transition-all shadow-xs"
+      >
+        <span class="material-symbols-outlined text-base">person_remove</span>
+        <span>Ajukan Izin Hapus</span>
+      </button>
+      {% endif %}
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Pending Delete Request Notification Banner -->
+  {% if pending_delete %}
+  <div class="bg-amber-50 border border-amber-300 rounded-3xl p-5 shadow-elevation-1">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center flex-shrink-0">
+          <span class="material-symbols-outlined text-xl">warning</span>
+        </div>
+        <div>
+          <h4 class="font-extrabold text-sm text-amber-950">
+            {% if request.user.is_admin_role %}
+            Permohonan Izin Penghapusan Anggota Menunggu Tindakan Anda
+            {% else %}
+            Permohonan Izin Hapus Anggota Menunggu Persetujuan Admin
+            {% endif %}
+          </h4>
+          <p class="text-xs text-amber-800 mt-0.5">
+            Diajukan oleh pelatih <strong>{{ pending_delete.diajukan_oleh.get_full_name|default:pending_delete.diajukan_oleh.username }}</strong> pada {{ pending_delete.created_at|date:"d M Y H:i" }}.
+          </p>
+          <p class="text-xs text-amber-900 mt-1 bg-amber-100/60 p-2 rounded-xl">
+            <strong>Alasan Pelatih:</strong> "{{ pending_delete.alasan }}"
+          </p>
+        </div>
+      </div>
+
+      {% if request.user.is_admin_role %}
+      <div class="flex items-center gap-2 self-end sm:self-auto flex-shrink-0">
+        <!-- Tolak Form -->
+        <form id="form-reject-del-req" method="POST" action="{% url 'members:approve_delete_request' pending_delete.id %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="tolak">
+          <button 
+            type="button"
+            onclick="openConfirmModal({
+              title: 'Tolak Permohonan Hapus?',
+              message: 'Apakah Anda yakin ingin menolak permohonan izin hapus anggota ini?',
+              confirmText: 'Ya, Tolak Permohonan',
+              confirmColor: 'bg-slate-700 hover:bg-slate-800 text-white',
+              icon: 'close',
+              iconColor: 'bg-slate-100 text-slate-700',
+              formId: 'form-reject-del-req'
+            })"
+            class="px-4 py-2 rounded-full bg-surface-container hover:bg-surface-container-high text-outline text-xs font-bold transition-all cursor-pointer"
+          >
+            Tolak
+          </button>
+        </form>
+
+        <!-- Setujui Form -->
+        <form id="form-approve-del-req" method="POST" action="{% url 'members:approve_delete_request' pending_delete.id %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="setuju">
+          <button 
+            type="button"
+            onclick="openConfirmModal({
+              title: 'Setujui Penghapusan Anggota?',
+              message: 'Apakah Anda menyetujui penghapusan anggota ini? Anggota beserta akun dan seluruh riwayatnya akan dihapus permanen dari sistem.',
+              confirmText: 'Setujui & Hapus Anggota',
+              confirmColor: 'bg-red-700 hover:bg-red-800 text-white',
+              icon: 'person_remove',
+              iconColor: 'bg-red-100 text-red-700',
+              formId: 'form-approve-del-req'
+            })"
+            class="px-4 py-2 rounded-full bg-red-700 hover:bg-red-800 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+          >
+            <span class="material-symbols-outlined text-sm">check</span>
+            <span>Setujui Hapus</span>
+          </button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Member Hero Profile Card -->
+  <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 sm:p-8 shadow-elevation-2">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+      
+      <div class="flex items-center gap-4">
+        <!-- Avatar Initial -->
+        <div class="relative">
+          <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-primary text-on-primary flex items-center justify-center font-black text-2xl shadow-elevation-1">
+            {{ profile.user.first_name|first|default:profile.user.username|first }}
+          </div>
+          {% if profile.sabuk_saat_ini %}
+          <div class="absolute -bottom-2 -right-2 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase shadow border border-outline/30" style="background-color: {{ profile.sabuk_saat_ini.warna_hex }}; color: {% if profile.sabuk_saat_ini.nama_sabuk == 'Putih' or profile.sabuk_saat_ini.nama_sabuk == 'Kuning' %}#000000{% else %}#FFFFFF{% endif %};">
+            {{ profile.sabuk_saat_ini.nama_sabuk }}
+          </div>
+          {% endif %}
+        </div>
+
+        <div>
+          <h2 class="text-xl sm:text-2xl font-black text-on-surface">
+            {{ profile.user.get_full_name|default:profile.user.username }}
+          </h2>
+          <p class="text-xs sm:text-sm text-on-surface-variant flex items-center gap-1.5 flex-wrap">
+            <span>NISN: <strong class="font-mono text-on-surface">{{ profile.nisn }}</strong></span>
+            <span>•</span>
+            <span>Kelas: <strong class="text-on-surface">{{ profile.kelas_sekolah }}</strong></span>
+            {% if profile.sekolah %}
+            <span>•</span>
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary-container/40 text-primary font-bold text-xs border border-primary/20">
+              <span class="material-symbols-outlined text-xs">school</span>
+              <span>{{ profile.sekolah.nama_sekolah }}</span>
+            </span>
+            {% endif %}
+          </p>
+          <div class="flex flex-wrap items-center gap-2 mt-2">
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-secondary-container text-on-secondary-container">
+              {{ profile.sabuk_saat_ini.nama_sabuk|default:"Sabuk Dasar" }}
+            </span>
+            {% if profile.kategori_fokus %}
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container-high text-on-surface">
+              {{ profile.kategori_fokus.nama }} ({{ profile.kategori_fokus.kelas_tanding|default:"Bebas" }})
+            </span>
+            {% endif %}
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+              {{ profile.get_status_keanggotaan_display }}
+            </span>
+
+            <!-- Streak Keaktifan Badge (PRD 3.4) -->
+            {% if streak > 0 %}
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1 shadow-2xs">
+              <span>🔥</span>
+              <span>Streak {{ streak }} Sesi</span>
+            </span>
+            {% endif %}
+
+            <!-- Biometric Profile Status (PRD 3.1) -->
+            {% if profile.has_face_registered %}
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs text-emerald-600">verified_user</span>
+              <span>Wajah Terdaftar</span>
+            </span>
+            {% if request.user.is_admin_role or request.user.is_pelatih_role or request.user.id == profile.user_id %}
+            <form method="POST" action="{% url 'members:reset_face_registration' profile.user_id %}" class="inline">
+              {% csrf_token %}
+              <button 
+                type="submit" 
+                onclick="return confirm('Apakah Anda yakin ingin mereset data biometrik wajah siswa ini? Siswa harus mendaftarkan wajah ulang saat presensi berikutnya.')" 
+                class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-colors cursor-pointer"
+                title="Reset data biometrik wajah"
+              >
+                Reset Wajah
+              </button>
+            </form>
+            {% endif %}
+            {% else %}
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-300 flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs text-slate-500">face</span>
+              <span>Wajah Belum Terdaftar</span>
+            </span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="flex items-center gap-4 border-t sm:border-t-0 sm:border-l border-outline-variant/40 pt-4 sm:pt-0 sm:pl-6">
+        <div class="text-center">
+          <div class="text-2xl font-black text-primary">{{ hadir_count }}</div>
+          <div class="text-[11px] font-bold text-on-surface-variant uppercase">Sesi Hadir</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl font-black text-emerald-700">{{ persentase_hadir }}%</div>
+          <div class="text-[11px] font-bold text-on-surface-variant uppercase">Kehadiran</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Grafik Analitik Kehadiran Siswa -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- Card 1: Donut Chart Komposisi Kehadiran Siswa -->
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+              <span class="material-symbols-outlined text-lg">pie_chart</span>
+            </span>
+            <div>
+              <h3 class="text-base font-extrabold text-on-surface">Komposisi Presensi Pesilat</h3>
+              <p class="text-xs text-on-surface-variant">Rasio status Hadir, Izin, Sakit, dan Alpa</p>
+            </div>
+          </div>
+          <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface">
+            Total {{ total_sesi }} Sesi
+          </span>
+        </div>
+
+        <div class="relative flex items-center justify-center my-4 h-52">
+          <canvas id="memberDonutChart"></canvas>
+          <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <span class="text-2xl font-black text-primary">{{ persentase_hadir }}%</span>
+            <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Hadir</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Breakdown Badges -->
+      <div class="grid grid-cols-4 gap-2 pt-3 border-t border-outline-variant/30 text-center">
+        <div class="p-2 rounded-2xl bg-emerald-50 border border-emerald-200">
+          <div class="text-[11px] font-bold text-emerald-800">Hadir</div>
+          <div class="text-lg font-black text-emerald-700">{{ hadir_count }}</div>
+        </div>
+        <div class="p-2 rounded-2xl bg-blue-50 border border-blue-200">
+          <div class="text-[11px] font-bold text-blue-800">Izin</div>
+          <div class="text-lg font-black text-blue-700">{{ izin_count }}</div>
+        </div>
+        <div class="p-2 rounded-2xl bg-amber-50 border border-amber-200">
+          <div class="text-[11px] font-bold text-amber-800">Sakit</div>
+          <div class="text-lg font-black text-amber-700">{{ sakit_count }}</div>
+        </div>
+        <div class="p-2 rounded-2xl bg-red-50 border border-red-200">
+          <div class="text-[11px] font-bold text-red-800">Alpa</div>
+          <div class="text-lg font-black text-red-700">{{ alpa_count }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Tren Kumulatif Kehadiran vs Target UKT -->
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
+              <span class="material-symbols-outlined text-lg">show_chart</span>
+            </span>
+            <div>
+              <h3 class="text-base font-extrabold text-on-surface">Tren Kehadiran vs Target UKT</h3>
+              <p class="text-xs text-on-surface-variant">Stabilitas kehadiran menuju kualifikasi sabuk berikutnya</p>
+            </div>
+          </div>
+          <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full {% if is_eligible_ukt %}bg-emerald-100 text-emerald-900{% else %}bg-amber-100 text-amber-900{% endif %}">
+            <span class="w-2 h-2 rounded-full {% if is_eligible_ukt %}bg-emerald-500{% else %}bg-amber-500{% endif %}"></span>
+            Target UKT: {{ min_kehadiran_ukt }}%
+          </span>
+        </div>
+
+        <div class="h-56 mt-3">
+          <canvas id="memberTrendChart"></canvas>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-on-surface-variant text-center pt-2 border-t border-outline-variant/30">
+        Ambang batas kelulusan UKT untuk sabuk ini adalah {{ min_kehadiran_ukt }}%.
+      </p>
+    </div>
+
+  </div>
+
+  <!-- Detail Information Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    <!-- Riwayat Kenaikan Sabuk (UKT) -->
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1">
+      <h3 class="text-base font-extrabold text-on-surface mb-1 flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary">military_tech</span>
+        <span>Riwayat Kenaikan Sabuk (UKT)</span>
+      </h3>
+      <p class="text-xs text-on-surface-variant mb-4">Catatan kelulusan ujian kenaikan tingkat perguruan</p>
+
+      <div class="space-y-3">
+        {% for r in riwayat_sabuk %}
+        <div class="p-3.5 rounded-2xl bg-surface-container border border-outline-variant/30 flex items-center justify-between">
+          <div>
+            <div class="text-xs font-bold text-on-surface">
+              Sabuk {{ r.sabuk_asal.nama_sabuk }} ➔ <span class="text-primary font-black">Sabuk {{ r.sabuk_baru.nama_sabuk }}</span>
+            </div>
+            <div class="text-[11px] text-outline mt-0.5">
+              {{ r.tanggal_ujian|date:"d F Y" }} • Penguji: {{ r.penguji_pelatih.user.get_full_name|default:"Dewan Guru" }}
+            </div>
+          </div>
+          <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900">
+            {{ r.get_hasil_display }}
+          </span>
+        </div>
+        {% empty %}
+        <p class="text-center py-6 text-xs text-outline">
+          Belum ada riwayat ujian kenaikan tingkat yang tercatat.
+        </p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Riwayat Kehadiran -->
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1">
+      <h3 class="text-base font-extrabold text-on-surface mb-1 flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary">history</span>
+        <span>Riwayat Presensi Latihan</span>
+      </h3>
+      <p class="text-xs text-on-surface-variant mb-4">Log absensi kehadiran pesilat pada setiap sesi</p>
+
+      <div class="space-y-2 max-h-80 overflow-y-auto pr-1">
+        {% for p in presensi_list %}
+        <div class="p-3 rounded-2xl bg-surface-container flex items-center justify-between">
+          <div>
+            <div class="font-bold text-xs text-on-surface">{{ p.sesi.get_tipe_sesi_display }}</div>
+            <div class="text-[11px] text-outline">{{ p.sesi.tanggal|date:"d M Y" }} • {{ p.waktu_presensi|time:"H:i" }} WIB</div>
+          </div>
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-bold {% if p.status == 'HADIR' %}bg-emerald-100 text-emerald-800{% elif p.status == 'IZIN' %}bg-blue-100 text-blue-800{% else %}bg-amber-100 text-amber-800{% endif %}">
+            {{ p.get_status_display }}
+          </span>
+        </div>
+        {% empty %}
+        <p class="text-center py-6 text-xs text-outline">
+          Belum ada catatan presensi latihan.
+        </p>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Modal Edit Data Anggota (Admin & Pelatih) -->
+  <div 
+    x-show="showEditModal" 
+    x-cloak 
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+  >
+    <div 
+      @click.away="showEditModal = false"
+      class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 sm:p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-elevation-3 space-y-4"
+    >
+      <div class="flex items-center justify-between pb-3 border-b border-outline-variant/30">
+        <div class="flex items-center gap-2 text-primary">
+          <span class="material-symbols-outlined text-2xl">manage_accounts</span>
+          <h3 class="font-black text-base text-on-surface">Edit Data Pesilat</h3>
+        </div>
+        <button type="button" @click="showEditModal = false" class="text-outline hover:text-on-surface">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <form method="POST" action="{% url 'members:member_edit' profile.user_id %}" class="space-y-4">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">Nama Depan *</label>
+            <input type="text" name="first_name" value="{{ profile.user.first_name }}" required class="w-full px-3 py-2 bg-surface-container-lowest border border-outline/30 rounded-xl text-xs font-semibold outline-none focus:border-primary">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">Nama Belakang</label>
+            <input type="text" name="last_name" value="{{ profile.user.last_name }}" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline/30 rounded-xl text-xs font-semibold outline-none focus:border-primary">
+          </div>
+          <!-- Asal Sekolah -->
+          <div class="sm:col-span-2" x-data="{ isNewSchool: false }">
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-bold text-on-surface-variant uppercase">Asal Sekolah</label>
+              <label class="inline-flex items-center gap-1 text-[11px] text-primary font-bold cursor-pointer">
+                <input type="checkbox" x-model="isNewSchool" class="rounded text-primary h-3 w-3 cursor-pointer">
+                <span>+ Sekolah Baru</span>
+              </label>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <select name="sekolah_id" :disabled="isNewSchool" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline/30 rounded-xl text-xs font-semibold outline-none focus:border-primary disabled:opacity-50">
+                <option value="">-- Pilih Asal Sekolah --</option>
+                {% for s in sekolah_list %}
+                <option value="{{ s.id }}" {% if profile.sekolah_id == s.id %}selected{% endif %}>{{ s.nama_sekolah }}</option>
+                {% endfor %}
+              </select>
+              <div x-show="isNewSchool" x-cloak>
+                <input type="text" name="nama_sekolah_baru" placeholder="Ketik nama sekolah baru..." class="w-full px-3 py-2 bg-surface-container-lowest border border-primary/50 rounded-xl text-xs outline-none focus:border-primary">
+              </div>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">NISN Kemdikbudristek (10 Digit) *</label>
+            <input type="text" name="nisn" value="{{ profile.nisn }}" required maxlength="10" minlength="10" pattern="[0-9]{10}" inputmode="numeric" placeholder="10 Digit Angka" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline/30 rounded-xl text-xs font-mono font-semibold outline-none focus:border-primary">
+            <p class="text-[10px] text-outline mt-0.5">Wajib tepat 10 digit angka Dapodik.</p>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">Kelas & Jurusan *</label>
+            <input type="text" name="kelas_sekolah" value="{{ profile.kelas_sekolah }}" required class="w-full px-3 py-2 bg-surface-container-lowest border border-outline/30 rounded-xl text-xs font-semibold outline-none focus:border-primary">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">Tingkat Sabuk</label>
+            <select name="sabuk_id" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline/30 rounded-xl text-xs font-semibold outline-none focus:border-primary">
+              {% for s in sabuk_list %}
+              <option value="{{ s.id }}" {% if profile.sabuk_saat_ini and profile.sabuk_saat_ini.id == s.id %}selected{% endif %}>Sabuk {{ s.nama_sabuk }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">Kategori Peminatan</label>
+            <select name="kategori_id" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline/30 rounded-xl text-xs font-semibold outline-none focus:border-primary">
+              <option value="">-- Belum Menentukan --</option>
+              {% for k in kategori_list %}
+              <option value="{{ k.id }}" {% if profile.kategori_fokus and profile.kategori_fokus.id == k.id %}selected{% endif %}>{{ k.nama }} ({{ k.kelas_tanding|default:"Bebas" }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">Email</label>
+            <input type="email" name="email" value="{{ profile.user.email }}" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline/30 rounded-xl text-xs outline-none focus:border-primary">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">No. WhatsApp</label>
+            <input type="tel" name="phone_number" value="{{ profile.user.phone_number|default:'' }}" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline/30 rounded-xl text-xs outline-none focus:border-primary">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">Nama Orang Tua / Wali</label>
+            <input type="text" name="nama_wali" value="{{ profile.nama_wali|default:'' }}" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline/30 rounded-xl text-xs outline-none focus:border-primary">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">No HP Wali Murid</label>
+            <input type="tel" name="no_hp_wali" value="{{ profile.no_hp_wali|default:'' }}" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline/30 rounded-xl text-xs outline-none focus:border-primary">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">Status Keanggotaan</label>
+            <select name="status_keanggotaan" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline/30 rounded-xl text-xs font-semibold outline-none focus:border-primary">
+              {% for code, label in status_choices %}
+              <option value="{{ code }}" {% if profile.status_keanggotaan == code %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-outline-variant/30">
+          <button type="button" @click="showEditModal = false" class="px-4 py-2 rounded-full bg-surface-container text-xs font-bold text-outline hover:text-on-surface">
+            Batal
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-full bg-primary hover:bg-primary-dark text-on-primary text-xs font-bold shadow-xs">
+            Simpan Perubahan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Ajukan Izin Hapus (Khusus Pelatih) -->
+  <div 
+    x-show="showDeleteReqModal" 
+    x-cloak 
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+  >
+    <div 
+      @click.away="showDeleteReqModal = false"
+      class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-elevation-3 space-y-4"
+    >
+      <div class="flex items-center justify-between pb-3 border-b border-outline-variant/30">
+        <div class="flex items-center gap-2 text-red-700">
+          <span class="material-symbols-outlined text-2xl">person_remove</span>
+          <h3 class="font-black text-base text-on-surface">Ajukan Izin Hapus Anggota</h3>
+        </div>
+        <button type="button" @click="showDeleteReqModal = false" class="text-outline hover:text-on-surface">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <p class="text-xs text-on-surface-variant leading-relaxed">
+        Sebagai pelatih, Anda wajib mendapatkan izin dari Admin / Pembina eskul sebelum data anggota <strong>{{ profile.user.get_full_name|default:profile.user.username }}</strong> dihapus dari sistem.
+      </p>
+
+      <form method="POST" action="{% url 'members:member_delete' profile.user_id %}" class="space-y-4">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <div>
+          <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">
+            Alasan Penghapusan <span class="text-error">*</span>
+          </label>
+          <textarea 
+            name="alasan_penghapusan" 
+            required 
+            rows="3" 
+            placeholder="Contoh: Siswa kurang aktif berlatih / tidak memenuhi syarat kehadiran."
+            class="w-full px-3 py-2 bg-surface-container-lowest border border-outline/30 rounded-2xl text-xs font-medium outline-none focus:border-primary"
+          >{% if persentase_hadir < 50 %}Anggota kurang aktif berlatih (Tingkat kehadiran hanya {{ persentase_hadir }}% dari total {{ total_sesi }} sesi).{% endif %}</textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-outline-variant/30">
+          <button type="button" @click="showDeleteReqModal = false" class="px-4 py-2 rounded-full bg-surface-container text-xs font-bold text-outline hover:text-on-surface">
+            Batal
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-full bg-red-700 hover:bg-red-800 text-white text-xs font-bold shadow-xs">
+            Kirim Pengajuan ke Admin
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // 1. Member Donut Chart
+    const donutCtx = document.getElementById('memberDonutChart');
+    if (donutCtx) {
+      const donutData = {{ member_donut_json|safe }};
+      new Chart(donutCtx, {
+        type: 'doughnut',
+        data: {
+          labels: donutData.labels,
+          datasets: [{
+            data: donutData.data,
+            backgroundColor: [
+              '#10B981', // Hadir
+              '#3B82F6', // Izin
+              '#F59E0B', // Sakit
+              '#EF4444', // Alpa
+            ],
+            borderWidth: 2,
+            borderColor: '#FFF8F6',
+            hoverOffset: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '72%',
+          plugins: {
+            legend: {
+              display: false,
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.parsed || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                  return ` ${label}: ${value} sesi (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 2. Member Trend Line Chart
+    const trendCtx = document.getElementById('memberTrendChart');
+    if (trendCtx) {
+      const trendData = {{ member_trend_json|safe }};
+      new Chart(trendCtx, {
+        type: 'line',
+        data: {
+          labels: trendData.labels.length > 0 ? trendData.labels : ['Belum ada sesi'],
+          datasets: [
+            {
+              label: 'Kehadiran Pesilat (%)',
+              data: trendData.cumulative_pct.length > 0 ? trendData.cumulative_pct : [0],
+              borderColor: '#8A1C14',
+              backgroundColor: 'rgba(138, 28, 20, 0.12)',
+              borderWidth: 3,
+              fill: true,
+              tension: 0.35,
+              pointBackgroundColor: '#8A1C14',
+              pointRadius: 4,
+              pointHoverRadius: 6,
+            },
+            {
+              label: 'Syarat UKT (%)',
+              data: trendData.target_ukt.length > 0 ? trendData.target_ukt : [75],
+              borderColor: '#EF4444',
+              borderWidth: 2,
+              borderDash: [5, 5],
+              fill: false,
+              pointRadius: 0,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              min: 0,
+              max: 100,
+              ticks: {
+                callback: (val) => val + '%',
+                stepSize: 25,
+                font: { size: 10 }
+              },
+              grid: {
+                color: 'rgba(133, 115, 113, 0.15)',
+              }
+            },
+            x: {
+              ticks: {
+                font: { size: 10 }
+              },
+              grid: {
+                display: false
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                boxWidth: 12,
+                font: { size: 11, weight: 'bold' }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return ` ${context.dataset.label}: ${context.parsed.y}%`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

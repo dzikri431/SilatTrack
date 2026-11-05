@@ -1,0 +1,764 @@
+{% extends 'base.html' %}
+
+{% block title %}Pusat Cetak Laporan Presensi - SilatTrack{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="{
+  showDeleteReqModal: false,
+  targetMemberName: '',
+  targetMemberReason: '',
+  deleteReqActionUrl: '',
+  openReqModal(userId, name, pct) {
+    this.targetMemberName = name;
+    this.targetMemberReason = 'Anggota kurang aktif berlatih (Tingkat kehadiran: ' + pct + '% dari total {{ total_sesi }} sesi).';
+    this.deleteReqActionUrl = '/members/' + userId + '/delete/';
+    this.showDeleteReqModal = true;
+  }
+}">
+
+  <!-- Header & Actions -->
+  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div>
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-container/60 text-primary text-xs font-bold mb-1">
+        <span class="material-symbols-outlined text-sm">assignment</span>
+        <span>Manajemen Laporan Resmi</span>
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight">
+        Laporan Presensi Ekstrakurikuler
+      </h2>
+      <p class="text-sm text-on-surface-variant">
+        Rekapitulasi kehadiran pesilat untuk pertanggungjawaban pihak sekolah (Kepala Sekolah & Waka Kesiswaan).
+      </p>
+    </div>
+
+    <!-- Quick Action Export Buttons -->
+    <div class="flex flex-wrap items-center gap-2">
+      <!-- Button Cetak Dokumen / PDF -->
+      <a href="{% url 'attendance:report_print' %}?periode_tipe={{ periode_tipe }}&bulan={{ bulan }}&tahun={{ tahun }}&admin_id={{ admin_id }}&pelatih_id={{ pelatih_id }}&sekolah={{ selected_sekolah }}&kepala_sekolah={{ kepala_sekolah_nama|urlencode }}&kepala_sekolah_nip={{ kepala_sekolah_nip|urlencode }}&kepala_sekolah_jabatan={{ kepala_sekolah_jabatan|urlencode }}" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary hover:bg-primary-dark text-on-primary font-bold text-xs shadow-elevation-1 hover:scale-105 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-lg">print</span>
+        <span>Buka Lembar Cetak / PDF</span>
+      </a>
+
+      <!-- Button Export Excel -->
+      <a href="{% url 'attendance:report_export_excel' %}?periode_tipe={{ periode_tipe }}&bulan={{ bulan }}&tahun={{ tahun }}&admin_id={{ admin_id }}&pelatih_id={{ pelatih_id }}&sekolah={{ selected_sekolah }}&kepala_sekolah={{ kepala_sekolah_nama|urlencode }}&kepala_sekolah_nip={{ kepala_sekolah_nip|urlencode }}&kepala_sekolah_jabatan={{ kepala_sekolah_jabatan|urlencode }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-elevation-1 hover:scale-105 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-lg">table_view</span>
+        <span>Unduh File Excel (.xlsx)</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Filter Periode Laporan (Material 3 Card) -->
+  <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-5 sm:p-6 shadow-elevation-1">
+    <form method="GET" action="{% url 'attendance:report_index' %}" class="space-y-4">
+      {% csrf_token %}
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-outline-variant/30 pb-4">
+        <div>
+          <h3 class="text-base font-extrabold text-on-surface">Pilih Periode & Asal Sekolah</h3>
+          <p class="text-xs text-on-surface-variant">Tentukan rentang waktu dan filter sekolah pesilat untuk laporan resmi</p>
+        </div>
+
+        <!-- Radio Tipe Periode -->
+        <div class="inline-flex p-1 bg-surface-container-high rounded-full border border-outline-variant/40 self-start sm:self-auto">
+          <label class="cursor-pointer">
+            <input type="radio" name="periode_tipe" value="bulanan" class="sr-only" onchange="this.form.submit()" {% if periode_tipe == 'bulanan' %}checked{% endif %}>
+            <span class="inline-flex items-center gap-1 px-4 py-1.5 rounded-full text-xs font-bold transition-colors {% if periode_tipe == 'bulanan' %}bg-primary text-on-primary shadow-xs{% else %}text-on-surface-variant hover:text-on-surface{% endif %}">
+              <span class="material-symbols-outlined text-sm">calendar_month</span>
+              <span>Laporan Bulanan</span>
+            </span>
+          </label>
+          <label class="cursor-pointer">
+            <input type="radio" name="periode_tipe" value="tahunan" class="sr-only" onchange="this.form.submit()" {% if periode_tipe == 'tahunan' %}checked{% endif %}>
+            <span class="inline-flex items-center gap-1 px-4 py-1.5 rounded-full text-xs font-bold transition-colors {% if periode_tipe == 'tahunan' %}bg-primary text-on-primary shadow-xs{% else %}text-on-surface-variant hover:text-on-surface{% endif %}">
+              <span class="material-symbols-outlined text-sm">event_repeat</span>
+              <span>Laporan Tahunan</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+        <!-- Filter Sekolah -->
+        <div>
+          <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">Filter Sekolah</label>
+          <select name="sekolah" onchange="this.form.submit()" class="w-full px-4 py-2.5 rounded-2xl bg-surface-container-highest border border-outline-variant/50 text-sm font-semibold text-on-surface focus:outline-primary">
+            <option value="">Semua Sekolah</option>
+            {% for s in sekolah_list %}
+              <option value="{{ s.id }}" {% if selected_sekolah == s.id|stringformat:"s" %}selected{% endif %}>{{ s.nama_sekolah }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        {% if periode_tipe == 'bulanan' %}
+        <!-- Pilih Bulan -->
+        <div>
+          <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">Bulan</label>
+          <select name="bulan" class="w-full px-4 py-2.5 rounded-2xl bg-surface-container-highest border border-outline-variant/50 text-sm font-semibold text-on-surface focus:outline-primary">
+            {% for b_val, b_name in bulan_names.items %}
+              <option value="{{ b_val }}" {% if b_val == bulan %}selected{% endif %}>{{ b_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+
+        <!-- Pilih Tahun -->
+        <div>
+          <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">Tahun</label>
+          <select name="tahun" class="w-full px-4 py-2.5 rounded-2xl bg-surface-container-highest border border-outline-variant/50 text-sm font-semibold text-on-surface focus:outline-primary">
+            {% for y in available_years %}
+              <option value="{{ y }}" {% if y == tahun %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- Penandatangan Laporan (Admin, Pelatih, Kepala Sekolah) -->
+      <div class="border-t border-outline-variant/30 pt-4 mt-2">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-1.5 text-xs font-extrabold text-on-surface">
+            <span class="material-symbols-outlined text-base text-primary">draw</span>
+            <span>Penandatangan Laporan Resmi (Pengesahan Dokumen)</span>
+          </div>
+          <span class="text-[11px] text-on-surface-variant">Disesuaikan otomatis per sekolah & dapat diedit langsung</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <!-- Admin / Pembina -->
+          <div>
+            <label class="block text-[11px] font-bold text-on-surface-variant uppercase mb-1">Pembina / Admin Eskul</label>
+            <select name="admin_id" class="w-full px-3 py-2 rounded-2xl bg-surface-container-highest border border-outline-variant/50 text-xs font-semibold text-on-surface focus:outline-primary">
+              {% for a in admin_list %}
+              <option value="{{ a.id }}" {% if selected_admin.id == a.id %}selected{% endif %}>
+                {{ a.get_full_name|default:a.username }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Pelatih -->
+          <div>
+            <label class="block text-[11px] font-bold text-on-surface-variant uppercase mb-1">Pelatih Utama Silat</label>
+            <select name="pelatih_id" class="w-full px-3 py-2 rounded-2xl bg-surface-container-highest border border-outline-variant/50 text-xs font-semibold text-on-surface focus:outline-primary">
+              {% for p in pelatih_list %}
+              <option value="{{ p.user_id }}" {% if selected_pelatih.user_id == p.user_id %}selected{% endif %}>
+                {{ p.user.get_full_name|default:p.user.username }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Jabatan Kepala Sekolah -->
+          <div>
+            <label class="block text-[11px] font-bold text-on-surface-variant uppercase mb-1">Jabatan Penandatangan</label>
+            <input 
+              type="text" 
+              name="kepala_sekolah_jabatan" 
+              value="{{ kepala_sekolah_jabatan|default:'Kepala Sekolah' }}" 
+              placeholder="Contoh: Kepala Sekolah / Plt. Kepala Sekolah"
+              class="w-full px-3 py-2 rounded-2xl bg-surface-container-highest border border-outline-variant/50 text-xs font-semibold text-on-surface focus:outline-primary"
+            >
+          </div>
+
+          <!-- Nama Kepala Sekolah -->
+          <div>
+            <label class="block text-[11px] font-bold text-on-surface-variant uppercase mb-1">Nama Kepala Sekolah</label>
+            <input 
+              type="text" 
+              name="kepala_sekolah" 
+              value="{{ kepala_sekolah_nama }}" 
+              placeholder="Nama Kepala Sekolah beserta gelar"
+              class="w-full px-3 py-2 rounded-2xl bg-surface-container-highest border border-outline-variant/50 text-xs font-semibold text-on-surface focus:outline-primary"
+            >
+          </div>
+
+          <!-- NIP Kepala Sekolah -->
+          <div>
+            <label class="block text-[11px] font-bold text-on-surface-variant uppercase mb-1">NIP Kepala Sekolah</label>
+            <input 
+              type="text" 
+              name="kepala_sekolah_nip" 
+              value="{{ kepala_sekolah_nip }}" 
+              placeholder="Contoh: 19720412 199802 1 003"
+              class="w-full px-3 py-2 rounded-2xl bg-surface-container-highest border border-outline-variant/50 text-xs font-semibold text-on-surface focus:outline-primary font-mono"
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-outline-variant/20 mt-3">
+        <div class="text-[11px] text-on-surface-variant font-medium">
+          {% if selected_sekolah %}
+          Menampilkan data presensi pesilat: <strong class="text-on-surface">{{ sekolah_nama }}</strong>
+          {% else %}
+          Menampilkan gabungan seluruh anggota pesilat dari semua sekolah
+          {% endif %}
+        </div>
+        <div class="flex items-center gap-2">
+          {% if selected_sekolah %}
+          <button 
+            type="submit" 
+            formmethod="POST" 
+            name="action" 
+            value="save_kepala_sekolah" 
+            class="py-2 px-4 rounded-2xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-bold text-xs border border-outline-variant/50 shadow-xs flex items-center gap-1.5 cursor-pointer"
+            title="Simpan nama, NIP, dan jabatan Kepala Sekolah ini ke database sebagai default sekolah terpilih"
+          >
+            <span class="material-symbols-outlined text-base text-primary">save</span>
+            <span>Simpan Default Sekolah Ini</span>
+          </button>
+          {% endif %}
+          <button type="submit" class="py-2.5 px-6 rounded-2xl bg-primary hover:bg-primary-dark text-on-primary font-bold text-xs shadow-xs hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+            <span class="material-symbols-outlined text-base">filter_alt</span>
+            <span>Terapkan Filter & Penandatangan</span>
+          </button>
+        </div>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Executive Metric Callouts (Industrial Grade) -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    
+    <!-- Total Sesi -->
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-5 shadow-elevation-1">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold text-on-surface-variant uppercase">Sesi Pertemuan</span>
+        <div class="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+          <span class="material-symbols-outlined text-lg">event_available</span>
+        </div>
+      </div>
+      <div class="text-2xl sm:text-3xl font-black text-on-surface">{{ total_sesi }}</div>
+      <p class="text-[11px] text-on-surface-variant mt-1">Sesi latihan terlaksana</p>
+    </div>
+
+    <!-- Total Pesilat -->
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-5 shadow-elevation-1">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold text-on-surface-variant uppercase">Pesilat Binaan</span>
+        <div class="w-8 h-8 rounded-xl bg-secondary/15 text-secondary flex items-center justify-center">
+          <span class="material-symbols-outlined text-lg">sports_martial_arts</span>
+        </div>
+      </div>
+      <div class="text-2xl sm:text-3xl font-black text-on-surface">{{ total_pesilat }}</div>
+      <p class="text-[11px] text-on-surface-variant mt-1">Siswa eskul aktif</p>
+    </div>
+
+    <!-- Rata-rata Kehadiran -->
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-5 shadow-elevation-1">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold text-on-surface-variant uppercase">Tingkat Kehadiran</span>
+        <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
+          <span class="material-symbols-outlined text-lg">analytics</span>
+        </div>
+      </div>
+      <div class="text-2xl sm:text-3xl font-black text-emerald-700">{{ attendance_rate }}%</div>
+      <p class="text-[11px] text-on-surface-variant mt-1">Rasio disiplin eskul</p>
+    </div>
+
+    <!-- Akumulasi Presensi -->
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-5 shadow-elevation-1">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold text-on-surface-variant uppercase">Akumulasi Hadir</span>
+        <div class="w-8 h-8 rounded-xl bg-tertiary-container text-on-tertiary-container flex items-center justify-center">
+          <span class="material-symbols-outlined text-lg">fact_check</span>
+        </div>
+      </div>
+      <div class="text-2xl sm:text-3xl font-black text-primary">{{ total_hadir }}</div>
+      <p class="text-[11px] text-on-surface-variant mt-1">Izin: {{ total_izin }} • Sakit: {{ total_sakit }} • Alpa: {{ total_alpa }}</p>
+    </div>
+
+  </div>
+
+  <!-- Grafik Analitik Laporan (Chart.js) -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- Donut Chart: Komposisi Presensi Periode Ini -->
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+              <span class="material-symbols-outlined text-lg">pie_chart</span>
+            </span>
+            <div>
+              <h3 class="text-base font-extrabold text-on-surface">Distribusi Presensi {{ periode_label }}</h3>
+              <p class="text-xs text-on-surface-variant">Komposisi status kehadiran seluruh pesilat</p>
+            </div>
+          </div>
+          <span class="text-xs font-bold text-outline">{{ total_sesi }} Sesi</span>
+        </div>
+
+        <div class="relative flex items-center justify-center my-4 h-52">
+          <canvas id="reportDonutChart"></canvas>
+          <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <span class="text-2xl font-black text-primary">{{ attendance_rate }}%</span>
+            <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Kehadiran</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Breakdown Badges -->
+      <div class="grid grid-cols-4 gap-2 pt-3 border-t border-outline-variant/30 text-center">
+        <div class="p-2 rounded-2xl bg-emerald-50 border border-emerald-200">
+          <div class="text-[11px] font-bold text-emerald-800">Hadir</div>
+          <div class="text-lg font-black text-emerald-700">{{ total_hadir }}</div>
+        </div>
+        <div class="p-2 rounded-2xl bg-blue-50 border border-blue-200">
+          <div class="text-[11px] font-bold text-blue-800">Izin</div>
+          <div class="text-lg font-black text-blue-700">{{ total_izin }}</div>
+        </div>
+        <div class="p-2 rounded-2xl bg-amber-50 border border-amber-200">
+          <div class="text-[11px] font-bold text-amber-800">Sakit</div>
+          <div class="text-lg font-black text-amber-700">{{ total_sakit }}</div>
+        </div>
+        <div class="p-2 rounded-2xl bg-red-50 border border-red-200">
+          <div class="text-[11px] font-bold text-red-800">Alpa</div>
+          <div class="text-lg font-black text-red-700">{{ total_alpa }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bar Chart: Tren Kehadiran per Sesi -->
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="w-8 h-8 rounded-xl bg-secondary/15 text-secondary flex items-center justify-center">
+              <span class="material-symbols-outlined text-lg">bar_chart</span>
+            </span>
+            <div>
+              <h3 class="text-base font-extrabold text-on-surface">Tren Kehadiran Sesi Latihan</h3>
+              <p class="text-xs text-on-surface-variant">Fluktuasi kehadiran siswa tiap sesi pada periode ini</p>
+            </div>
+          </div>
+          <span class="text-xs font-bold text-outline">{{ sesi_list|length }} Sesi</span>
+        </div>
+
+        <div class="h-56 mt-3">
+          <canvas id="reportTrendChart"></canvas>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-on-surface-variant text-center pt-2 border-t border-outline-variant/30">
+        Menampilkan rasio siswa Hadir vs Izin/Sakit vs Alpa pada setiap sesi latihan.
+      </p>
+    </div>
+
+  </div>
+
+  <!-- Pratinjau Tabel 1: Rekapitulasi Presensi Anggota -->
+  <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+      <div>
+        <h3 class="text-lg font-extrabold text-on-surface">1. Rekapitulasi Presensi Pesilat ({{ periode_label }})</h3>
+        <p class="text-xs text-on-surface-variant">Daftar kehadiran siswa, persentase disiplin, dan status kelayakan UKT</p>
+      </div>
+      <span class="text-xs font-bold px-3 py-1 rounded-full bg-surface-container-high text-on-surface self-start sm:self-center">
+        {{ member_matrix|length }} Pesilat Terdaftar
+      </span>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead>
+          <tr class="border-b border-outline-variant/40 text-xs font-bold text-on-surface-variant uppercase">
+            <th class="py-3 px-3 text-center">No</th>
+            <th class="py-3 px-3">Nama Siswa / Pesilat</th>
+            <th class="py-3 px-3">Kelas & NISN</th>
+            <th class="py-3 px-3">Sabuk</th>
+            <th class="py-3 px-2 text-center text-emerald-800 bg-emerald-50/50">H</th>
+            <th class="py-3 px-2 text-center text-blue-800 bg-blue-50/50">I</th>
+            <th class="py-3 px-2 text-center text-amber-800 bg-amber-50/50">S</th>
+            <th class="py-3 px-2 text-center text-red-800 bg-red-50/50">A</th>
+            <th class="py-3 px-3 min-w-[140px]">Persentase</th>
+            <th class="py-3 px-3 text-center">Status UKT</th>
+            <th class="py-3 px-3 text-center">Keaktifan & Aksi</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-outline-variant/20">
+          {% for item in member_matrix %}
+          <tr class="hover:bg-surface-container transition-colors">
+            <td class="py-3 px-3 text-center font-bold text-outline text-xs">{{ item.no }}</td>
+            <td class="py-3 px-3 font-bold text-on-surface">
+              <a href="{% url 'members:member_detail' item.anggota.user.id %}" class="hover:text-primary hover:underline">
+                {{ item.anggota.user.get_full_name|default:item.anggota.user.username }}
+              </a>
+            </td>
+            <td class="py-3 px-3 text-xs text-on-surface-variant">
+              <span class="font-semibold">{{ item.anggota.kelas_sekolah|default:"-" }}</span>
+              <span class="text-outline text-[11px] block">NISN: {{ item.anggota.nisn|default:"-" }}</span>
+            </td>
+            <td class="py-3 px-3 text-xs">
+              <span class="inline-block px-2.5 py-0.5 rounded-full font-bold border border-outline-variant/40" style="background-color: {{ item.anggota.sabuk_saat_ini.warna_hex }}; color: {% if item.anggota.sabuk_saat_ini.nama_sabuk == 'Putih' or item.anggota.sabuk_saat_ini.nama_sabuk == 'Kuning' %}#000000{% else %}#FFFFFF{% endif %};">
+                {{ item.anggota.sabuk_saat_ini.nama_sabuk|default:"-" }}
+              </span>
+            </td>
+            <td class="py-3 px-2 text-center font-bold text-emerald-700 bg-emerald-50/30">{{ item.hadir }}</td>
+            <td class="py-3 px-2 text-center font-bold text-blue-700 bg-blue-50/30">{{ item.izin }}</td>
+            <td class="py-3 px-2 text-center font-bold text-amber-700 bg-amber-50/30">{{ item.sakit }}</td>
+            <td class="py-3 px-2 text-center font-bold text-red-700 bg-red-50/30">{{ item.alpa }}</td>
+            <td class="py-3 px-3">
+              <div class="flex items-center justify-between text-xs mb-1">
+                <span class="font-black text-primary">{{ item.persentase }}%</span>
+                <span class="text-[10px] text-outline">Target {{ item.min_ukt }}%</span>
+              </div>
+              <div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-500 {% if item.status_ukt == 'AMAN' %}bg-emerald-500{% elif item.status_ukt == 'PERINGATAN' %}bg-amber-500{% else %}bg-red-500{% endif %}" style="width: {{ item.persentase }}%"></div>
+              </div>
+            </td>
+            <td class="py-3 px-3 text-center">
+              {% if item.status_ukt == 'AMAN' %}
+              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                <span class="material-symbols-outlined text-xs">verified</span>
+                <span>{{ item.status_label }}</span>
+              </span>
+              {% elif item.status_ukt == 'PERINGATAN' %}
+              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">
+                <span class="material-symbols-outlined text-xs">warning</span>
+                <span>{{ item.status_label }}</span>
+              </span>
+              {% else %}
+              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-100 text-red-800">
+                <span class="material-symbols-outlined text-xs">error</span>
+                <span>{{ item.status_label }}</span>
+              </span>
+              {% endif %}
+            </td>
+            <td class="py-3 px-3 text-center">
+              {% if item.is_kurang_aktif %}
+                <div class="inline-flex flex-col items-center gap-1.5">
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-300">
+                    <span class="material-symbols-outlined text-xs">person_alert</span>
+                    <span>Kurang Aktif</span>
+                  </span>
+
+                  {% if request.user.is_admin_role %}
+                    <!-- Admin Hapus Langsung -->
+                    <form id="form-del-report-{{ item.anggota.user_id }}" method="POST" action="{% url 'members:member_delete' item.anggota.user_id %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                      <button 
+                        type="button"
+                        onclick="openConfirmModal({
+                          title: 'Hapus Anggota Kurang Aktif?',
+                          message: 'Apakah Anda yakin ingin menghapus {{ item.anggota.user.get_full_name|default:item.anggota.user.username|escapejs }} secara permanen? Pesilat ini terdeteksi kurang aktif dengan tingkat kehadiran {{ item.persentase }}% ({{ item.hadir }}/{{ total_sesi }} sesi).',
+                          confirmText: 'Ya, Hapus Permanen',
+                          confirmColor: 'bg-red-700 hover:bg-red-800 text-white',
+                          icon: 'person_remove',
+                          iconColor: 'bg-red-100 text-red-700',
+                          formId: 'form-del-report-{{ item.anggota.user_id }}'
+                        })"
+                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-50 hover:bg-red-700 text-red-700 hover:text-white border border-red-200 text-[10px] font-bold transition-all shadow-2xs cursor-pointer"
+                        title="Hapus anggota langsung (Wewenang Admin)"
+                      >
+                        <span class="material-symbols-outlined text-xs">delete</span>
+                        <span>Hapus</span>
+                      </button>
+                    </form>
+                  {% elif request.user.is_pelatih_role %}
+                    <!-- Pelatih Wajib Izin Admin -->
+                    {% if item.has_pending_delete %}
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                        <span class="material-symbols-outlined text-xs animate-pulse">hourglass_top</span>
+                        <span>Menunggu Izin</span>
+                      </span>
+                    {% else %}
+                      <button 
+                        type="button"
+                        @click="openReqModal('{{ item.anggota.user_id }}', '{{ item.anggota.user.get_full_name|default:item.anggota.user.username|escapejs }}', '{{ item.persentase }}')"
+                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-50 hover:bg-red-100 text-red-700 border border-red-300 text-[10px] font-bold transition-all shadow-2xs cursor-pointer"
+                        title="Ajukan izin penghapusan ke Admin"
+                      >
+                        <span class="material-symbols-outlined text-xs">person_remove</span>
+                        <span>Ajukan Izin Hapus</span>
+                      </button>
+                    {% endif %}
+                  {% endif %}
+                </div>
+              {% else %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-surface-container-high text-on-surface-variant">
+                  <span class="material-symbols-outlined text-xs text-emerald-600">check_circle</span>
+                  <span>Aktif Berlatih</span>
+                </span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="11" class="text-center py-8 text-outline">
+              Belum ada data kehadiran pesilat untuk periode ini.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pratinjau Tabel 2: Log Sesi & Materi Latihan yang Disampaikan -->
+  <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h3 class="text-lg font-extrabold text-on-surface">2. Log Pertemuan Sesi & Kurikulum Materi</h3>
+        <p class="text-xs text-on-surface-variant">Catatan materi latihan eskul silat yang diajarkan pada periode {{ periode_label }}</p>
+      </div>
+      <span class="text-xs font-bold px-3 py-1 rounded-full bg-surface-container-high text-on-surface">
+        {{ sesi_list|length }} Sesi
+      </span>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead>
+          <tr class="border-b border-outline-variant/40 text-xs font-bold text-on-surface-variant uppercase">
+            <th class="py-3 px-3">Tanggal & Waktu</th>
+            <th class="py-3 px-3">Tipe Sesi</th>
+            <th class="py-3 px-3">Pelatih Pengampu</th>
+            <th class="py-3 px-3">Materi yang Diajarkan</th>
+            <th class="py-3 px-3 text-center">Pesilat Hadir</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-outline-variant/20">
+          {% for s in sesi_list %}
+          <tr class="hover:bg-surface-container transition-colors">
+            <td class="py-3 px-3">
+              <div class="font-bold text-on-surface">{{ s.tanggal|date:"d M Y" }}</div>
+              <div class="text-xs text-outline">{{ s.jam_buka|time:"H:i" }} WIB</div>
+            </td>
+            <td class="py-3 px-3 font-semibold text-on-surface">{{ s.get_tipe_sesi_display }}</td>
+            <td class="py-3 px-3 text-on-surface-variant">{{ s.pelatih.get_full_name|default:s.pelatih.username }}</td>
+            <td class="py-3 px-3 text-xs text-on-surface max-w-md">
+              {{ s.materi_latihan|default:"Latihan rutin teknik dan fisik." }}
+            </td>
+            <td class="py-3 px-3 text-center font-bold text-primary">
+              {{ s.total_hadir }}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center py-8 text-outline">
+              Belum ada sesi latihan yang diselenggarakan pada periode ini.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  <!-- Pratinjau Lembar Pengesahan Tanda Tangan Resmi (Admin, Pelatih, Kepala Sekolah) -->
+  <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-outline-variant/30 pb-3 mb-6">
+      <div class="flex items-center gap-2">
+        <span class="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+          <span class="material-symbols-outlined text-lg">draw</span>
+        </span>
+        <div>
+          <h3 class="text-base font-extrabold text-on-surface">Lembar Pengesahan Dokumen Laporan</h3>
+          <p class="text-xs text-on-surface-variant">Penandatangan resmi yang dicantumkan pada lembar cetak dokumen dan ekspor spreadsheet Excel</p>
+        </div>
+      </div>
+      <span class="text-xs font-bold text-outline">Ditetapkan: {{ today|date:"d F Y" }}</span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+      <!-- Kolom 1: Pembina / Admin -->
+      <div class="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col justify-between h-44 shadow-xs">
+        <div>
+          <span class="text-[11px] font-bold text-primary uppercase tracking-wider block">{{ admin_jabatan }}</span>
+          <p class="text-[11px] text-on-surface-variant mt-0.5">Admin & Pembina Eskul</p>
+        </div>
+        <div>
+          <p class="font-extrabold text-sm text-on-surface underline">{{ admin_nama }}</p>
+          <p class="text-[11px] text-outline font-mono mt-0.5">NIP. {{ admin_nip }}</p>
+        </div>
+      </div>
+
+      <!-- Kolom 2: Pelatih -->
+      <div class="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col justify-between h-44 shadow-xs">
+        <div>
+          <span class="text-[11px] font-bold text-secondary uppercase tracking-wider block">{{ pelatih_jabatan }}</span>
+          <p class="text-[11px] text-on-surface-variant mt-0.5">Dewan Kepelatihan Pencak Silat</p>
+        </div>
+        <div>
+          <p class="font-extrabold text-sm text-on-surface underline">{{ pelatih_nama }}</p>
+          <p class="text-[11px] text-outline font-mono mt-0.5">Reg. IPSI: {{ pelatih_reg }}</p>
+        </div>
+      </div>
+
+      <!-- Kolom 3: Kepala Sekolah -->
+      <div class="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col justify-between h-44 shadow-xs">
+        <div>
+          <span class="text-[11px] font-bold text-tertiary uppercase tracking-wider block">Mengetahui</span>
+          <p class="text-[11px] text-on-surface-variant mt-0.5">{{ kepala_sekolah_jabatan }}</p>
+        </div>
+        <div>
+          <p class="font-extrabold text-sm text-on-surface underline">{{ kepala_sekolah_nama }}</p>
+          <p class="text-[11px] text-outline font-mono mt-0.5">NIP. {{ kepala_sekolah_nip }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Ajukan Izin Hapus Anggota (Khusus Pelatih) -->
+  <div 
+    x-show="showDeleteReqModal" 
+    x-cloak 
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+  >
+    <div 
+      @click.away="showDeleteReqModal = false"
+      class="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-6 max-w-md w-full shadow-elevation-3 space-y-4"
+    >
+      <div class="flex items-center justify-between border-b border-outline-variant/30 pb-3">
+        <div class="flex items-center gap-2 text-red-700">
+          <span class="material-symbols-outlined text-xl">person_remove</span>
+          <h3 class="font-extrabold text-sm text-on-surface">Ajukan Izin Hapus Anggota Kurang Aktif</h3>
+        </div>
+        <button type="button" @click="showDeleteReqModal = false" class="text-outline hover:text-on-surface">
+          <span class="material-symbols-outlined text-lg">close</span>
+        </button>
+      </div>
+
+      <p class="text-xs text-on-surface-variant">
+        Sebagai Pelatih, Anda wajib mendapatkan persetujuan Admin sebelum menghapus anggota: <strong class="text-on-surface" x-text="targetMemberName"></strong>.
+      </p>
+
+      <form :action="deleteReqActionUrl" method="POST" class="space-y-3">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <div>
+          <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">
+            Alasan Penghapusan Anggota <span class="text-error">*</span>
+          </label>
+          <textarea 
+            name="alasan_penghapusan" 
+            required 
+            rows="3" 
+            x-model="targetMemberReason"
+            class="w-full px-3 py-2 bg-surface-container-lowest border border-outline/30 rounded-2xl text-xs font-medium outline-none focus:border-primary"
+          ></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-outline-variant/30">
+          <button type="button" @click="showDeleteReqModal = false" class="px-4 py-2 rounded-full bg-surface-container text-xs font-bold text-outline hover:text-on-surface">
+            Batal
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-full bg-red-700 hover:bg-red-800 text-white text-xs font-bold shadow-xs">
+            Kirim Pengajuan ke Admin
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // 1. Donut Chart
+    const donutCtx = document.getElementById('reportDonutChart');
+    if (donutCtx) {
+      const donutData = {{ donut_chart_json|safe }};
+      new Chart(donutCtx, {
+        type: 'doughnut',
+        data: {
+          labels: donutData.labels,
+          datasets: [{
+            data: donutData.data,
+            backgroundColor: [
+              '#10B981', // Hadir
+              '#3B82F6', // Izin
+              '#F59E0B', // Sakit
+              '#EF4444', // Alpa
+            ],
+            borderWidth: 2,
+            borderColor: '#FFF8F6',
+            hoverOffset: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '72%',
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.parsed || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                  return ` ${label}: ${value} presensi (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 2. Trend Bar Chart
+    const trendCtx = document.getElementById('reportTrendChart');
+    if (trendCtx) {
+      const trendData = {{ trend_chart_json|safe }};
+      new Chart(trendCtx, {
+        type: 'bar',
+        data: {
+          labels: trendData.labels.length > 0 ? trendData.labels : ['Belum ada sesi'],
+          datasets: [
+            {
+              label: 'Pesilat Hadir',
+              data: trendData.hadir.length > 0 ? trendData.hadir : [0],
+              backgroundColor: '#10B981',
+              borderRadius: 6,
+            },
+            {
+              label: 'Izin / Sakit',
+              data: trendData.izin_sakit.length > 0 ? trendData.izin_sakit : [0],
+              backgroundColor: '#3B82F6',
+              borderRadius: 6,
+            },
+            {
+              label: 'Alpa / Tidak Hadir',
+              data: trendData.alpa.length > 0 ? trendData.alpa : [0],
+              backgroundColor: '#EF4444',
+              borderRadius: 6,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0, font: { size: 10 } },
+              grid: { color: 'rgba(133, 115, 113, 0.15)' }
+            },
+            x: {
+              ticks: { font: { size: 10 } },
+              grid: { display: false }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { boxWidth: 12, font: { size: 11, weight: 'bold' } }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return ` ${context.dataset.label}: ${context.parsed.y} pesilat`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

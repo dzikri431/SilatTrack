@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if request.user.is_admin_role %}Tambah Jadwal Latihan Mingguan{% else %}Ajukan Jadwal Latihan Mingguan{% endif %} - SilatTrack{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+
+  <!-- Breadcrumbs & Header -->
+  <div>
+    <div class="flex items-center gap-2 text-xs font-semibold text-on-surface-variant mb-1">
+      <a href="{% url 'core:dashboard' %}" class="hover:text-primary transition-colors">Dashboard</a>
+      <span class="material-symbols-outlined text-xs">chevron_right</span>
+      <a href="{% url 'schedule:schedule_list' %}" class="hover:text-primary transition-colors">Jadwal Latihan</a>
+      <span class="material-symbols-outlined text-xs">chevron_right</span>
+      <span class="text-primary font-bold">{% if request.user.is_admin_role %}Tambah Jadwal{% else %}Ajukan Jadwal{% endif %}</span>
+    </div>
+    <h2 class="text-2xl sm:text-3xl font-black text-on-surface">
+      {% if request.user.is_admin_role %}
+      Tambah Jadwal Latihan Mingguan
+      {% else %}
+      Ajukan Jadwal Latihan Mingguan
+      {% endif %}
+    </h2>
+    <p class="text-xs sm:text-sm text-on-surface-variant mt-0.5">
+      {% if request.user.is_admin_role %}
+      Konfigurasikan jadwal rutin latihan pencak silat sekolah yang langsung aktif di sistem.
+      {% else %}
+      Ajukan usulan jadwal latihan baru. Jadwal akan aktif setelah diverifikasi dan disetujui oleh Admin / Pembina eskul.
+      {% endif %}
+    </p>
+  </div>
+
+  <!-- Form Card -->
+  <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 sm:p-8 shadow-elevation-1">
+    <form method="POST" class="space-y-4">
+      {% csrf_token %}
+
+      <!-- Nama Jadwal -->
+      <div>
+        <label for="id_nama_jadwal" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 ml-1">
+          Nama Jadwal / Kegiatan <span class="text-error">*</span>
+        </label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-outline">
+            <span class="material-symbols-outlined text-lg">event_note</span>
+          </span>
+          <input 
+            type="text" 
+            name="nama_jadwal" 
+            id="id_nama_jadwal" 
+            required
+            value="{{ form_data.nama_jadwal|default:'' }}"
+            placeholder="Contoh: Latihan Rutin Selasa Sore atau TC Pra-Kejuaraan"
+            class="w-full pl-10 pr-4 py-2.5 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-medium text-on-surface outline-none"
+          >
+        </div>
+      </div>
+
+      <!-- Hari & Jam -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label for="id_hari" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 ml-1">
+            Hari Latihan <span class="text-error">*</span>
+          </label>
+          <select name="hari_indeks" id="id_hari" required class="w-full px-4 py-2.5 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-semibold text-on-surface outline-none">
+            {% for val, label in hari_choices %}
+            <option value="{{ val }}" {% if form_data.hari_indeks == val|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label for="id_jam_mulai" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 ml-1">
+            Jam Mulai <span class="text-error">*</span>
+          </label>
+          <input 
+            type="time" 
+            name="jam_mulai" 
+            id="id_jam_mulai" 
+            required
+            value="{{ form_data.jam_mulai|default:'15:30' }}"
+            class="w-full px-4 py-2 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-semibold text-on-surface outline-none"
+          >
+        </div>
+
+        <div>
+          <label for="id_jam_selesai" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 ml-1">
+            Jam Selesai <span class="text-error">*</span>
+          </label>
+          <input 
+            type="time" 
+            name="jam_selesai" 
+            id="id_jam_selesai" 
+            required
+            value="{{ form_data.jam_selesai|default:'17:30' }}"
+            class="w-full px-4 py-2 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-semibold text-on-surface outline-none"
+          >
+        </div>
+      </div>
+
+      <!-- Lokasi Latihan -->
+      <div x-data="{
+        setLocation(val) {
+          document.getElementById('id_lokasi').value = val;
+        }
+      }">
+        <div class="flex items-center justify-between mb-1.5 ml-1">
+          <label for="id_lokasi" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+            Lokasi Latihan / Dojo <span class="text-error">*</span>
+          </label>
+          <span class="text-[11px] text-outline">Bisa pilih sekolah atau ketik bebas</span>
+        </div>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-outline">
+            <span class="material-symbols-outlined text-lg">location_on</span>
+          </span>
+          <input 
+            type="text" 
+            name="nama_lokasi" 
+            id="id_lokasi" 
+            list="lokasi_suggestions"
+            required
+            value="{{ form_data.nama_lokasi|default:'' }}"
+            placeholder="Contoh: Lapangan Utama SMKN 1 Rongga atau Dojo SMAN 1 Rongga"
+            class="w-full pl-10 pr-4 py-2.5 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-medium text-on-surface outline-none"
+          >
+          <datalist id="lokasi_suggestions">
+            {% for s in sekolah_list %}
+            <option value="Lapangan Utama {{ s.nama_sekolah }}"></option>
+            <option value="Dojo / Aula {{ s.nama_sekolah }}"></option>
+            <option value="{{ s.nama_sekolah }}"></option>
+            {% endfor %}
+            <option value="Dojo SilatTrack Pusat"></option>
+            <option value="Gedung Serbaguna"></option>
+          </datalist>
+        </div>
+        <!-- Quick Preset Pills -->
+        {% if sekolah_list %}
+        <div class="mt-2 flex flex-wrap items-center gap-1.5 ml-1">
+          <span class="text-[10px] text-outline font-semibold">Saran Cepat:</span>
+          {% for s in sekolah_list %}
+          <button type="button" @click="setLocation('Lapangan {{ s.nama_sekolah|escapejs }}')" class="text-[10px] px-2.5 py-1 rounded-full bg-surface-container-high hover:bg-primary-container hover:text-on-primary-container text-on-surface-variant font-medium transition-colors border border-outline-variant/30">
+            {{ s.nama_sekolah }}
+          </button>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Radius Geofence (Opsional) -->
+      <div>
+        <label for="id_radius" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 ml-1">
+          Radius Toleransi Geofence GPS (Meter)
+        </label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-outline">
+            <span class="material-symbols-outlined text-lg">radar</span>
+          </span>
+          <input 
+            type="number" 
+            name="radius_toleransi_meter" 
+            id="id_radius" 
+            value="{{ form_data.radius_toleransi_meter|default:'100' }}"
+            min="10" 
+            max="1000"
+            class="w-full pl-10 pr-4 py-2.5 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-medium text-on-surface outline-none"
+          >
+        </div>
+        <p class="text-[10px] text-outline mt-1 ml-1">Radius toleransi jarak siswa dari titik koordinat latihan (default: 100 meter).</p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="pt-4 flex items-center justify-end gap-3 border-t border-outline-variant/30">
+        <a href="{% url 'schedule:schedule_list' %}" class="px-5 py-2.5 rounded-full bg-surface-container-high text-xs font-bold text-on-surface hover:bg-surface-container-highest transition-all">
+          Batal
+        </a>
+        <button type="submit" class="px-6 py-2.5 rounded-full bg-primary hover:bg-primary-dark text-on-primary text-xs font-bold shadow-elevation-1 flex items-center gap-1.5 transition-all">
+          {% if request.user.is_admin_role %}
+          <span class="material-symbols-outlined text-base">check_circle</span>
+          <span>Simpan & Aktifkan Jadwal</span>
+          {% else %}
+          <span class="material-symbols-outlined text-base">send</span>
+          <span>Kirim Pengajuan ke Admin</span>
+          {% endif %}
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+{% endblock %}

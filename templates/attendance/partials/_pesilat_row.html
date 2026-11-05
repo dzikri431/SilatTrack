@@ -1,0 +1,121 @@
+<tr id="pesilat-row-{{ item.anggota.user_id }}" x-show="!searchQuery || '{{ item.anggota.user.get_full_name|default:item.anggota.user.username|escapejs }}'.toLowerCase().includes(searchQuery.toLowerCase()) || '{{ item.anggota.nisn|default:''|escapejs }}'.includes(searchQuery) || '{{ item.anggota.sekolah.nama_sekolah|default:''|escapejs }}'.toLowerCase().includes(searchQuery.toLowerCase())" class="hover:bg-surface-container/60 transition-colors border-b border-outline-variant/20">
+  
+  <!-- Nama, NISN & Sekolah -->
+  <td class="py-3 px-3">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center font-bold text-xs text-on-surface flex-shrink-0">
+        {{ item.anggota.user.first_name|first|default:item.anggota.user.username|first }}
+      </div>
+      <div>
+        <div class="font-bold text-on-surface text-sm">{{ item.anggota.user.get_full_name|default:item.anggota.user.username }}</div>
+        <div class="text-[11px] text-outline font-mono flex items-center gap-1.5 flex-wrap">
+          <span>{{ item.anggota.nisn }}</span>
+          <span>•</span>
+          <span>{{ item.anggota.kelas_sekolah }}</span>
+          {% if item.anggota.sekolah %}
+          <span class="px-1.5 py-0.5 rounded bg-primary-container/40 text-primary font-sans font-bold text-[10px] border border-primary/20">
+            {{ item.anggota.sekolah.nama_sekolah }}
+          </span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </td>
+
+  <!-- Sabuk -->
+  <td class="py-3 px-3">
+    {% if item.anggota.sabuk_saat_ini %}
+    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border shadow-xs" style="background-color: {{ item.anggota.sabuk_saat_ini.warna_hex }}; color: {% if item.anggota.sabuk_saat_ini.nama_sabuk == 'Putih' or item.anggota.sabuk_saat_ini.nama_sabuk == 'Kuning' %}#1E293B{% else %}#FFFFFF{% endif %};">
+      {{ item.anggota.sabuk_saat_ini.nama_sabuk }}
+    </span>
+    {% else %}
+    <span class="text-xs text-outline">-</span>
+    {% endif %}
+  </td>
+
+  <!-- Status, Metode, & Waktu -->
+  <td class="py-3 px-3 text-center">
+    {% if item.presensi %}
+      <div class="inline-flex items-center gap-1">
+        <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold {% if item.presensi.status == 'HADIR' %}bg-emerald-100 text-emerald-800 border border-emerald-200{% elif item.presensi.status == 'IZIN' %}bg-blue-100 text-blue-800 border border-blue-200{% elif item.presensi.status == 'SAKIT' %}bg-amber-100 text-amber-800 border border-amber-200{% else %}bg-red-100 text-red-800 border border-red-200{% endif %}">
+          {{ item.presensi.get_status_display }}
+        </span>
+      </div>
+      <div class="flex items-center justify-center gap-1.5 mt-1 text-[10px] text-outline">
+        <span class="px-1.5 py-0.5 rounded-md {% if item.presensi.metode_presensi == 'FACE_SCAN' %}bg-emerald-100 text-emerald-900 font-extrabold border border-emerald-300{% elif item.presensi.metode_presensi == 'QR_DYNAMIC' %}bg-blue-50 text-blue-700 font-semibold{% elif item.presensi.metode_presensi == 'MANUAL_MANDIRI' %}bg-purple-50 text-purple-700 font-semibold{% else %}bg-slate-100 text-slate-600 font-medium{% endif %}">
+          {% if item.presensi.metode_presensi == 'FACE_SCAN' %}👤 AI Wajah{% elif item.presensi.metode_presensi == 'QR_DYNAMIC' %}📷 Barcode{% elif item.presensi.metode_presensi == 'MANUAL_MANDIRI' %}✍️ Mandiri{% else %}👤 Pelatih{% endif %}
+        </span>
+        <span>• {{ item.presensi.waktu_presensi|time:"H:i" }}</span>
+        
+        {% if item.presensi.foto_face_scan %}
+        <button 
+          type="button" 
+          @click="openFaceSnapshot('{{ item.presensi.foto_face_scan.url }}', '{{ item.anggota.user.get_full_name|default:item.anggota.user.username|escapejs }}', '{{ item.presensi.waktu_presensi|time:"H:i" }} WIB', '{{ item.presensi.face_distance|default:"0.0" }}')"
+          class="inline-flex items-center justify-center p-0.5 rounded bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 transition-all cursor-pointer"
+          title="Lihat Bukti Foto Snapshot Wajah"
+        >
+          <img src="{{ item.presensi.foto_face_scan.url }}" alt="Snapshot" class="w-5 h-5 rounded object-cover shadow-2xs">
+        </button>
+        {% endif %}
+      </div>
+    {% else %}
+      <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-surface-container text-outline border border-outline-variant/30">
+        Belum Hadir
+      </span>
+    {% endif %}
+  </td>
+
+  <!-- Interactive HTMX Quick Toggle Buttons (Khusus Admin / Pelatih) -->
+  {% if request.user.is_admin_role or request.user.is_pelatih_role %}
+  <td class="py-3 px-3 text-right">
+    <div class="inline-flex rounded-full p-1 bg-surface-container-high/80 border border-outline-variant/30 shadow-xs">
+      
+      <!-- HADIR -->
+      <button 
+        type="button"
+        hx-post="{% url 'attendance:toggle_member_attendance' sesi.id item.anggota.user_id %}?status=HADIR"
+        hx-target="#pesilat-row-{{ item.anggota.user_id }}"
+        hx-swap="outerHTML"
+        title="Tandai Hadir"
+        class="px-2.5 py-1 text-xs rounded-full font-bold transition-all {% if item.presensi and item.presensi.status == 'HADIR' %}bg-emerald-600 text-white shadow-xs{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest{% endif %}">
+        H
+      </button>
+
+      <!-- IZIN -->
+      <button 
+        type="button"
+        hx-post="{% url 'attendance:toggle_member_attendance' sesi.id item.anggota.user_id %}?status=IZIN"
+        hx-target="#pesilat-row-{{ item.anggota.user_id }}"
+        hx-swap="outerHTML"
+        title="Tandai Izin"
+        class="px-2.5 py-1 text-xs rounded-full font-bold transition-all {% if item.presensi and item.presensi.status == 'IZIN' %}bg-blue-600 text-white shadow-xs{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest{% endif %}">
+        I
+      </button>
+
+      <!-- SAKIT -->
+      <button 
+        type="button"
+        hx-post="{% url 'attendance:toggle_member_attendance' sesi.id item.anggota.user_id %}?status=SAKIT"
+        hx-target="#pesilat-row-{{ item.anggota.user_id }}"
+        hx-swap="outerHTML"
+        title="Tandai Sakit"
+        class="px-2.5 py-1 text-xs rounded-full font-bold transition-all {% if item.presensi and item.presensi.status == 'SAKIT' %}bg-amber-600 text-white shadow-xs{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest{% endif %}">
+        S
+      </button>
+
+      <!-- ALPA -->
+      <button 
+        type="button"
+        hx-post="{% url 'attendance:toggle_member_attendance' sesi.id item.anggota.user_id %}?status=ALPA"
+        hx-target="#pesilat-row-{{ item.anggota.user_id }}"
+        hx-swap="outerHTML"
+        title="Tandai Alpa"
+        class="px-2.5 py-1 text-xs rounded-full font-bold transition-all {% if item.presensi and item.presensi.status == 'ALPA' %}bg-red-600 text-white shadow-xs{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest{% endif %}">
+        A
+      </button>
+
+    </div>
+  </td>
+  {% endif %}
+
+</tr>

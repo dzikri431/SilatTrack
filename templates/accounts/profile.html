@@ -1,0 +1,465 @@
+{% extends 'base.html' %}
+
+{% block title %}Profil Saya - SilatTrack{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+
+  <!-- Header & Title -->
+  <div>
+    <h2 class="text-2xl sm:text-3xl font-black text-on-surface">Pengaturan Profil Pengguna</h2>
+    <p class="text-xs sm:text-sm text-on-surface-variant">Kelola data identitas pribadi, kontak, data sabuk eskul, dan kata sandi akun Anda</p>
+  </div>
+
+  <!-- Profile Hero Banner Card (M3 Elevated) -->
+  <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-2">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+      
+      <div class="flex items-center gap-4">
+        <!-- Avatar Photo or Initial -->
+        <div class="relative flex-shrink-0">
+          {% if user.avatar %}
+          <img 
+            src="{{ user.avatar.url }}" 
+            alt="{{ user.get_full_name|default:user.username }}" 
+            class="w-20 h-20 rounded-3xl object-cover border-2 border-primary shadow-elevation-1"
+          >
+          {% else %}
+          <div class="w-20 h-20 rounded-3xl bg-primary text-on-primary flex items-center justify-center font-black text-3xl shadow-elevation-1">
+            {{ user.first_name|first|default:user.username|first }}
+          </div>
+          {% endif %}
+
+          {% if anggota_profile and anggota_profile.sabuk_saat_ini %}
+          <span class="absolute -bottom-2 -right-2 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase shadow border border-outline/30" style="background-color: {{ anggota_profile.sabuk_saat_ini.warna_hex }}; color: {% if anggota_profile.sabuk_saat_ini.nama_sabuk == 'Putih' or anggota_profile.sabuk_saat_ini.nama_sabuk == 'Kuning' %}#000000{% else %}#FFFFFF{% endif %};">
+            {{ anggota_profile.sabuk_saat_ini.nama_sabuk }}
+          </span>
+          {% endif %}
+        </div>
+
+        <div>
+          <h3 class="text-xl sm:text-2xl font-black text-on-surface leading-tight">
+            {{ user.get_full_name|default:user.username }}
+          </h3>
+          <p class="text-xs text-on-surface-variant font-mono mt-0.5">
+            @{{ user.username }} • Email: {{ user.email|default:"(Belum diset)" }}
+          </p>
+          <div class="flex flex-wrap items-center gap-2 mt-2">
+            <span class="px-3 py-0.5 rounded-full text-xs font-bold {% if user.is_admin_role %}bg-red-100 text-red-800{% elif user.is_pelatih_role %}bg-amber-100 text-amber-900{% else %}bg-emerald-100 text-emerald-800{% endif %}">
+              {{ user.get_role_display }}
+            </span>
+            {% if anggota_profile %}
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container-high text-on-surface">
+              Kelas: {{ anggota_profile.kelas_sekolah }}
+            </span>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container-high text-on-surface font-mono">
+              NISN: {{ anggota_profile.nisn }}
+            </span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- Left / Main: Edit Data Pribadi & Eskul (8 cols) -->
+    <div class="lg:col-span-8 space-y-6">
+      
+      <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 sm:p-8 shadow-elevation-1">
+        <div class="flex items-center gap-2 pb-3 mb-6 border-b border-outline-variant/30 text-primary">
+          <span class="material-symbols-outlined text-2xl">manage_accounts</span>
+          <h3 class="text-base font-black text-on-surface">Ubah Data Pribadi & Kontak</h3>
+        </div>
+
+        <form method="POST" action="{% url 'accounts:profile' %}" enctype="multipart/form-data" class="space-y-4">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="update_profile">
+
+          <!-- Foto Profil Baru -->
+          <div class="p-4 bg-surface-container rounded-2xl border border-outline-variant/20 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div class="flex-1">
+              <label class="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1">
+                Foto Profil (Avatar)
+              </label>
+              <p class="text-[11px] text-outline mb-2">Unggah foto profil baru berformat JPG, PNG atau WebP</p>
+              <input 
+                type="file" 
+                name="avatar" 
+                accept="image/*"
+                class="text-xs text-on-surface file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-primary file:text-on-primary hover:file:bg-primary-dark"
+              >
+            </div>
+            {% if user.avatar %}
+            <div class="text-center sm:text-right">
+              <span class="text-[10px] text-outline block mb-1">Foto Saat Ini:</span>
+              <img src="{{ user.avatar.url }}" alt="Avatar" class="w-12 h-12 rounded-xl object-cover border border-outline-variant inline-block">
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Nama Depan -->
+            <div>
+              <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 ml-1">
+                Nama Depan <span class="text-primary">*</span>
+              </label>
+              <input 
+                type="text" 
+                name="first_name" 
+                value="{{ user.first_name }}" 
+                required
+                class="w-full px-4 py-2.5 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-medium text-on-surface outline-none"
+              >
+            </div>
+
+            <!-- Nama Belakang -->
+            <div>
+              <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 ml-1">
+                Nama Belakang
+              </label>
+              <input 
+                type="text" 
+                name="last_name" 
+                value="{{ user.last_name }}" 
+                class="w-full px-4 py-2.5 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-medium text-on-surface outline-none"
+              >
+            </div>
+
+            <!-- Username -->
+            <div>
+              <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 ml-1">
+                Username <span class="text-primary">*</span>
+              </label>
+              <input 
+                type="text" 
+                name="username" 
+                value="{{ user.username }}" 
+                required
+                class="w-full px-4 py-2.5 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-medium text-on-surface outline-none"
+              >
+            </div>
+
+            <!-- Email -->
+            <div>
+              <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 ml-1">
+                Email
+              </label>
+              <input 
+                type="email" 
+                name="email" 
+                value="{{ user.email }}" 
+                placeholder="nama@email.com"
+                class="w-full px-4 py-2.5 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-medium text-on-surface outline-none"
+              >
+            </div>
+
+            <!-- Nomor Handphone -->
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 ml-1">
+                Nomor WhatsApp / Kontak Handphone
+              </label>
+              <input 
+                type="tel" 
+                name="phone_number" 
+                value="{{ user.phone_number|default:'' }}" 
+                placeholder="08xxxxxxxxxx"
+                class="w-full px-4 py-2.5 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-medium text-on-surface outline-none"
+              >
+            </div>
+          </div>
+
+          <!-- Khusus Profil Anggota / Pesilat -->
+          {% if anggota_profile %}
+          <div class="pt-4 border-t border-outline-variant/30 mt-6">
+            <div class="flex items-center gap-2 pb-2 mb-4 text-primary">
+              <span class="material-symbols-outlined text-xl">sports_kabaddi</span>
+              <h4 class="font-black text-xs uppercase tracking-wider">Keterangan Sabuk & Keanggotaan Silat</h4>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- NISN -->
+              <div>
+                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 ml-1">
+                  NISN / ID Anggota
+                </label>
+                <input 
+                  type="text" 
+                  name="nisn" 
+                  value="{{ anggota_profile.nisn }}" 
+                  required
+                  class="w-full px-4 py-2.5 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-medium text-on-surface outline-none"
+                >
+              </div>
+
+              <!-- Kelas Sekolah -->
+              <div>
+                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 ml-1">
+                  Kelas & Jurusan
+                </label>
+                <input 
+                  type="text" 
+                  name="kelas_sekolah" 
+                  value="{{ anggota_profile.kelas_sekolah }}" 
+                  required
+                  class="w-full px-4 py-2.5 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-medium text-on-surface outline-none"
+                >
+              </div>
+
+              <!-- Jenis Kelamin -->
+              <div>
+                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 ml-1">
+                  Jenis Kelamin
+                </label>
+                <select name="jenis_kelamin" class="w-full px-4 py-2.5 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-semibold text-on-surface outline-none">
+                  <option value="L" {% if anggota_profile.jenis_kelamin == 'L' %}selected{% endif %}>Laki-laki</option>
+                  <option value="P" {% if anggota_profile.jenis_kelamin == 'P' %}selected{% endif %}>Perempuan</option>
+                </select>
+              </div>
+
+              <!-- Update Tingkat Sabuk Saat Ini -->
+              <div>
+                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 ml-1">
+                  Tingkatan Sabuk Saat Ini
+                </label>
+                <select name="sabuk_id" class="w-full px-4 py-2.5 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-semibold text-on-surface outline-none">
+                  {% for s in sabuk_list %}
+                  <option value="{{ s.id }}" {% if anggota_profile.sabuk_saat_ini_id == s.id %}selected{% endif %}>
+                    Sabuk {{ s.nama_sabuk }} (Tingkat {{ s.urutan_tingkat }})
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Kategori Fokus -->
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 ml-1">
+                  Kategori Peminatan (Tanding / Seni)
+                </label>
+                <select name="kategori_id" class="w-full px-4 py-2.5 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-semibold text-on-surface outline-none">
+                  <option value="">-- Belum Menentukan --</option>
+                  {% for k in kategori_list %}
+                  <option value="{{ k.id }}" {% if anggota_profile.kategori_fokus_id == k.id %}selected{% endif %}>
+                    {{ k.nama }} ({{ k.kelas_tanding|default:"Bebas" }})
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Kontak Orang Tua / Wali -->
+              <div>
+                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 ml-1">
+                  Nama Orang Tua / Wali
+                </label>
+                <input 
+                  type="text" 
+                  name="nama_wali" 
+                  value="{{ anggota_profile.nama_wali|default:'' }}" 
+                  placeholder="Nama orang tua/wali"
+                  class="w-full px-4 py-2.5 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-medium text-on-surface outline-none"
+                >
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 ml-1">
+                  No. HP Wali Murid
+                </label>
+                <input 
+                  type="tel" 
+                  name="no_hp_wali" 
+                  value="{{ anggota_profile.no_hp_wali|default:'' }}" 
+                  placeholder="Kontak darurat wali"
+                  class="w-full px-4 py-2.5 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-medium text-on-surface outline-none"
+                >
+              </div>
+            </div>
+
+            <!-- Penjelasan Kurikulum Sabuk Saat Ini -->
+            {% if anggota_profile.sabuk_saat_ini %}
+            <div class="mt-4 p-4 rounded-2xl bg-surface-container border border-outline-variant/30 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-black text-on-surface flex items-center gap-1.5">
+                  <span class="material-symbols-outlined text-primary text-base">info</span>
+                  Kurikulum Sabuk {{ anggota_profile.sabuk_saat_ini.nama_sabuk }}
+                </span>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase" style="background-color: {{ anggota_profile.sabuk_saat_ini.warna_hex }}; color: {% if anggota_profile.sabuk_saat_ini.nama_sabuk == 'Putih' or anggota_profile.sabuk_saat_ini.nama_sabuk == 'Kuning' %}#000000{% else %}#FFFFFF{% endif %};">
+                  Tingkat {{ anggota_profile.sabuk_saat_ini.urutan_tingkat }}
+                </span>
+              </div>
+              <p class="text-xs text-on-surface-variant leading-relaxed">
+                {{ anggota_profile.sabuk_saat_ini.deskripsi|default:"Materi teknik dasar dan pembinaan fisik." }}
+              </p>
+              <div class="text-[11px] font-bold text-primary">
+                ★ Minimal Kehadiran Latihan untuk Ujian Kenaikan Sabuk (UKT): {{ anggota_profile.sabuk_saat_ini.min_kehadiran_ukt }}%
+              </div>
+            </div>
+            {% endif %}
+
+          </div>
+          {% endif %}
+
+          <!-- Khusus Pelatih -->
+          {% if pelatih_profile %}
+          <div class="pt-4 border-t border-outline-variant/30 mt-6">
+            <div class="flex items-center gap-2 pb-2 mb-4 text-primary">
+              <span class="material-symbols-outlined text-xl">workspace_premium</span>
+              <h4 class="font-black text-xs uppercase tracking-wider">Kredensial & Lisensi Pelatih</h4>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 ml-1">
+                  Tingkatan Pendekar / Gelar
+                </label>
+                <input 
+                  type="text" 
+                  name="tingkatan_pendekar" 
+                  value="{{ pelatih_profile.tingkatan_pendekar|default:'' }}" 
+                  placeholder="Contoh: Pendekar Muda"
+                  class="w-full px-4 py-2.5 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-medium text-on-surface outline-none"
+                >
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 ml-1">
+                  Spesialisasi Kepelatihan
+                </label>
+                <input 
+                  type="text" 
+                  name="spesialisasi" 
+                  value="{{ pelatih_profile.spesialisasi|default:'' }}" 
+                  placeholder="Tanding, Seni, Fisik"
+                  class="w-full px-4 py-2.5 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-medium text-on-surface outline-none"
+                >
+              </div>
+
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 ml-1">
+                  Nomor Sertifikasi / SK Pengurus
+                </label>
+                <input 
+                  type="text" 
+                  name="sertifikasi_sk" 
+                  value="{{ pelatih_profile.sertifikasi_sk|default:'' }}" 
+                  class="w-full px-4 py-2.5 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-medium text-on-surface outline-none"
+                >
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          <div class="pt-4">
+            <button 
+              type="submit" 
+              class="w-full sm:w-auto px-6 py-3 rounded-full bg-primary hover:bg-primary-dark text-on-primary font-bold text-xs shadow-elevation-1 hover:shadow-elevation-2 active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <span class="material-symbols-outlined text-lg">save</span>
+              <span>Simpan Perubahan Profil</span>
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+    </div>
+
+    <!-- Right: Keamanan & Ganti Kata Sandi (4 cols) -->
+    <div class="lg:col-span-4 space-y-6">
+      
+      <!-- Password Change Card -->
+      <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1">
+        <div class="flex items-center gap-2 pb-3 mb-4 border-b border-outline-variant/30 text-primary">
+          <span class="material-symbols-outlined text-xl">lock_reset</span>
+          <h3 class="text-sm font-black text-on-surface">Ubah Kata Sandi</h3>
+        </div>
+
+        <form method="POST" action="{% url 'accounts:profile' %}" class="space-y-4" x-data="{ oldShow: false, newShow: false, confShow: false }">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="change_password">
+
+          <!-- Current Password -->
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 ml-1">
+              Kata Sandi Saat Ini <span class="text-primary">*</span>
+            </label>
+            <div class="relative">
+              <input 
+                :type="oldShow ? 'text' : 'password'" 
+                name="current_password" 
+                required 
+                placeholder="Kata sandi lama"
+                class="w-full pl-3.5 pr-9 py-2 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-medium text-on-surface outline-none"
+              >
+              <button type="button" @click="oldShow = !oldShow" class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-outline">
+                <span class="material-symbols-outlined text-base" x-text="oldShow ? 'visibility_off' : 'visibility'"></span>
+              </button>
+            </div>
+          </div>
+
+          <!-- New Password -->
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 ml-1">
+              Kata Sandi Baru <span class="text-primary">*</span>
+            </label>
+            <div class="relative">
+              <input 
+                :type="newShow ? 'text' : 'password'" 
+                name="new_password" 
+                required 
+                placeholder="Minimal 6 karakter"
+                class="w-full pl-3.5 pr-9 py-2 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-medium text-on-surface outline-none"
+              >
+              <button type="button" @click="newShow = !newShow" class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-outline">
+                <span class="material-symbols-outlined text-base" x-text="newShow ? 'visibility_off' : 'visibility'"></span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Confirm New Password -->
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1 ml-1">
+              Konfirmasi Sandi Baru <span class="text-primary">*</span>
+            </label>
+            <div class="relative">
+              <input 
+                :type="confShow ? 'text' : 'password'" 
+                name="confirm_new_password" 
+                required 
+                placeholder="Ulangi sandi baru"
+                class="w-full pl-3.5 pr-9 py-2 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-medium text-on-surface outline-none"
+              >
+              <button type="button" @click="confShow = !confShow" class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-outline">
+                <span class="material-symbols-outlined text-base" x-text="confShow ? 'visibility_off' : 'visibility'"></span>
+              </button>
+            </div>
+          </div>
+
+          <button 
+            type="submit" 
+            class="w-full py-2.5 px-4 rounded-full bg-surface-container-high hover:bg-primary hover:text-on-primary font-bold text-xs text-on-surface transition-all flex items-center justify-center gap-1.5"
+          >
+            <span class="material-symbols-outlined text-base">key</span>
+            <span>Perbarui Kata Sandi</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Tips Keamanan -->
+      <div class="bg-surface-container-low border border-outline-variant/30 rounded-3xl p-5 text-xs text-outline space-y-2">
+        <div class="flex items-center gap-1.5 font-bold text-on-surface">
+          <span class="material-symbols-outlined text-base text-primary">security</span>
+          <span>Keamanan Data Pendekar</span>
+        </div>
+        <p>
+          Pastikan nomor WhatsApp aktif untuk menerima pengumuman jadwal latihan dan evaluasi kenaikan tingkat (UKT).
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

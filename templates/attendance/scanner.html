@@ -1,0 +1,748 @@
+{% extends 'base.html' %}
+{% load l10n %}
+
+{% block title %}Presensi Wajah Face ID - SilatTrack{% endblock %}
+
+{% block extra_head %}
+<style>
+  @keyframes biometricLaser {
+    0% { top: 15%; opacity: 0.2; }
+    50% { top: 85%; opacity: 0.9; }
+    100% { top: 15%; opacity: 0.2; }
+  }
+  .laser-scanner-beam {
+    animation: biometricLaser 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div 
+  class="max-w-md mx-auto space-y-6 py-2" 
+  x-data="faceAttendanceHub({
+    submitFaceUrl: '{% url 'attendance:submit_face_scan' %}',
+    activeSessionId: '{{ active_session.id|default:'' }}',
+    hasFaceRegistered: {{ has_face_registered|yesno:'true,false' }},
+    referenceDescriptor: {{ face_descriptor_json|safe }},
+    dojoLat: parseFloat('{{ dojo_lat_unlocalized|default:"-7.001100" }}'),
+    dojoLng: parseFloat('{{ dojo_lng_unlocalized|default:"107.272100" }}'),
+    maxRadius: parseFloat('{{ max_radius_meter|unlocalize|default:"100" }}')
+  })"
+>
+
+  <!-- Header -->
+  <div class="text-center">
+    <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary text-on-primary shadow-elevation-1 mb-2">
+      <span class="material-symbols-outlined text-3xl">face</span>
+    </div>
+    <h2 class="text-2xl font-black text-on-surface">Presensi Wajah (Face ID)</h2>
+    <p class="text-xs text-on-surface-variant">Presensi Biometrik AI & Verifikasi Radius Lokasi Tempat Latihan</p>
+  </div>
+
+  <!-- Dynamic Result Container (HTMX Target for Face) -->
+  <div id="scanner-result-box"></div>
+
+  <!-- Status Info if Already Checked In Today -->
+  {% if user_presensi %}
+  <div class="bg-emerald-50 border border-emerald-300 rounded-3xl p-4 flex items-center gap-3 shadow-xs">
+    <div class="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0">
+      <span class="material-symbols-outlined text-xl">verified</span>
+    </div>
+    <div class="text-xs">
+      <span class="font-bold text-emerald-950 block text-sm">Kamu Sudah Presensi Hari Ini</span>
+      <span class="text-emerald-800">
+        Status: <strong>{{ user_presensi.get_status_display }}</strong> • Metode: {{ user_presensi.get_metode_presensi_display }} • {{ user_presensi.waktu_presensi|time:"H:i" }} WIB
+      </span>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Active Session Check -->
+  {% if active_session %}
+  <div class="bg-surface-container-low border border-primary/30 rounded-3xl p-5 shadow-elevation-1 space-y-2">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-10 h-10 rounded-2xl bg-primary text-on-primary flex items-center justify-center shadow-xs flex-shrink-0">
+          <span class="material-symbols-outlined text-xl">sports_martial_arts</span>
+        </div>
+        <div>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-900 border border-emerald-300">
+            Sesi Dibuka (Presensi Aktif)
+          </span>
+          <h4 class="font-black text-sm text-on-surface mt-0.5">{{ active_session.get_tipe_sesi_display }}</h4>
+        </div>
+      </div>
+      <div class="text-right">
+        <span class="text-xs font-mono font-bold text-primary block">{{ active_session.jam_buka|time:"H:i" }} WIB</span>
+        <span class="text-[10px] text-outline">{{ active_session.tanggal|date:"d M Y" }}</span>
+      </div>
+    </div>
+    <p class="text-xs text-on-surface-variant pt-2 border-t border-outline-variant/30">
+      Pelatih: <strong class="text-on-surface">{{ active_session.pelatih.get_full_name|default:active_session.pelatih.username }}</strong>
+      {% if active_session.materi_latihan %} • Materi: {{ active_session.materi_latihan }}{% endif %}
+    </p>
+  </div>
+  {% else %}
+  <div class="bg-amber-50 border border-amber-300 rounded-3xl p-6 text-center space-y-2 shadow-xs">
+    <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center mx-auto">
+      <span class="material-symbols-outlined text-2xl">event_busy</span>
+    </div>
+    <h4 class="font-extrabold text-sm text-amber-950">Belum Ada Sesi Latihan yang Dibuka</h4>
+    <p class="text-xs text-amber-800 max-w-xs mx-auto">
+      Pelatih atau Admin belum membuka sesi latihan aktif. Presensi wajah baru dapat dipindai setelah sesi resmi dibuka.
+    </p>
+    <a href="{% url 'attendance:session_list' %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-amber-300 text-amber-900 text-xs font-bold hover:bg-amber-100 transition-colors mt-2">
+      <span class="material-symbols-outlined text-sm">calendar_month</span>
+      <span>Lihat Arsip Sesi Latihan</span>
+    </a>
+  </div>
+  {% endif %}
+
+  <!-- KARTU RADIUS LOKASI TEMPAT LATIHAN (MAKSIMAL 100 METER) -->
+  <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-5 shadow-elevation-1 space-y-3">
+    
+    <div class="flex items-center justify-between border-b border-outline-variant/30 pb-3">
+      <div class="flex items-center gap-2">
+        <span class="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+          <span class="material-symbols-outlined text-lg">radar</span>
+        </span>
+        <div>
+          <h4 class="font-extrabold text-xs text-on-surface">Radius Lokasi Tempat Latihan</h4>
+          <p class="text-[10px] text-outline">Batas Geofence: <strong>Maks. 100 Meter</strong></p>
+        </div>
+      </div>
+
+      <!-- Live Geofence Status Badge -->
+      <div>
+        <template x-if="isRequestingLocation">
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1">
+            <span class="material-symbols-outlined text-xs animate-spin">sync</span>
+            <span>Mendeteksi GPS...</span>
+          </span>
+        </template>
+
+        <template x-if="!isRequestingLocation && locationConfirmed && isWithinRadius">
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1 shadow-xs">
+            <span class="material-symbols-outlined text-xs">verified</span>
+            <span>Dalam Radius (Bisa Presensi)</span>
+          </span>
+        </template>
+
+        <template x-if="!isRequestingLocation && locationConfirmed && !isWithinRadius">
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-800 border border-red-300 flex items-center gap-1 shadow-xs">
+            <span class="material-symbols-outlined text-xs">fmd_bad</span>
+            <span>Di Luar Radius 100m</span>
+          </span>
+        </template>
+
+        <template x-if="!isRequestingLocation && !locationConfirmed">
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-200 text-slate-800 flex items-center gap-1">
+            <span class="material-symbols-outlined text-xs">location_searching</span>
+            <span>Belum Dikonfirmasi</span>
+          </span>
+        </template>
+      </div>
+    </div>
+
+    <!-- Info Tempat Latihan & Anggota -->
+    <div class="grid grid-cols-2 gap-2 text-xs">
+      <div class="p-2.5 bg-surface-container rounded-2xl border border-outline-variant/20">
+        <span class="text-[10px] font-bold text-outline block uppercase tracking-wider">Tempat Latihan:</span>
+        <strong class="text-on-surface font-extrabold block text-xs truncate" title="{{ lokasi_nama }}">{{ lokasi_nama }}</strong>
+        <span class="text-[10px] text-outline font-mono block mt-0.5">{{ dojo_lat_unlocalized }}, {{ dojo_lng_unlocalized }}</span>
+      </div>
+
+      <div class="p-2.5 bg-surface-container rounded-2xl border border-outline-variant/20">
+        <span class="text-[10px] font-bold text-outline block uppercase tracking-wider">Jarak Anda Saat Ini:</span>
+        <template x-if="locationConfirmed">
+          <div>
+            <strong class="text-on-surface font-extrabold block text-xs" :class="isWithinRadius ? 'text-emerald-700' : 'text-red-700'">
+              <span x-text="distanceMeters"></span> Meter
+            </strong>
+            <span class="text-[10px] font-mono block mt-0.5" :class="isWithinRadius ? 'text-emerald-600' : 'text-red-600'" x-text="isWithinRadius ? 'Dalam toleransi 100m' : 'Melebihi batas 100m'"></span>
+          </div>
+        </template>
+        <template x-if="!locationConfirmed">
+          <span class="text-xs text-outline italic block mt-1">Menunggu GPS...</span>
+        </template>
+      </div>
+    </div>
+
+    <!-- Status Saat Berada di Radius Latihan -->
+    <template x-if="locationConfirmed && isWithinRadius">
+      <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 text-xs flex items-center justify-between gap-2 shadow-xs">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-emerald-700 text-xl flex-shrink-0">check_circle</span>
+          <div>
+            <strong class="block font-bold">Terdeteksi di {{ lokasi_nama|default:"Tempat Latihan" }}</strong>
+            <span class="text-[11px] text-emerald-800 block mt-0.5">
+              Jarak <span x-text="distanceMeters"></span>m dari titik dojo. Fitur presensi Face ID siap digunakan!
+            </span>
+          </div>
+        </div>
+        <a 
+          :href="'https://www.google.com/maps/dir/?api=1&destination=' + dojoLat + ',' + dojoLng" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          title="Buka Peta {{ lokasi_nama|default:'Tempat Latihan' }}"
+          class="px-2.5 py-1.5 rounded-xl bg-white border border-emerald-300 text-emerald-800 text-[10px] font-bold flex items-center gap-1 hover:bg-emerald-100 flex-shrink-0"
+        >
+          <span class="material-symbols-outlined text-sm">map</span>
+          <span>Peta</span>
+        </a>
+      </div>
+    </template>
+
+    <!-- Tombol Minta Izin / Konfirmasi Lokasi -->
+    <template x-if="!locationConfirmed">
+      <div class="space-y-2">
+        <div class="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center gap-2">
+          <span class="material-symbols-outlined text-amber-700 text-lg flex-shrink-0 animate-spin" x-show="isRequestingLocation">sync</span>
+          <span class="material-symbols-outlined text-amber-700 text-lg flex-shrink-0" x-show="!isRequestingLocation">location_searching</span>
+          <div class="flex-1">
+            <span x-text="isRequestingLocation ? 'Sedang mendeteksi koordinat GPS tempat latihan Anda...' : (locationError || 'Menunggu izin akses GPS perangkat Anda. Pastikan klik Izinkan/Allow pada pop-up browser.')"></span>
+          </div>
+        </div>
+        <div class="flex flex-col gap-2">
+          <button 
+            type="button" 
+            @click="requestLocation()"
+            :disabled="isRequestingLocation"
+            class="w-full py-2.5 rounded-full bg-primary hover:bg-primary-dark text-on-primary text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+          >
+            <span class="material-symbols-outlined text-base">my_location</span>
+            <span x-text="isRequestingLocation ? 'Menghubungkan GPS...' : 'Ukur Ulang Lokasi GPS Saya'"></span>
+          </button>
+          <a 
+            :href="'https://www.google.com/maps/dir/?api=1&destination=' + dojoLat + ',' + dojoLng" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            class="w-full py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
+          >
+            <span class="material-symbols-outlined text-sm">directions</span>
+            <span>Arahkan Rute Maps ke {{ lokasi_nama|default:"Tempat Latihan" }}</span>
+            <span class="material-symbols-outlined text-xs">open_in_new</span>
+          </a>
+          <button 
+            type="button" 
+            @click="simulateDojoLocation()"
+            class="w-full py-2 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer"
+          >
+            <span class="material-symbols-outlined text-sm">pin_drop</span>
+            <span>Mode Uji Coba: Gunakan Lokasi Dojo Langsung</span>
+          </button>
+        </div>
+      </div>
+    </template>
+
+    <template x-if="locationConfirmed && !isWithinRadius">
+      <div class="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-900 text-xs flex items-start gap-2.5">
+        <span class="material-symbols-outlined text-red-700 text-xl flex-shrink-0">error</span>
+        <div class="flex-1 space-y-2">
+          <div>
+            <strong class="block font-bold">Presensi Dinonaktifkan (Di Luar Radius 100 Meter)</strong>
+            <span class="text-[11px] text-red-800 leading-tight block mt-0.5">
+              Jarak Anda terdeteksi <strong x-text="distanceMeters"></strong> meter dari {{ lokasi_nama|default:"tempat latihan" }}. Silakan mendekat ke area tempat latihan.
+            </span>
+          </div>
+          <div class="flex flex-col gap-2">
+            <a 
+              :href="'https://www.google.com/maps/dir/?api=1&destination=' + dojoLat + ',' + dojoLng" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              class="w-full py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
+            >
+              <span class="material-symbols-outlined text-sm">directions</span>
+              <span>Arahkan Rute Maps ke {{ lokasi_nama|default:"Tempat Latihan" }}</span>
+              <span class="material-symbols-outlined text-xs">open_in_new</span>
+            </a>
+            <div class="flex items-center gap-2">
+              <button type="button" @click="requestLocation()" class="flex-1 py-1.5 bg-red-700 hover:bg-red-800 text-white rounded-full text-[11px] font-bold inline-flex items-center justify-center gap-1 shadow-xs cursor-pointer">
+                <span class="material-symbols-outlined text-xs">refresh</span>
+                <span>Ukur Ulang Jarak GPS</span>
+              </button>
+              <button type="button" @click="simulateDojoLocation()" class="flex-1 py-1.5 bg-amber-700 hover:bg-amber-800 text-white rounded-full text-[11px] font-bold inline-flex items-center justify-center gap-1 shadow-xs cursor-pointer">
+                <span class="material-symbols-outlined text-xs">pin_drop</span>
+                <span>Simulasi Lokasi (Uji Coba)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+  </div>
+
+  <!-- KARTU PEMINDAI WAJAH AI FACE RECOGNITION -->
+  <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-5 shadow-elevation-2 space-y-4">
+    
+    <!-- Mode Notification Banner -->
+    <div class="text-center space-y-1">
+      <template x-if="hasFaceRegistered">
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 text-[11px] font-extrabold shadow-xs">
+          <span class="material-symbols-outlined text-xs text-emerald-700">verified_user</span>
+          <span>Mode: Verifikasi Biometrik Wajah (1:1 Match)</span>
+        </div>
+      </template>
+      <template x-if="!hasFaceRegistered">
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-extrabold shadow-xs">
+          <span class="material-symbols-outlined text-xs text-amber-700">how_to_reg</span>
+          <span>Mode: Pendaftaran Wajah Baru (Auto-Enrollment)</span>
+        </div>
+      </template>
+      <p class="text-[11px] text-outline" x-text="hasFaceRegistered ? 'Posisikan wajah Anda stabil di dalam lingkaran oval untuk verifikasi instan.' : 'Wajah Anda akan otomatis didaftarkan ke sistem saat posisi stabil.'"></p>
+    </div>
+
+    <!-- Camera Viewfinder Region -->
+    <div class="relative overflow-hidden rounded-3xl bg-black aspect-square flex items-center justify-center border-2 border-primary/30 shadow-inner">
+      
+      <!-- Video Element -->
+      <video id="face-video" autoplay muted playsinline class="w-full h-full object-cover transform -scale-x-100"></video>
+      
+      <!-- Hidden Canvas for frame snapshot & descriptor extraction -->
+      <canvas id="face-canvas" class="hidden"></canvas>
+
+      <!-- Biometric Oval Reticle Overlay -->
+      <div x-show="isCameraRunning" class="absolute inset-0 pointer-events-none flex flex-col items-center justify-center z-10 p-4">
+        
+        <!-- The Oval Guide -->
+        <div 
+          class="w-48 h-60 sm:w-56 sm:h-68 rounded-[50%/60%] border-4 transition-all duration-300 relative flex items-center justify-center overflow-hidden"
+          :class="{
+            'border-white/60 shadow-[0_0_15px_rgba(255,255,255,0.25)]': reticleStatus === 'standby',
+            'border-amber-400 shadow-[0_0_25px_rgba(251,191,36,0.5)] animate-pulse': reticleStatus === 'detecting',
+            'border-emerald-500 shadow-[0_0_35px_rgba(16,185,129,0.7)]': reticleStatus === 'verified',
+            'border-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.5)]': reticleStatus === 'error'
+          }"
+        >
+          <!-- Animated Laser Scan Beam -->
+          <div class="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary-container to-transparent laser-scanner-beam pointer-events-none"></div>
+
+          <!-- Stability Progress Bar Inside Oval -->
+          <template x-if="stabilityScore > 0 && stabilityScore < 100">
+            <div class="absolute bottom-4 left-6 right-6 h-1.5 bg-black/50 rounded-full overflow-hidden border border-white/30">
+              <div class="h-full bg-emerald-400 transition-all duration-100" :style="`width: ${stabilityScore}%`"></div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Live Guidance Banner Badge -->
+        <div class="mt-3 px-3.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-white text-[11px] font-bold flex items-center gap-1.5 shadow-lg">
+          <span class="w-2 h-2 rounded-full" :class="{
+            'bg-slate-400': reticleStatus === 'standby',
+            'bg-amber-400 animate-ping': reticleStatus === 'detecting',
+            'bg-emerald-400': reticleStatus === 'verified',
+            'bg-rose-400': reticleStatus === 'error'
+          }"></span>
+          <span x-text="guideMessage"></span>
+        </div>
+
+      </div>
+
+      <!-- Geofence Block Warning Overlay in Camera Box -->
+      <div x-show="!locationConfirmed || !isWithinRadius" class="absolute inset-0 bg-surface-container-highest/95 p-6 flex flex-col items-center justify-center text-center space-y-2 z-20">
+        <span class="material-symbols-outlined text-4xl text-amber-700">fmd_bad</span>
+        <strong class="text-sm font-bold text-on-surface">Kamera Biometrik Terkunci</strong>
+        <p class="text-xs text-on-surface-variant max-w-[240px]">
+          Konfirmasi lokasi GPS Anda terlebih dahulu dan pastikan berada dalam radius 100 meter tempat latihan.
+        </p>
+        <button 
+          type="button" 
+          @click="simulateDojoLocation()" 
+          class="px-4 py-2 rounded-full bg-primary text-on-primary text-xs font-bold shadow-xs hover:bg-primary-dark transition-all cursor-pointer mt-1"
+        >
+          Gunakan Lokasi Dojo (Mode Uji Coba)
+        </button>
+      </div>
+
+      <!-- AI Loading Overlay -->
+      <div x-show="isLoadingModels" class="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white gap-2.5 z-30">
+        <span class="material-symbols-outlined text-4xl animate-spin text-primary-container">psychology</span>
+        <span class="text-xs font-bold">Memuat Model Jaringan AI Wajah...</span>
+        <span class="text-[10px] text-white/70">TinyFaceDetector • Landmark68 • RecognitionNet</span>
+      </div>
+
+      <!-- Processing Submission Overlay -->
+      <div x-show="isProcessing" class="absolute inset-0 bg-black/85 flex flex-col items-center justify-center text-white gap-2.5 z-30">
+        <span class="material-symbols-outlined text-4xl animate-spin text-emerald-400">hourglass_top</span>
+        <span class="text-xs font-bold">Memverifikasi Biometrik & Presensi...</span>
+        <span class="text-[10px] text-emerald-300">Menyimpan snapshot bukti kehadiran</span>
+      </div>
+
+    </div>
+
+    <!-- Camera Controller Buttons -->
+    <div class="grid grid-cols-2 gap-2">
+      <button 
+        type="button" 
+        @click="startFaceCamera()" 
+        x-show="!isCameraRunning"
+        :disabled="!locationConfirmed || !isWithinRadius || isLoadingModels"
+        :class="(!locationConfirmed || !isWithinRadius || isLoadingModels) ? 'opacity-50 cursor-not-allowed bg-slate-400 col-span-2' : 'bg-primary hover:bg-primary-dark cursor-pointer col-span-2'"
+        class="py-3 rounded-full text-on-primary font-bold text-xs shadow-elevation-1 flex items-center justify-center gap-2 transition-all"
+      >
+        <span class="material-symbols-outlined text-lg">videocam</span>
+        <span x-text="(!locationConfirmed || !isWithinRadius) ? 'Lokasi Belum Sesuai (Radius 100m)' : 'Mulai Pemindaian Wajah'"></span>
+      </button>
+
+      <button 
+        type="button" 
+        @click="stopFaceCamera()" 
+        x-show="isCameraRunning"
+        class="py-3 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-bold text-xs border border-outline-variant/50 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+      >
+        <span class="material-symbols-outlined text-base">videocam_off</span>
+        <span>Tutup Kamera</span>
+      </button>
+
+      <button 
+        type="button" 
+        @click="toggleCameraFacing()" 
+        x-show="isCameraRunning"
+        class="py-3 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-bold text-xs border border-outline-variant/50 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+        title="Ganti Kamera Depan/Belakang"
+      >
+        <span class="material-symbols-outlined text-base">cameraswitch</span>
+        <span x-text="facingMode === 'user' ? 'Kamera Belakang' : 'Kamera Depan'"></span>
+      </button>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function faceAttendanceHub(config) {
+  return {
+    submitFaceUrl: config.submitFaceUrl,
+    activeSessionId: config.activeSessionId,
+    hasFaceRegistered: config.hasFaceRegistered,
+    referenceDescriptor: config.referenceDescriptor ? new Float32Array(config.referenceDescriptor) : null,
+    
+    // Geofencing States
+    dojoLat: parseFloat(config.dojoLat),
+    dojoLng: parseFloat(config.dojoLng),
+    maxRadius: parseFloat(config.maxRadius || 100),
+    locationConfirmed: false,
+    userLat: null,
+    userLng: null,
+    distanceMeters: null,
+    isWithinRadius: false,
+    isRequestingLocation: false,
+    locationError: null,
+
+    simulateDojoLocation() {
+      this.userLat = this.dojoLat;
+      this.userLng = this.dojoLng;
+      this.distanceMeters = 0;
+      this.isWithinRadius = true;
+      this.locationConfirmed = true;
+      this.isRequestingLocation = false;
+      this.locationError = null;
+    },
+
+    // AI Camera & Face-API States
+    isCameraRunning: false,
+    isLoadingModels: false,
+    modelsLoaded: false,
+    isProcessing: false,
+    facingMode: 'user', // 'user' (depan) atau 'environment' (belakang)
+    videoStream: null,
+    detectionTimer: null,
+    
+    // Reticle UI Feedback
+    reticleStatus: 'standby', // 'standby' | 'detecting' | 'verified' | 'error'
+    guideMessage: 'Posisikan wajah di dalam oval',
+    stabilityScore: 0,
+    consecutiveMatches: 0,
+    requiredMatches: 3, // ~1 detik deteksi stabil (3 frames x 300ms)
+    watchId: null,
+
+    init() {
+      // 1. Minta izin & deteksi GPS otomatis begitu halaman dibuka
+      this.requestLocation();
+      this.startWatchingLocation();
+      // 2. Pre-load model AI face-api
+      this.loadAiModels();
+    },
+
+    calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371e3;
+      const phi1 = lat1 * Math.PI / 180;
+      const phi2 = lat2 * Math.PI / 180;
+      const deltaPhi = (lat2 - lat1) * Math.PI / 180;
+      const deltaLambda = (lon2 - lon1) * Math.PI / 180;
+
+      const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+                Math.cos(phi1) * Math.cos(phi2) *
+                Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return Math.round(R * c);
+    },
+
+    requestLocation() {
+      if (!navigator.geolocation) {
+        this.locationError = "Browser Anda tidak mendukung geolokasi GPS.";
+        return;
+      }
+      this.isRequestingLocation = true;
+      this.locationError = null;
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          this.userLat = pos.coords.latitude;
+          this.userLng = pos.coords.longitude;
+          this.distanceMeters = this.calculateDistance(
+            this.dojoLat,
+            this.dojoLng,
+            this.userLat,
+            this.userLng
+          );
+          this.isWithinRadius = (this.distanceMeters <= this.maxRadius);
+          this.locationConfirmed = true;
+          this.isRequestingLocation = false;
+          this.locationError = null;
+        },
+        (err) => {
+          this.isRequestingLocation = false;
+          this.locationConfirmed = false;
+          if (err.code === 1) {
+            this.locationError = "Izin akses lokasi GPS ditolak oleh browser. Klik ikon izin situs/gembok pada browser untuk mengizinkan akses lokasi atau gunakan tombol Mode Uji Coba.";
+          } else if (err.code === 2) {
+            this.locationError = "Posisi GPS tidak dapat dideteksi oleh perangkat.";
+          } else if (err.code === 3) {
+            this.locationError = "Pencarian sinyal GPS timeout. Coba klik 'Ukur Ulang Lokasi GPS Saya'.";
+          } else {
+            this.locationError = err.message || "Gagal mendapatkan lokasi GPS.";
+          }
+          console.warn("GPS Location error:", err);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    },
+
+    startWatchingLocation() {
+      if (!navigator.geolocation || this.watchId) return;
+      this.watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          this.userLat = pos.coords.latitude;
+          this.userLng = pos.coords.longitude;
+          this.distanceMeters = this.calculateDistance(
+            this.dojoLat,
+            this.dojoLng,
+            this.userLat,
+            this.userLng
+          );
+          this.isWithinRadius = (this.distanceMeters <= this.maxRadius);
+          this.locationConfirmed = true;
+          this.isRequestingLocation = false;
+        },
+        (err) => {
+          console.warn("GPS Watcher:", err.message);
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 }
+      );
+    },
+
+    async loadAiModels() {
+      if (this.modelsLoaded || typeof faceapi === 'undefined') return;
+      this.isLoadingModels = true;
+      
+      const localUri = '/static/models';
+      const cdnUri = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
+
+      try {
+        await Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri(localUri).catch(() => faceapi.nets.tinyFaceDetector.loadFromUri(cdnUri)),
+          faceapi.nets.faceLandmark68Net.loadFromUri(localUri).catch(() => faceapi.nets.faceLandmark68Net.loadFromUri(cdnUri)),
+          faceapi.nets.faceRecognitionNet.loadFromUri(localUri).catch(() => faceapi.nets.faceRecognitionNet.loadFromUri(cdnUri)),
+        ]);
+        this.modelsLoaded = true;
+      } catch (err) {
+        console.error("Gagal memuat model face-api:", err);
+      } finally {
+        this.isLoadingModels = false;
+      }
+    },
+
+    async startFaceCamera() {
+      if (!this.locationConfirmed || !this.isWithinRadius) {
+        alert("Presensi wajah dinonaktifkan karena posisi Anda berada di luar radius 100m dari tempat latihan.");
+        return;
+      }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("Akses kamera memerlukan izin browser dan koneksi aman (HTTPS atau http://localhost / http://127.0.0.1). Mohon buka aplikasi melalui http://127.0.0.1:8000.");
+        return;
+      }
+      if (!this.modelsLoaded) {
+        await this.loadAiModels();
+      }
+
+      const video = document.getElementById('face-video');
+      if (!video) return;
+
+      try {
+        this.videoStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: this.facingMode,
+            width: { ideal: 640 },
+            height: { ideal: 640 }
+          },
+          audio: false
+        });
+        video.srcObject = this.videoStream;
+        await video.play();
+        this.isCameraRunning = true;
+        this.reticleStatus = 'standby';
+        this.guideMessage = 'Posisikan wajah di dalam oval';
+        this.consecutiveMatches = 0;
+        this.stabilityScore = 0;
+
+        // Mulai AI Facial Detection Loop
+        this.startFaceDetectionLoop();
+      } catch (err) {
+        console.error("Kamera gagal diakses:", err);
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          alert("Izin akses kamera ditolak oleh browser. Silakan klik ikon gembok / izin situs pada bilah alamat URL browser Anda untuk mengizinkan (Allow) kamera.");
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+          alert("Kamera tidak ditemukan pada perangkat Anda.");
+        } else {
+          alert("Gagal mengakses kamera: " + (err.message || "Pastikan kamera tidak sedang digunakan oleh aplikasi lain."));
+        }
+      }
+    },
+
+    stopFaceCamera() {
+      if (this.detectionTimer) {
+        clearInterval(this.detectionTimer);
+        this.detectionTimer = null;
+      }
+      if (this.videoStream) {
+        this.videoStream.getTracks().forEach(track => track.stop());
+        this.videoStream = null;
+      }
+      this.isCameraRunning = false;
+      this.reticleStatus = 'standby';
+      this.stabilityScore = 0;
+      this.consecutiveMatches = 0;
+    },
+
+    toggleCameraFacing() {
+      this.facingMode = this.facingMode === 'user' ? 'environment' : 'user';
+      this.stopFaceCamera();
+      this.startFaceCamera();
+    },
+
+    startFaceDetectionLoop() {
+      const video = document.getElementById('face-video');
+      const canvas = document.getElementById('face-canvas');
+      if (!video || !canvas) return;
+
+      const detectorOptions = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
+
+      this.detectionTimer = setInterval(async () => {
+        if (!this.isCameraRunning || this.isProcessing) return;
+
+        try {
+          const detection = await faceapi.detectSingleFace(video, detectorOptions)
+            .withFaceLandmarks()
+            .withFaceDescriptor();
+
+          if (!detection) {
+            this.reticleStatus = 'standby';
+            this.guideMessage = 'Posisikan wajah di dalam oval';
+            this.consecutiveMatches = 0;
+            this.stabilityScore = 0;
+            return;
+          }
+
+          // Wajah terdeteksi!
+          if (this.hasFaceRegistered && this.referenceDescriptor) {
+            // VERIFIKASI 1:1 DENGAN PROFIL WAJAH TERDAFTAR
+            const distance = faceapi.euclideanDistance(detection.descriptor, this.referenceDescriptor);
+            const accuracy = Math.max(0, Math.min(100, Math.round((1.0 - (distance / 0.60)) * 100)));
+
+            if (distance <= 0.58) {
+              // Cocok!
+              this.reticleStatus = 'detecting';
+              this.consecutiveMatches += 1;
+              this.stabilityScore = Math.min(100, Math.round((this.consecutiveMatches / this.requiredMatches) * 100));
+              this.guideMessage = `Wajah cocok (${accuracy}%)! Tahan posisi...`;
+
+              if (this.consecutiveMatches >= this.requiredMatches) {
+                // Stabil terverifikasi!
+                this.reticleStatus = 'verified';
+                this.guideMessage = `Terverifikasi (${accuracy}%)! Mengambil foto...`;
+                this.submitFaceAttendance(detection.descriptor, video, canvas);
+              }
+            } else {
+              this.reticleStatus = 'error';
+              this.consecutiveMatches = 0;
+              this.stabilityScore = 0;
+              this.guideMessage = `Wajah tidak cocok (Jarak: ${distance.toFixed(2)})`;
+            }
+          } else {
+            // AUTO-ENROLLMENT MODE (Pendaftaran Wajah Pertama)
+            if (detection.detection.score >= 0.60) {
+              this.reticleStatus = 'detecting';
+              this.consecutiveMatches += 1;
+              this.stabilityScore = Math.min(100, Math.round((this.consecutiveMatches / this.requiredMatches) * 100));
+              this.guideMessage = 'Mendaftarkan wajah... Tahan posisi stabil!';
+
+              if (this.consecutiveMatches >= this.requiredMatches) {
+                this.reticleStatus = 'verified';
+                this.guideMessage = 'Wajah terekam! Memproses pendaftaran...';
+                this.submitFaceAttendance(detection.descriptor, video, canvas);
+              }
+            }
+          }
+
+        } catch (err) {
+          console.warn("Detection error frame:", err);
+        }
+      }, 250);
+    },
+
+    submitFaceAttendance(descriptor, video, canvas) {
+      if (this.isProcessing) return;
+      this.isProcessing = true;
+
+      // 1. Ambil Snapshot Frame dari Video
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 640;
+      const ctx = canvas.getContext('2d');
+      // Balik horizontal jika kamera depan agar foto tidak terbalik
+      if (this.facingMode === 'user') {
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+      }
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const snapshotBase64 = canvas.toDataURL('image/jpeg', 0.85);
+
+      // Matikan loop kamera
+      this.stopFaceCamera();
+
+      // 2. Kirim ke Server Django via HTMX ajax
+      htmx.ajax('POST', this.submitFaceUrl, {
+        values: {
+          sesi_id: this.activeSessionId,
+          face_descriptor: JSON.stringify(Array.from(descriptor)),
+          face_snapshot: snapshotBase64,
+          user_latitude: this.userLat,
+          user_longitude: this.userLng,
+        },
+        target: '#scanner-result-box',
+        swap: 'innerHTML'
+      }).then(() => {
+        this.isProcessing = false;
+      }).catch((err) => {
+        this.isProcessing = false;
+        console.error("Gagal submit presensi wajah:", err);
+      });
+    }
+
+  };
+}
+</script>
+{% endblock %}

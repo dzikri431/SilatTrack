@@ -1,0 +1,476 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id" class="h-full bg-[#FFF8F6]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>{% block title %}SilatTrack - Absensi Eskul Pencak Silat{% endblock %}</title>
+  
+  <!-- Google Fonts: Plus Jakarta Sans & Material Symbols -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            primary: {
+              DEFAULT: '#8A1C14',
+              container: '#FFDAD5',
+              dark: '#6A0C06',
+            },
+            'on-primary': {
+              DEFAULT: '#FFFFFF',
+              container: '#410001',
+            },
+            secondary: {
+              DEFAULT: '#77574E',
+              container: '#FFDBD1',
+            },
+            'on-secondary': {
+              DEFAULT: '#FFFFFF',
+              container: '#2C150F',
+            },
+            tertiary: {
+              DEFAULT: '#725B2E',
+              container: '#FEDFA6',
+            },
+            'on-tertiary': {
+              DEFAULT: '#FFFFFF',
+              container: '#261900',
+            },
+            surface: {
+              DEFAULT: '#FFF8F6',
+              dim: '#E8D6D3',
+              bright: '#FFF8F6',
+              'container-lowest': '#FFFFFF',
+              'container-low': '#FFF0EE',
+              'container': '#FCEAE6',
+              'container-high': '#F7E4E1',
+              'container-highest': '#F1DEDC',
+            },
+            'on-surface': {
+              DEFAULT: '#231918',
+              variant: '#534341',
+            },
+            outline: {
+              DEFAULT: '#857371',
+              variant: '#D8C2BE',
+            },
+            error: {
+              DEFAULT: '#BA1A1A',
+              container: '#FFDAD6',
+            },
+            success: {
+              DEFAULT: '#16A34A',
+              container: '#DCFCE7',
+            }
+          },
+          borderRadius: {
+            '2xl': '20px',
+            '3xl': '28px',
+          },
+          boxShadow: {
+            'elevation-1': '0px 1px 3px 1px rgba(60, 20, 15, 0.08), 0px 1px 2px 0px rgba(60, 20, 15, 0.15)',
+            'elevation-2': '0px 2px 6px 2px rgba(60, 20, 15, 0.08), 0px 1px 2px 0px rgba(60, 20, 15, 0.15)',
+            'elevation-3': '0px 4px 8px 3px rgba(60, 20, 15, 0.1), 0px 1px 3px 0px rgba(60, 20, 15, 0.2)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- HTMX & Alpine.js -->
+  <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js"></script>
+  
+  <!-- face-api.js for On-Device AI Biometric Face Recognition -->
+  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+  <script>window.faceapi || document.write('<script src="{% static "js/face-api.min.js" %}"><\/script>')</script>
+
+  <!-- HTML5 QR Code Scanner -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <!-- Chart.js for Attendance Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.Chart) {
+        Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+        Chart.defaults.color = '#534341';
+        Chart.defaults.plugins.tooltip.padding = 10;
+        Chart.defaults.plugins.tooltip.cornerRadius = 12;
+      }
+    });
+  </script>
+
+  <!-- Global Helpers for Confirm Modal and Toasts -->
+  <script>
+    window.openConfirmModal = function(options) {
+      window.dispatchEvent(new CustomEvent('open-confirm-modal', { detail: options }));
+    };
+    window.showToast = function(message, type = 'info') {
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message, type } }));
+    };
+  </script>
+
+  <style>
+    /* Material 3 Ripple and Micro-interactions */
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+    .material-symbols-filled {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+    [x-cloak] { display: none !important; }
+  </style>
+</head>
+<body x-data class="h-full flex flex-col font-sans text-on-surface bg-surface antialiased" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+
+  <!-- Top App Bar (Material 3) -->
+  <header class="sticky top-0 z-40 bg-surface-container-low/90 backdrop-blur-md border-b border-outline-variant/30 px-4 lg:px-8 py-3 transition-all">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center gap-3">
+        <a href="{% url 'core:dashboard' %}" class="flex items-center gap-2.5 group">
+          <div class="w-10 h-10 rounded-2xl bg-primary text-on-primary flex items-center justify-center shadow-elevation-1 group-hover:scale-105 transition-transform">
+            <span class="material-symbols-outlined text-2xl">sports_kabaddi</span>
+          </div>
+          <div>
+            <h1 class="font-extrabold text-lg text-primary tracking-tight leading-tight">SilatTrack</h1>
+            <p class="text-[11px] font-medium text-on-surface-variant">Absensi Pencak Silat</p>
+          </div>
+        </a>
+      </div>
+
+      <!-- Desktop Nav Links -->
+      {% if request.user.is_authenticated %}
+      <nav class="hidden md:flex items-center gap-1 bg-surface-container-high/60 p-1.5 rounded-full border border-outline-variant/40">
+        <a href="{% url 'core:dashboard' %}" class="px-4 py-1.5 rounded-full text-sm font-semibold transition-colors {% if request.resolver_match.url_name == 'dashboard' %}bg-primary text-on-primary shadow-sm{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest{% endif %}">
+          Dashboard
+        </a>
+        <a href="{% url 'attendance:session_list' %}" class="px-4 py-1.5 rounded-full text-sm font-semibold transition-colors {% if 'attendance' in request.path and 'scan' not in request.path and 'reports' not in request.path %}bg-primary text-on-primary shadow-sm{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest{% endif %}">
+          Sesi Latihan
+        </a>
+        {% if request.user.is_anggota_role %}
+        <a href="{% url 'attendance:scanner' %}" class="px-4 py-1.5 rounded-full text-sm font-semibold transition-colors {% if 'scan' in request.path %}bg-primary text-on-primary shadow-sm{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest{% endif %}">
+          Presensi Face ID
+        </a>
+        {% endif %}
+        {% if request.user.is_admin_role or request.user.is_pelatih_role %}
+        <a href="{% url 'members:member_list' %}" class="px-4 py-1.5 rounded-full text-sm font-semibold transition-colors {% if 'members' in request.path and 'transparansi' not in request.path %}bg-primary text-on-primary shadow-sm{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest{% endif %}">
+          Anggota
+        </a>
+        {% endif %}
+        <a href="{% url 'schedule:schedule_list' %}" class="px-4 py-1.5 rounded-full text-sm font-semibold transition-colors {% if 'schedule' in request.path %}bg-primary text-on-primary shadow-sm{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest{% endif %}">
+          Jadwal
+        </a>
+        {% if request.user.is_admin_role or request.user.is_pelatih_role %}
+        <a href="{% url 'attendance:report_index' %}" class="px-4 py-1.5 rounded-full text-sm font-semibold transition-colors {% if 'reports' in request.path %}bg-primary text-on-primary shadow-sm{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest{% endif %}">
+          Laporan
+        </a>
+        {% endif %}
+        {% if request.user.is_admin_role %}
+        <a href="{% url 'accounts:admin_create_user' %}" class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors {% if 'create-user' in request.path %}bg-emerald-800 text-white shadow-sm{% else %}text-emerald-900 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300{% endif %} inline-flex items-center gap-1.5" title="Buat Akun Pelatih / Anggota">
+          <span class="material-symbols-outlined text-sm">person_add</span>
+          <span>Buat Akun</span>
+        </a>
+        {% endif %}
+        {% if request.user.is_admin_role or request.user.is_pelatih_role %}
+        <a href="{% url 'members:public_parent_portal' %}" class="px-3 py-1.5 rounded-full text-xs font-bold transition-colors {% if 'transparansi' in request.path %}bg-primary text-on-primary shadow-sm{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest{% endif %} inline-flex items-center gap-1" title="Portal Wali Murid">
+          <span class="material-symbols-outlined text-sm">family_restroom</span>
+          <span>Portal Wali</span>
+        </a>
+        <a href="{% url 'core:presentation' %}" target="_blank" title="Presentasi Investor" class="px-3.5 py-1.5 rounded-full text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 transition-colors inline-flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-sm">slideshow</span>
+          <span>Pitch Deck</span>
+        </a>
+        {% endif %}
+      </nav>
+
+      <!-- User Menu -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <a href="{% url 'accounts:profile' %}" class="flex items-center gap-2.5 p-1 sm:pr-3 rounded-full hover:bg-surface-container transition-all group" title="Pengaturan Profil">
+          <div class="relative">
+            {% if request.user.avatar %}
+            <img src="{{ request.user.avatar.url }}" alt="Avatar" class="w-9 h-9 rounded-full object-cover border border-primary/50 group-hover:scale-105 transition-transform">
+            {% else %}
+            <div class="w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center text-xs font-black shadow-xs group-hover:scale-105 transition-transform">
+              {{ request.user.first_name|first|default:request.user.username|first }}
+            </div>
+            {% endif %}
+          </div>
+          <div class="text-left hidden sm:block">
+            <p class="text-xs font-bold text-on-surface leading-tight group-hover:text-primary transition-colors">{{ request.user.get_full_name|default:request.user.username }}</p>
+            <span class="inline-block text-[10px] font-semibold uppercase tracking-wider px-2 py-0.2 rounded-full {% if request.user.is_admin_role %}bg-red-100 text-red-800 border border-red-200{% elif request.user.is_pelatih_role %}bg-amber-100 text-amber-900 border border-amber-200{% else %}bg-emerald-100 text-emerald-800 border border-emerald-200{% endif %}">
+              {{ request.user.get_role_display }}
+            </span>
+          </div>
+        </a>
+
+        <a href="{% url 'accounts:logout' %}" title="Keluar Akun" class="w-9 h-9 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-primary flex items-center justify-center transition-colors">
+          <span class="material-symbols-outlined text-xl">logout</span>
+        </a>
+      </div>
+      {% else %}
+      <div class="flex items-center gap-2">
+        <a href="{% url 'members:public_parent_portal' %}" class="px-3.5 py-1.5 rounded-full text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 transition-all inline-flex items-center gap-1.5 shadow-2xs">
+          <span class="material-symbols-outlined text-sm">family_restroom</span>
+          <span>Portal Wali</span>
+        </a>
+        <a href="{% url 'accounts:login' %}" class="px-4 py-1.5 rounded-full text-xs font-bold text-white bg-primary hover:bg-primary-dark transition-all shadow-xs">
+          Masuk
+        </a>
+      </div>
+      {% endif %}
+
+    </div>
+  </header>
+
+  <!-- Floating Industrial Toast Notifications Container -->
+  <div 
+    x-data="{
+      toasts: [],
+      addToast(message, type = 'info') {
+        const id = Date.now() + Math.random();
+        this.toasts.push({ id, message, type });
+        setTimeout(() => this.removeToast(id), 4500);
+      },
+      removeToast(id) {
+        this.toasts = this.toasts.filter(t => t.id !== id);
+      }
+    }"
+    x-init="
+      {% if messages %}
+        {% for message in messages %}
+          addToast('{{ message|escapejs }}', '{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}info{% endif %}');
+        {% endfor %}
+      {% endif %}
+    "
+    @show-toast.window="addToast($event.detail.message, $event.detail.type)"
+    class="fixed top-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0"
+  >
+    <template x-for="toast in toasts" :key="toast.id">
+      <div 
+        x-transition:enter="transform ease-out duration-300 transition"
+        x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-4"
+        x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
+        :class="{
+          'bg-white text-emerald-950 border-emerald-200 shadow-elevation-3': toast.type === 'success',
+          'bg-white text-red-950 border-red-200 shadow-elevation-3': toast.type === 'error',
+          'bg-white text-gray-900 border-outline-variant/40 shadow-elevation-3': toast.type !== 'success' && toast.type !== 'error'
+        }"
+        class="pointer-events-auto p-4 rounded-2xl border flex items-start gap-3 shadow-lg transition-all"
+      >
+        <div 
+          :class="{
+            'bg-emerald-100 text-emerald-700': toast.type === 'success',
+            'bg-red-100 text-red-700': toast.type === 'error',
+            'bg-primary-container text-primary': toast.type !== 'success' && toast.type !== 'error'
+          }"
+          class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+        >
+          <span class="material-symbols-outlined text-lg" x-text="toast.type === 'success' ? 'check_circle' : (toast.type === 'error' ? 'error' : 'info')"></span>
+        </div>
+        <div class="flex-1 pt-0.5">
+          <p class="text-xs font-bold leading-tight" x-text="toast.type === 'success' ? 'Berhasil' : (toast.type === 'error' ? 'Pemberitahuan' : 'Informasi')"></p>
+          <p class="text-xs text-on-surface-variant mt-0.5 font-medium leading-relaxed" x-text="toast.message"></p>
+        </div>
+        <button @click="removeToast(toast.id)" class="text-outline hover:text-on-surface transition-colors p-1" title="Tutup">
+          <span class="material-symbols-outlined text-sm">close</span>
+        </button>
+      </div>
+    </template>
+  </div>
+
+  <!-- Reusable Material Design 3 Confirmation Dialog (Modal) -->
+  <div 
+    x-data="{ 
+      show: false, 
+      title: '', 
+      message: '', 
+      confirmText: 'Lanjutkan', 
+      cancelText: 'Batal', 
+      confirmColor: 'bg-primary hover:bg-primary-dark text-on-primary',
+      icon: 'help',
+      iconColor: 'bg-primary-container text-primary',
+      targetForm: null,
+      callback: null,
+      open(options) {
+        this.title = options.title || 'Konfirmasi Tindakan';
+        this.message = options.message || 'Apakah Anda yakin ingin melanjutkan tindakan ini?';
+        this.confirmText = options.confirmText || 'Lanjutkan';
+        this.cancelText = options.cancelText || 'Batal';
+        this.confirmColor = options.confirmColor || 'bg-primary hover:bg-primary-dark text-on-primary';
+        this.icon = options.icon || 'help';
+        this.iconColor = options.iconColor || 'bg-primary-container text-primary';
+        this.targetForm = options.formId ? document.getElementById(options.formId) : null;
+        this.callback = options.callback || null;
+        this.show = true;
+      },
+      confirmAction() {
+        this.show = false;
+        if (this.targetForm) {
+          if (typeof this.targetForm.requestSubmit === 'function') {
+            this.targetForm.requestSubmit();
+          } else {
+            HTMLFormElement.prototype.submit.call(this.targetForm);
+          }
+        } else if (typeof this.callback === 'function') {
+          this.callback();
+        }
+      }
+    }"
+    @open-confirm-modal.window="open($event.detail)"
+    @keydown.escape.window="show = false"
+    x-cloak
+    x-show="show"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4"
+  >
+    <!-- Backdrop Blur -->
+    <div 
+      x-show="show"
+      x-transition:enter="ease-out duration-200"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="ease-in duration-150"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+      @click="show = false"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+    ></div>
+
+    <!-- Modal Card (Material 3 Dialog) -->
+    <div 
+      x-show="show"
+      x-transition:enter="ease-out duration-200"
+      x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+      x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+      x-transition:leave="ease-in duration-150"
+      x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+      x-transition:leave-end="opacity-0 scale-95 translate-y-2"
+      class="relative bg-surface-container-lowest border border-outline-variant/40 rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-elevation-3 z-10"
+    >
+      <div class="flex items-start gap-4">
+        <div :class="'w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ' + iconColor">
+          <span class="material-symbols-outlined text-2xl" x-text="icon"></span>
+        </div>
+        <div class="flex-1">
+          <h3 class="text-lg font-black text-on-surface" x-text="title"></h3>
+          <p class="text-xs sm:text-sm text-on-surface-variant mt-1.5 leading-relaxed" x-text="message"></p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-end gap-2.5 mt-6 pt-4 border-t border-outline-variant/30">
+        <button 
+          type="button" 
+          @click="show = false"
+          class="px-4 py-2.5 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-bold transition-all"
+          x-text="cancelText"
+        ></button>
+        <button 
+          type="button" 
+          @click="confirmAction()"
+          :class="'px-5 py-2.5 rounded-full font-bold text-xs shadow-sm hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 ' + confirmColor"
+        >
+          <span x-text="confirmText"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Body -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 mb-20 md:mb-8">
+    {% block content %}
+    {% endblock %}
+  </main>
+
+  <!-- Mobile Bottom Navigation Bar (Material 3 Pill Style) -->
+  {% if request.user.is_authenticated %}
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface-container/95 backdrop-blur-lg border-t border-outline-variant/30 px-3 py-2">
+    <div class="flex items-center justify-around">
+      
+      <!-- Beranda -->
+      <a href="{% url 'core:dashboard' %}" class="flex flex-col items-center gap-1 group py-1">
+        <div class="px-4 py-1 rounded-full transition-all {% if request.resolver_match.url_name == 'dashboard' %}bg-primary-container text-on-primary-container font-bold{% else %}text-on-surface-variant hover:bg-surface-container-high{% endif %}">
+          <span class="material-symbols-outlined text-xl {% if request.resolver_match.url_name == 'dashboard' %}material-symbols-filled{% endif %}">dashboard</span>
+        </div>
+        <span class="text-[11px] font-medium {% if request.resolver_match.url_name == 'dashboard' %}text-primary font-bold{% else %}text-on-surface-variant{% endif %}">Beranda</span>
+      </a>
+
+      <!-- Sesi Latihan -->
+      <a href="{% url 'attendance:session_list' %}" class="flex flex-col items-center gap-1 group py-1">
+        <div class="px-4 py-1 rounded-full transition-all {% if 'attendance' in request.path and 'scan' not in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-on-surface-variant hover:bg-surface-container-high{% endif %}">
+          <span class="material-symbols-outlined text-xl {% if 'attendance' in request.path and 'scan' not in request.path %}material-symbols-filled{% endif %}">calendar_month</span>
+        </div>
+        <span class="text-[11px] font-medium {% if 'attendance' in request.path and 'scan' not in request.path %}text-primary font-bold{% else %}text-on-surface-variant{% endif %}">Sesi</span>
+      </a>
+
+      <!-- Face ID (Center Action) -->
+      {% if request.user.is_anggota_role %}
+      <a href="{% url 'attendance:scanner' %}" class="flex flex-col items-center -mt-5">
+        <div class="w-14 h-14 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-elevation-3 hover:scale-105 active:scale-95 transition-all">
+          <span class="material-symbols-outlined text-2xl">face</span>
+        </div>
+        <span class="text-[11px] font-bold text-primary mt-1">Face ID</span>
+      </a>
+      {% endif %}
+
+      {% if request.user.is_admin_role or request.user.is_pelatih_role %}
+      <!-- Anggota -->
+      <a href="{% url 'members:member_list' %}" class="flex flex-col items-center gap-1 group py-1">
+        <div class="px-4 py-1 rounded-full transition-all {% if 'members' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-on-surface-variant hover:bg-surface-container-high{% endif %}">
+          <span class="material-symbols-outlined text-xl {% if 'members' in request.path %}material-symbols-filled{% endif %}">groups</span>
+        </div>
+        <span class="text-[11px] font-medium {% if 'members' in request.path %}text-primary font-bold{% else %}text-on-surface-variant{% endif %}">Pesilat</span>
+      </a>
+      {% endif %}
+
+      <!-- Jadwal -->
+      <a href="{% url 'schedule:schedule_list' %}" class="flex flex-col items-center gap-1 group py-1">
+        <div class="px-4 py-1 rounded-full transition-all {% if 'schedule' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-on-surface-variant hover:bg-surface-container-high{% endif %}">
+          <span class="material-symbols-outlined text-xl {% if 'schedule' in request.path %}material-symbols-filled{% endif %}">schedule</span>
+        </div>
+        <span class="text-[11px] font-medium {% if 'schedule' in request.path %}text-primary font-bold{% else %}text-on-surface-variant{% endif %}">Jadwal</span>
+      </a>
+
+      {% if request.user.is_admin_role or request.user.is_pelatih_role %}
+      <!-- Laporan -->
+      <a href="{% url 'attendance:report_index' %}" class="flex flex-col items-center gap-1 group py-1">
+        <div class="px-4 py-1 rounded-full transition-all {% if 'reports' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-on-surface-variant hover:bg-surface-container-high{% endif %}">
+          <span class="material-symbols-outlined text-xl {% if 'reports' in request.path %}material-symbols-filled{% endif %}">description</span>
+        </div>
+        <span class="text-[11px] font-medium {% if 'reports' in request.path %}text-primary font-bold{% else %}text-on-surface-variant{% endif %}">Laporan</span>
+      </a>
+      {% endif %}
+
+      <!-- Profil Saya -->
+      <a href="{% url 'accounts:profile' %}" class="flex flex-col items-center gap-1 group py-1">
+        <div class="px-4 py-1 rounded-full transition-all {% if 'profile' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-on-surface-variant hover:bg-surface-container-high{% endif %}">
+          <span class="material-symbols-outlined text-xl {% if 'profile' in request.path %}material-symbols-filled{% endif %}">account_circle</span>
+        </div>
+        <span class="text-[11px] font-medium {% if 'profile' in request.path %}text-primary font-bold{% else %}text-on-surface-variant{% endif %}">Profil</span>
+      </a>
+
+    </div>
+  </nav>
+  {% endif %}
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

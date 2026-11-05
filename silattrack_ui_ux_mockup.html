@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SilatTrack - UI/UX Design System & Interactive Mockup</title>
+  
+  <!-- Google Fonts: Plus Jakarta Sans & Material Symbols -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            primary: {
+              DEFAULT: '#8A1C14',       // Crimson Pendekar
+              dark: '#6A0C06',
+              light: '#B3261E',
+              container: '#FFDAD5',
+            },
+            'on-primary': {
+              DEFAULT: '#FFFFFF',
+              container: '#410001',
+            },
+            secondary: {
+              DEFAULT: '#77574E',
+              container: '#FFDBD1',
+            },
+            'on-secondary': {
+              DEFAULT: '#FFFFFF',
+              container: '#2C150F',
+            },
+            tertiary: {
+              DEFAULT: '#725B2E',       // Golden Brass
+              container: '#FEDFA6',
+            },
+            'on-tertiary': {
+              DEFAULT: '#FFFFFF',
+              container: '#261900',
+            },
+            surface: {
+              DEFAULT: '#FFF8F6',
+              dim: '#E8D6D3',
+              bright: '#FFF8F6',
+              'container-lowest': '#FFFFFF',
+              'container-low': '#FFF0EE',
+              'container': '#FCEAE6',
+              'container-high': '#F7E4E1',
+              'container-highest': '#F1DEDC',
+            },
+            'on-surface': {
+              DEFAULT: '#231918',
+              variant: '#534341',
+            },
+            outline: {
+              DEFAULT: '#857371',
+              variant: '#D8C2BE',
+            },
+            error: {
+              DEFAULT: '#BA1A1A',
+              container: '#FFDAD6',
+            },
+            success: {
+              DEFAULT: '#16A34A',
+              container: '#DCFCE7',
+            }
+          },
+          borderRadius: {
+            '2xl': '20px',
+            '3xl': '28px',
+            '4xl': '36px',
+          },
+          boxShadow: {
+            'elevation-1': '0px 1px 3px 1px rgba(60, 20, 15, 0.08), 0px 1px 2px 0px rgba(60, 20, 15, 0.15)',
+            'elevation-2': '0px 2px 6px 2px rgba(60, 20, 15, 0.08), 0px 1px 2px 0px rgba(60, 20, 15, 0.15)',
+            'elevation-3': '0px 4px 8px 3px rgba(60, 20, 15, 0.12), 0px 1px 3px 0px rgba(60, 20, 15, 0.2)',
+            'elevation-4': '0px 6px 12px 4px rgba(60, 20, 15, 0.15), 0px 2px 4px 0px rgba(60, 20, 15, 0.25)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+    .material-symbols-filled {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+    /* Biometric Laser Animation */
+    @keyframes biometricLaser {
+      0% { top: 12%; opacity: 0.3; }
+      50% { top: 86%; opacity: 0.95; }
+      100% { top: 12%; opacity: 0.3; }
+    }
+    .laser-scanner-beam {
+      animation: biometricLaser 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #FFF0EE;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #D8C2BE;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #857371;
+    }
+  </style>
+</head>
+<body class="bg-[#1C1817] text-[#EDE0DE] font-sans antialiased min-h-screen flex flex-col selection:bg-primary selection:text-white">
+
+  <!-- Top Showcase Navigation Bar -->
+  <header class="border-b border-[#3D3331] bg-[#231918]/95 backdrop-blur-md sticky top-0 z-50 px-4 py-3">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+      
+      <!-- Logo & App Brand -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-primary-dark text-white flex items-center justify-center shadow-elevation-2 border border-white/20">
+          <span class="material-symbols-outlined text-2xl">sports_kabaddi</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-black text-lg text-white tracking-tight">SilatTrack</h1>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-primary-container text-on-primary-container">
+              UI/UX Mockup System v2.5
+            </span>
+          </div>
+          <p class="text-xs text-[#CBB9B6]">Sistem Absensi Eskul Pencak Silat • Material Design 3 (M3)</p>
+        </div>
+      </div>
+
+      <!-- Device View Mode Switcher -->
+      <div class="flex items-center gap-1.5 bg-[#2E2422] p-1.5 rounded-full border border-[#483B38]">
+        <button id="btn-device-mobile" onclick="setDeviceView('mobile')" class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 bg-primary text-white shadow-sm">
+          <span class="material-symbols-outlined text-sm">smartphone</span>
+          <span>Mobile (390px)</span>
+        </button>
+        <button id="btn-device-tablet" onclick="setDeviceView('tablet')" class="px-3.5 py-1.5 rounded-full text-xs font-bold text-[#D8C2BE] hover:text-white hover:bg-[#3D3331] transition-all flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-sm">tablet</span>
+          <span>Tablet (768px)</span>
+        </button>
+        <button id="btn-device-desktop" onclick="setDeviceView('desktop')" class="px-3.5 py-1.5 rounded-full text-xs font-bold text-[#D8C2BE] hover:text-white hover:bg-[#3D3331] transition-all flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-sm">desktop_windows</span>
+          <span>Desktop/TV</span>
+        </button>
+      </div>
+
+      <!-- Quick Screen Switcher Dropdown & Live Info -->
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-xs font-bold">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Interactive Preview</span>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Flow Selector Pills Bar -->
+  <div class="bg-[#2A201E] border-b border-[#3D3331] px-4 py-2.5 overflow-x-auto scrollbar-none">
+    <div class="max-w-7xl mx-auto flex items-center gap-2 min-w-max">
+      <span class="text-xs font-bold text-[#A89895] uppercase tracking-wider mr-1 flex items-center gap-1">
+        <span class="material-symbols-outlined text-sm">touch_app</span> Pilih Mockup:
+      </span>
+      
+      <button onclick="switchScreen('login')" id="pill-login" class="screen-pill px-3.5 py-1.5 rounded-full text-xs font-bold border border-transparent transition-all flex items-center gap-1.5 bg-white/10 text-white hover:bg-white/20">
+        <span class="material-symbols-outlined text-sm">login</span>
+        <span>1. Login & Demo 1-Click</span>
+      </button>
+
+      <button onclick="switchScreen('dashboard-coach')" id="pill-dashboard-coach" class="screen-pill px-3.5 py-1.5 rounded-full text-xs font-bold border border-transparent transition-all flex items-center gap-1.5 bg-primary text-white shadow-elevation-1">
+        <span class="material-symbols-outlined text-sm">dashboard</span>
+        <span>2. Dashboard Pelatih</span>
+      </button>
+
+      <button onclick="switchScreen('cockpit-qr')" id="pill-cockpit-qr" class="screen-pill px-3.5 py-1.5 rounded-full text-xs font-bold border border-transparent transition-all flex items-center gap-1.5 bg-white/10 text-white hover:bg-white/20">
+        <span class="material-symbols-outlined text-sm">qr_code_scanner</span>
+        <span>3. Cockpit Presensi & Rolling QR</span>
+      </button>
+
+      <button onclick="switchScreen('dashboard-student')" id="pill-dashboard-student" class="screen-pill px-3.5 py-1.5 rounded-full text-xs font-bold border border-transparent transition-all flex items-center gap-1.5 bg-white/10 text-white hover:bg-white/20">
+        <span class="material-symbols-outlined text-sm">person</span>
+        <span>4. Dashboard Pesilat & UKT</span>
+      </button>
+
+      <button onclick="switchScreen('biometric-scanner')" id="pill-biometric-scanner" class="screen-pill px-3.5 py-1.5 rounded-full text-xs font-bold border border-transparent transition-all flex items-center gap-1.5 bg-white/10 text-white hover:bg-white/20">
+        <span class="material-symbols-outlined text-sm">face</span>
+        <span>5. AI Face & Geofence 100m</span>
+      </button>
+
+      <button onclick="switchScreen('reports')" id="pill-reports" class="screen-pill px-3.5 py-1.5 rounded-full text-xs font-bold border border-transparent transition-all flex items-center gap-1.5 bg-white/10 text-white hover:bg-white/20">
+        <span class="material-symbols-outlined text-sm">description</span>
+        <span>6. Laporan Rekap & UKT</span>
+      </button>
+
+      <button onclick="switchScreen('members')" id="pill-members" class="screen-pill px-3.5 py-1.5 rounded-full text-xs font-bold border border-transparent transition-all flex items-center gap-1.5 bg-white/10 text-white hover:bg-white/20">
+        <span class="material-symbols-outlined text-sm">groups</span>
+        <span>7. Direktori Sabuk Pesilat</span>
+      </button>
+
+      <button onclick="switchScreen('parent-portal')" id="pill-parent-portal" class="screen-pill px-3.5 py-1.5 rounded-full text-xs font-bold border border-transparent transition-all flex items-center gap-1.5 bg-white/10 text-white hover:bg-white/20">
+        <span class="material-symbols-outlined text-sm">family_restroom</span>
+        <span>8. Portal Wali Murid</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Canvas / Simulator Container -->
+  <main class="flex-1 flex flex-col items-center justify-start p-4 sm:p-6 lg:p-8 overflow-y-auto">
+
+    <!-- Device Frame Simulator Container -->
+    <div id="device-viewport" class="w-full max-w-[410px] transition-all duration-300 ease-in-out flex flex-col">
+      
+      <!-- Device Chrome Outer (Bezel for Mobile/Tablet) -->
+      <div id="device-outer-frame" class="bg-[#120F0E] p-3 sm:p-4 rounded-[44px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),0_0_0_1px_rgba(255,255,255,0.1)] border-4 border-[#3D3331] transition-all duration-300">
+        
+        <!-- Screen Island / Speaker Notch (Mobile Only) -->
+        <div id="device-notch" class="flex items-center justify-between px-6 pt-1 pb-2 text-[#EDE0DE]">
+          <span class="text-xs font-bold tracking-tight">09:41</span>
+          <div class="w-24 h-4 bg-black rounded-full mx-auto flex items-center justify-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-[#1F1F1F]"></span>
+            <span class="w-2 h-2 rounded-full bg-emerald-500/80"></span>
+          </div>
+          <div class="flex items-center gap-1 text-xs">
+            <span class="material-symbols-outlined text-sm">signal_cellular_4_bar</span>
+            <span class="material-symbols-outlined text-sm">wifi</span>
+            <span class="material-symbols-outlined text-sm">battery_full</span>
+          </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- SCREEN CANVAS (EMBEDDED APPLICATION ENVIRONMENT) -->
+        <!-- ========================================================================= -->
+        <div id="app-canvas" class="bg-[#FFF8F6] text-[#231918] rounded-[32px] overflow-hidden min-h-[720px] max-h-[820px] flex flex-col shadow-inner relative transition-colors">
+
+          <!-- APP BAR (Sticky Inside Canvas) -->
+          <header id="mockup-app-bar" class="sticky top-0 z-30 bg-[#FFF0EE]/95 backdrop-blur-md border-b border-[#D8C2BE]/40 px-4 py-2.5 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-2xl bg-primary text-white flex items-center justify-center shadow-elevation-1">
+                <span class="material-symbols-outlined text-xl">sports_kabaddi</span>
+              </div>
+              <div>
+                <h2 class="font-extrabold text-sm text-primary tracking-tight leading-tight">SilatTrack</h2>
+                <p class="text-[10px] font-semibold text-[#534341]">Absensi Eskul Silat</p>
+              </div>
+            </div>
+
+            <!-- Profile & Active Status Chip -->
+            <div class="flex items-center gap-2">
+              <div id="active-user-badge" class="flex items-center gap-2 bg-[#FFF8F6] pl-1.5 pr-2.5 py-1 rounded-full border border-[#D8C2BE]/50 shadow-2xs">
+                <div class="w-6 h-6 rounded-full bg-primary text-white font-extrabold text-[10px] flex items-center justify-center">
+                  P
+                </div>
+                <div class="text-left">
+                  <span id="active-user-name" class="block text-[11px] font-bold text-[#231918] leading-tight">Pelatih Hendra</span>
+                  <span id="active-user-role" class="block text-[9px] font-extrabold text-amber-800 uppercase tracking-wider">PELATIH</span>
+                </div>
+              </div>
+
+              <button title="Notifikasi" class="w-8 h-8 rounded-full bg-[#FCEAE6] text-[#534341] flex items-center justify-center hover:bg-[#F7E4E1] relative">
+                <span class="material-symbols-outlined text-base">notifications</span>
+                <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary"></span>
+              </button>
+            </div>
+          </header>
+
+          <!-- APP VIEWPORT CONTENT BODY (Scrollable) -->
+          <div id="screen-container" class="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
+
+            <!-- ============================================================= -->
+            <!-- 1. SCREEN: LOGIN & 1-CLICK DEMO -->
+            <!-- ============================================================= -->
+            <section id="view-login" class="screen-view hidden space-y-5 py-4">
+              <div class="text-center space-y-2">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-primary text-white shadow-elevation-2">
+                  <span class="material-symbols-outlined text-3xl">sports_kabaddi</span>
+                </div>
+                <h3 class="text-2xl font-black text-[#231918] tracking-tight">Selamat Datang</h3>
+                <p class="text-xs text-[#534341]">Sistem Presensi Digital & Monitoring Eskul Pencak Silat</p>
+              </div>
+
+              <!-- Login Form Card -->
+              <div class="bg-white border border-[#D8C2BE]/50 rounded-3xl p-5 shadow-elevation-2 space-y-4">
+                <div>
+                  <label class="block text-[11px] font-bold text-[#534341] uppercase tracking-wider mb-1 ml-1">Username / NISN</label>
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#857371]">
+                      <span class="material-symbols-outlined text-lg">person</span>
+                    </span>
+                    <input type="text" value="pelatih1" class="w-full pl-10 pr-4 py-2.5 bg-[#FFF8F6] border border-[#D8C2BE] rounded-2xl text-xs font-semibold text-[#231918] outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-bold text-[#534341] uppercase tracking-wider mb-1 ml-1">Kata Sandi</label>
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#857371]">
+                      <span class="material-symbols-outlined text-lg">lock</span>
+                    </span>
+                    <input type="password" value="••••••••" class="w-full pl-10 pr-10 py-2.5 bg-[#FFF8F6] border border-[#D8C2BE] rounded-2xl text-xs font-semibold text-[#231918] outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                    <span class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-[#857371] cursor-pointer">
+                      <span class="material-symbols-outlined text-lg">visibility</span>
+                    </span>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between text-xs pt-1">
+                  <label class="flex items-center gap-1.5 cursor-pointer text-[#534341]">
+                    <input type="checkbox" checked class="rounded text-primary focus:ring-primary">
+                    <span class="text-[11px] font-medium">Ingat saya</span>
+                  </label>
+                  <a href="#" class="text-[11px] font-bold text-primary hover:underline">Lupa sandi?</a>
+                </div>
+
+                <button onclick="switchScreen('dashboard-coach')" class="w-full py-3 rounded-full bg-primary hover:bg-primary-dark text-white font-bold text-xs shadow-elevation-1 hover:shadow-elevation-2 flex items-center justify-center gap-2 transition-transform active:scale-95">
+                  <span>Masuk ke Dashboard</span>
+                  <span class="material-symbols-outlined text-base">arrow_forward</span>
+                </button>
+              </div>
+
+              <!-- 1-Click Demo Account Quick Access -->
+              <div class="bg-[#FFF0EE] border border-[#D8C2BE]/40 rounded-3xl p-4 space-y-2.5">
+                <div class="flex items-center gap-1.5 text-xs font-extrabold text-[#231918]">
+                  <span class="material-symbols-outlined text-sm text-primary">key</span>
+                  <span>Akun Demo Uji Coba (1-Click Login):</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                  <button onclick="loginAs('pelatih')" class="p-2.5 rounded-2xl bg-white border border-[#D8C2BE]/60 text-left hover:border-primary hover:bg-[#FFDAD5]/30 transition-all shadow-2xs">
+                    <div class="font-extrabold text-[11px] text-amber-900 flex items-center gap-1">
+                      <span class="material-symbols-outlined text-xs">sports_martial_arts</span> Pelatih Silat
+                    </div>
+                    <span class="text-[10px] text-[#534341] block">User: pelatih1</span>
+                  </button>
+
+                  <button onclick="loginAs('pesilat')" class="p-2.5 rounded-2xl bg-white border border-[#D8C2BE]/60 text-left hover:border-primary hover:bg-[#FFDAD5]/30 transition-all shadow-2xs">
+                    <div class="font-extrabold text-[11px] text-emerald-900 flex items-center gap-1">
+                      <span class="material-symbols-outlined text-xs">face</span> Siswa Pesilat
+                    </div>
+                    <span class="text-[10px] text-[#534341] block">User: pesilat1 (Kuning)</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="text-center text-[10px] text-[#857371]">
+                SilatTrack Architecture • DATH Stack & Google Material Design 3
+              </div>
+            </section>
+
+            <!-- ============================================================= -->
+            <!-- 2. SCREEN: DASHBOARD PELATIH (COACH COCKPIT) -->
+            <!-- ============================================================= -->
+            <section id="view-dashboard-coach" class="screen-view space-y-4">
+              
+              <!-- Greeting & Date -->
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFDAD5] text-primary text-[10px] font-bold mb-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                    Rabu, 21 Oktober 2026
+                  </div>
+                  <h3 class="text-xl font-black text-[#231918] tracking-tight">Salam Pendekar, Pelatih! 🥋</h3>
+                  <p class="text-xs text-[#534341]">Dojo Padepokan Silat Utama • Sesi Sore</p>
+                </div>
+                <button onclick="switchScreen('cockpit-qr')" class="w-10 h-10 rounded-2xl bg-primary text-white flex items-center justify-center shadow-elevation-2 active:scale-95" title="Buka Sesi">
+                  <span class="material-symbols-outlined text-xl">add_circle</span>
+                </button>
+              </div>
+
+              <!-- Active Session Live Alert Banner (Hero Card) -->
+              <div class="bg-gradient-to-r from-primary to-primary-dark text-white rounded-3xl p-5 shadow-elevation-3 relative overflow-hidden">
+                <div class="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-white/5 pointer-events-none"></div>
+                
+                <div class="flex items-center justify-between mb-2">
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[10px] font-extrabold uppercase tracking-wider">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    Sesi Latihan Aktif
+                  </span>
+                  <span class="text-[11px] font-mono font-bold text-amber-200">16:00 - 18:00 WIB</span>
+                </div>
+
+                <h4 class="text-lg font-black tracking-tight">Latihan Fisik & Jurus Tunggal Baku</h4>
+                <p class="text-xs text-[#FFDAD5] mt-1 line-clamp-2">Fokus pematangan kuda-kuda tengah, pukulan lurus, dan elakan bawah untuk persiapan UKT Sabuk Kuning & Hijau.</p>
+
+                <div class="flex items-center justify-between mt-4 pt-3 border-t border-white/20">
+                  <div class="flex items-center gap-2">
+                    <span class="text-2xl font-black text-amber-300">24<span class="text-xs text-white/80 font-normal">/32 Hadir</span></span>
+                    <span class="text-[10px] bg-emerald-500/30 text-emerald-200 px-2 py-0.5 rounded-full font-bold">75% Kuorum</span>
+                  </div>
+                  <button onclick="switchScreen('cockpit-qr')" class="px-3.5 py-1.5 rounded-full bg-white text-primary font-black text-xs shadow-md hover:bg-[#FFDAD5] transition-all flex items-center gap-1.5 active:scale-95">
+                    <span class="material-symbols-outlined text-sm">qr_code_2</span>
+                    <span>Buka Cockpit</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quick Metric Stats Grid -->
+              <div class="grid grid-cols-3 gap-2.5">
+                <div class="bg-white border border-[#D8C2BE]/40 rounded-2xl p-3 shadow-elevation-1 text-center">
+                  <span class="material-symbols-outlined text-primary text-xl">groups</span>
+                  <div class="text-xl font-black text-[#231918] mt-0.5">38</div>
+                  <div class="text-[10px] font-semibold text-[#534341]">Total Pesilat</div>
+                </div>
+
+                <div class="bg-white border border-[#D8C2BE]/40 rounded-2xl p-3 shadow-elevation-1 text-center">
+                  <span class="material-symbols-outlined text-amber-700 text-xl">event_available</span>
+                  <div class="text-xl font-black text-[#231918] mt-0.5">18</div>
+                  <div class="text-[10px] font-semibold text-[#534341]">Sesi Selesai</div>
+                </div>
+
+                <div class="bg-white border border-[#D8C2BE]/40 rounded-2xl p-3 shadow-elevation-1 text-center">
+                  <span class="material-symbols-outlined text-emerald-700 text-xl">verified</span>
+                  <div class="text-xl font-black text-[#231918] mt-0.5">88%</div>
+                  <div class="text-[10px] font-semibold text-[#534341]">Rata Hadir</div>
+                </div>
+              </div>
+
+              <!-- Pending Approvals Banner -->
+              <div class="bg-amber-50 border border-amber-300 rounded-3xl p-4 flex items-start gap-3 shadow-xs">
+                <div class="w-9 h-9 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-lg">pending_actions</span>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center justify-between">
+                    <h5 class="text-xs font-extrabold text-amber-950">1 Pengajuan Izin Menunggu</h5>
+                    <span class="text-[10px] text-amber-800 font-bold">10 menit lalu</span>
+                  </div>
+                  <p class="text-[11px] text-amber-900 mt-0.5">Ahmad Fadillah (Sabuk Hijau) mengajukan izin sakit flu disertai surat dokter.</p>
+                  <div class="flex items-center gap-2 mt-2">
+                    <button class="px-3 py-1 rounded-full bg-amber-600 text-white text-[10px] font-bold shadow-2xs hover:bg-amber-700">Setujui Izin</button>
+                    <button class="px-3 py-1 rounded-full bg-white border border-amber-300 text-amber-900 text-[10px] font-bold">Lihat Lampiran</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick List: Pesilat Terakhir Presensi -->
+              <div class="bg-white border border-[#D8C2BE]/40 rounded-3xl p-4 shadow-elevation-1 space-y-3">
+                <div class="flex items-center justify-between">
+                  <h4 class="text-xs font-black text-[#231918] uppercase tracking-wider flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-primary text-base">radar</span> Presensi Real-Time
+                  </h4>
+                  <span class="text-[10px] font-bold text-primary cursor-pointer hover:underline" onclick="switchScreen('cockpit-qr')">Lihat Semua</span>
+                </div>
+
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between p-2 rounded-2xl bg-[#FFF8F6] border border-[#D8C2BE]/30">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs">
+                        AF
+                      </div>
+                      <div>
+                        <div class="text-xs font-extrabold text-[#231918]">Alif Pratama</div>
+                        <div class="text-[10px] text-[#534341]">Sabuk Hijau • AI Biometrik Wajah</div>
+                      </div>
+                    </div>
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">16:04 WIB</span>
+                  </div>
+
+                  <div class="flex items-center justify-between p-2 rounded-2xl bg-[#FFF8F6] border border-[#D8C2BE]/30">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-xs">
+                        BR
+                      </div>
+                      <div>
+                        <div class="text-xs font-extrabold text-[#231918]">Bima Rizky</div>
+                        <div class="text-[10px] text-[#534341]">Sabuk Kuning • Scan Rolling QR</div>
+                      </div>
+                    </div>
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">16:07 WIB</span>
+                  </div>
+                </div>
+              </div>
+
+            </section>
+
+            <!-- ============================================================= -->
+            <!-- 3. SCREEN: COCKPIT PRESENSI & DYNAMIC ROLLING QR (PELATIH) -->
+            <!-- ============================================================= -->
+            <section id="view-cockpit-qr" class="screen-view hidden space-y-4">
+              
+              <!-- Cockpit Header -->
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    STATUS: SESI DIBUKA
+                  </span>
+                  <h3 class="text-lg font-black text-[#231918] mt-1">Cockpit Presensi Pelatih</h3>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button class="px-2.5 py-1 rounded-full bg-[#FFF0EE] text-primary text-[10px] font-bold border border-[#D8C2BE] flex items-center gap-1" title="Layar TV Fullscreen">
+                    <span class="material-symbols-outlined text-xs">fullscreen</span> TV Dojo
+                  </button>
+                  <button class="px-2.5 py-1 rounded-full bg-emerald-700 text-white text-[10px] font-bold flex items-center gap-1">
+                    <span class="material-symbols-outlined text-xs">download</span> Excel
+                  </button>
+                </div>
+              </div>
+
+              <!-- Dynamic Rolling QR Card (Anti-Screenshot HMAC) -->
+              <div class="bg-white border-2 border-primary/20 rounded-3xl p-5 shadow-elevation-2 text-center space-y-3 relative overflow-hidden">
+                <div class="flex items-center justify-between text-xs pb-2 border-b border-[#D8C2BE]/30">
+                  <div class="flex items-center gap-1.5 text-primary font-black">
+                    <span class="material-symbols-outlined text-base">security</span>
+                    <span>Dynamic Rolling QR Code</span>
+                  </div>
+                  <div class="flex items-center gap-1 font-mono text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                    <span class="material-symbols-outlined text-xs animate-spin">refresh</span>
+                    <span>Rotasi: <strong id="qr-timer-seconds">12</strong>s</span>
+                  </div>
+                </div>
+
+                <!-- QR Display Simulated Frame -->
+                <div class="py-2 flex flex-col items-center justify-center">
+                  <div class="relative p-3 bg-[#FFF8F6] border-2 border-dashed border-primary/40 rounded-3xl inline-block shadow-inner group">
+                    <!-- Simulated Vector QR Matrix -->
+                    <div class="w-44 h-44 bg-white p-2 rounded-2xl flex flex-col justify-between shadow-xs">
+                      <div class="flex justify-between">
+                        <div class="w-10 h-10 border-4 border-black p-1"><div class="w-full h-full bg-black"></div></div>
+                        <div class="flex-1 px-1 grid grid-cols-4 gap-0.5">
+                          <div class="bg-black"></div><div></div><div class="bg-black"></div><div class="bg-black"></div>
+                        </div>
+                        <div class="w-10 h-10 border-4 border-black p-1"><div class="w-full h-full bg-black"></div></div>
+                      </div>
+                      <!-- Center Silat Emblem in QR -->
+                      <div class="flex items-center justify-center my-1 relative">
+                        <div class="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-md font-bold text-xs border border-white">
+                          🥋
+                        </div>
+                      </div>
+                      <div class="flex justify-between">
+                        <div class="w-10 h-10 border-4 border-black p-1"><div class="w-full h-full bg-black"></div></div>
+                        <div class="flex-1 px-1 grid grid-cols-4 gap-0.5">
+                          <div></div><div class="bg-black"></div><div class="bg-black"></div><div></div>
+                        </div>
+                        <div class="w-6 h-6 border-2 border-black p-0.5 ml-auto self-end"><div class="w-full h-full bg-black"></div></div>
+                      </div>
+                    </div>
+
+                    <!-- Scan Beam effect -->
+                    <div class="absolute inset-x-5 top-5 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-75 shadow-[0_0_8px_#8A1C14]"></div>
+                  </div>
+
+                  <p class="text-[10px] text-[#534341] mt-2 font-mono">
+                    Token: <span class="bg-[#FFF0EE] px-2 py-0.5 rounded text-primary font-bold">HMAC_SHA256::#9812_TS_89</span>
+                  </p>
+                  <p class="text-[10px] text-[#857371]">QR otomatis berganti tiap 15 detik untuk mencegah titip absen.</p>
+                </div>
+
+                <!-- Live Counter Badges (M3 Out-of-band) -->
+                <div class="grid grid-cols-4 gap-1.5 pt-2 border-t border-[#D8C2BE]/30 text-center">
+                  <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-1.5">
+                    <span class="block text-[10px] font-bold text-emerald-800">Hadir</span>
+                    <span id="cockpit-counter-hadir" class="text-base font-black text-emerald-700">24</span>
+                  </div>
+                  <div class="bg-blue-50 border border-blue-200 rounded-xl p-1.5">
+                    <span class="block text-[10px] font-bold text-blue-800">Izin</span>
+                    <span class="text-base font-black text-blue-700">2</span>
+                  </div>
+                  <div class="bg-amber-50 border border-amber-200 rounded-xl p-1.5">
+                    <span class="block text-[10px] font-bold text-amber-800">Sakit</span>
+                    <span class="text-base font-black text-amber-700">1</span>
+                  </div>
+                  <div class="bg-red-50 border border-red-200 rounded-xl p-1.5">
+                    <span class="block text-[10px] font-bold text-red-800">Alpa</span>
+                    <span class="text-base font-black text-red-700">5</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Interactive Student List with HTMX-Style Quick Status Toggles -->
+              <div class="bg-white border border-[#D8C2BE]/40 rounded-3xl p-4 shadow-elevation-1 space-y-3">
+                <div class="flex items-center justify-between">
+                  <h4 class="text-xs font-black text-[#231918] uppercase tracking-wider">
+                    Presensi Cepat Anggota (Inline Toggle)
+                  </h4>
+                  <button onclick="markAllPresent()" class="px-2.5 py-1 rounded-full bg-purple-100 hover:bg-purple-200 text-purple-900 text-[10px] font-bold border border-purple-300">
+                    Tandai Semua Hadir
+                  </button>
+                </div>
+
+                <!-- Student Row 1 -->
+                <div class="p-2.5 rounded-2xl bg-[#FFF8F6] border border-[#D8C2BE]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-yellow-400 text-black flex items-center justify-center font-bold text-xs border border-black/20">
+                      BS
+                    </div>
+                    <div>
+                      <div class="text-xs font-extrabold text-[#231918]">Bintang Samudra</div>
+                      <div class="text-[10px] text-[#534341]">NISN: 00876123 • Sabuk Kuning</div>
+                    </div>
+                  </div>
+
+                  <!-- Quick Status Toggle Buttons -->
+                  <div class="inline-flex rounded-full p-0.5 bg-[#FCEAE6] self-end sm:self-auto border border-[#D8C2BE]/40" id="row-btn-group-1">
+                    <button onclick="toggleStudentStatus(1, 'H')" class="status-btn px-2.5 py-1 text-[10px] font-black rounded-full bg-primary text-white shadow-2xs">Hadir</button>
+                    <button onclick="toggleStudentStatus(1, 'I')" class="status-btn px-2.5 py-1 text-[10px] font-bold rounded-full text-[#534341] hover:bg-[#F7E4E1]">Izin</button>
+                    <button onclick="toggleStudentStatus(1, 'S')" class="status-btn px-2.5 py-1 text-[10px] font-bold rounded-full text-[#534341] hover:bg-[#F7E4E1]">Sakit</button>
+                    <button onclick="toggleStudentStatus(1, 'A')" class="status-btn px-2.5 py-1 text-[10px] font-bold rounded-full text-[#534341] hover:bg-[#F7E4E1]">Alpa</button>
+                  </div>
+                </div>
+
+                <!-- Student Row 2 -->
+                <div class="p-2.5 rounded-2xl bg-[#FFF8F6] border border-[#D8C2BE]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">
+                      DP
+                    </div>
+                    <div>
+                      <div class="text-xs font-extrabold text-[#231918]">Dewi Permata</div>
+                      <div class="text-[10px] text-[#534341]">NISN: 00876451 • Sabuk Hijau</div>
+                    </div>
+                  </div>
+
+                  <div class="inline-flex rounded-full p-0.5 bg-[#FCEAE6] self-end sm:self-auto border border-[#D8C2BE]/40" id="row-btn-group-2">
+                    <button onclick="toggleStudentStatus(2, 'H')" class="status-btn px-2.5 py-1 text-[10px] font-black rounded-full bg-primary text-white shadow-2xs">Hadir</button>
+                    <button onclick="toggleStudentStatus(2, 'I')" class="status-btn px-2.5 py-1 text-[10px] font-bold rounded-full text-[#534341] hover:bg-[#F7E4E1]">Izin</button>
+                    <button onclick="toggleStudentStatus(2, 'S')" class="status-btn px-2.5 py-1 text-[10px] font-bold rounded-full text-[#534341] hover:bg-[#F7E4E1]">Sakit</button>
+                    <button onclick="toggleStudentStatus(2, 'A')" class="status-btn px-2.5 py-1 text-[10px] font-bold rounded-full text-[#534341] hover:bg-[#F7E4E1]">Alpa</button>
+                  </div>
+                </div>
+
+                <!-- Student Row 3 -->
+                <div class="p-2.5 rounded-2xl bg-[#FFF8F6] border border-[#D8C2BE]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-800 flex items-center justify-center font-bold text-xs border border-slate-300">
+                      RF
+                    </div>
+                    <div>
+                      <div class="text-xs font-extrabold text-[#231918]">Rian Firmansyah</div>
+                      <div class="text-[10px] text-[#534341]">NISN: 00981299 • Sabuk Putih</div>
+                    </div>
+                  </div>
+
+                  <div class="inline-flex rounded-full p-0.5 bg-[#FCEAE6] self-end sm:self-auto border border-[#D8C2BE]/40" id="row-btn-group-3">
+                    <button onclick="toggleStudentStatus(3, 'H')" class="status-btn px-2.5 py-1 text-[10px] font-bold rounded-full text-[#534341] hover:bg-[#F7E4E1]">Hadir</button>
+                    <button onclick="toggleStudentStatus(3, 'I')" class="status-btn px-2.5 py-1 text-[10px] font-bold rounded-full text-[#534341] hover:bg-[#F7E4E1]">Izin</button>
+                    <button onclick="toggleStudentStatus(3, 'S')" class="status-btn px-2.5 py-1 text-[10px] font-bold rounded-full text-[#534341] hover:bg-[#F7E4E1]">Sakit</button>
+                    <button onclick="toggleStudentStatus(3, 'A')" class="status-btn px-2.5 py-1 text-[10px] font-black rounded-full bg-red-600 text-white shadow-2xs">Alpa</button>
+                  </div>
+                </div>
+
+              </div>
+
+            </section>
+
+            <!-- ============================================================= -->
+            <!-- 4. SCREEN: DASHBOARD PESILAT (STUDENT COCKPIT & UKT PROGRESS) -->
+            <!-- ============================================================= -->
+            <section id="view-dashboard-student" class="screen-view hidden space-y-4">
+              
+              <!-- Student Profile Card with Belt Badge -->
+              <div class="bg-white border border-[#D8C2BE]/40 rounded-3xl p-5 shadow-elevation-2 space-y-4">
+                <div class="flex items-start justify-between">
+                  <div class="flex items-center gap-3.5">
+                    <div class="relative">
+                      <div class="w-14 h-14 rounded-2xl bg-[#FFDAD5] text-[#410001] flex items-center justify-center font-black text-xl shadow-elevation-1 border-2 border-primary/20">
+                        RP
+                      </div>
+                      <span class="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-yellow-400 text-black border border-black/20 shadow-xs">
+                        KUNING
+                      </span>
+                    </div>
+
+                    <div>
+                      <h3 class="text-base font-extrabold text-[#231918]">Raden Panji Kusuma</h3>
+                      <p class="text-xs text-[#534341]">NISN: 00981124 • Kelas XI-IPA 2</p>
+                      <div class="flex items-center gap-1.5 mt-1">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FFDBD1] text-[#2C150F]">Tanding Kelas C</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300">🔥 Streak 6 Sesi</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    AKTIF
+                  </span>
+                </div>
+
+                <!-- Primary Action Buttons -->
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                  <button onclick="switchScreen('biometric-scanner')" class="py-2.5 px-3 rounded-full bg-primary hover:bg-primary-dark text-white font-extrabold text-xs shadow-elevation-1 flex items-center justify-center gap-1.5 active:scale-95 transition-all">
+                    <span class="material-symbols-outlined text-base">face</span>
+                    <span>Presensi Wajah AI</span>
+                  </button>
+
+                  <button onclick="switchScreen('biometric-scanner')" class="py-2.5 px-3 rounded-full bg-[#FFF0EE] hover:bg-[#FFDAD5] text-primary font-extrabold text-xs border border-[#D8C2BE] flex items-center justify-center gap-1.5 active:scale-95 transition-all">
+                    <span class="material-symbols-outlined text-base">qr_code_scanner</span>
+                    <span>Scan Barcode</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Today Active Session Notice -->
+              <div class="bg-amber-50 border border-amber-300 rounded-3xl p-4 flex items-center justify-between shadow-xs">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 animate-bounce">
+                    <span class="material-symbols-outlined text-xl">sports_kabaddi</span>
+                  </div>
+                  <div>
+                    <span class="text-[10px] font-extrabold uppercase text-amber-900">Sesi Latihan Hari Ini Aktif</span>
+                    <h4 class="text-xs font-black text-[#231918]">Jurus Tunggal & Sabung Tanding</h4>
+                    <span class="text-[10px] text-[#534341]">16:00 WIB • Padepokan Utama</span>
+                  </div>
+                </div>
+                <button onclick="switchScreen('biometric-scanner')" class="px-3 py-1.5 rounded-full bg-primary text-white text-[10px] font-bold shadow-xs">
+                  Absen Sekarang
+                </button>
+              </div>
+
+              <!-- UKT Progression Meter Card (Ujian Kenaikan Sabuk) -->
+              <div class="bg-white border border-[#D8C2BE]/40 rounded-3xl p-5 shadow-elevation-1 space-y-3">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h4 class="text-xs font-black text-[#231918] uppercase tracking-wider">Kualifikasi Kenaikan Sabuk (UKT)</h4>
+                    <p class="text-[10px] text-[#534341]">Target menuju Sabuk Hijau (Min. Kehadiran 80%)</p>
+                  </div>
+                  <div class="w-8 h-8 rounded-xl bg-[#FEDFA6] text-[#261900] flex items-center justify-center font-bold">
+                    <span class="material-symbols-outlined text-base">military_tech</span>
+                  </div>
+                </div>
+
+                <div class="space-y-1.5">
+                  <div class="flex items-baseline justify-between">
+                    <span class="text-2xl font-black text-primary">85%</span>
+                    <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                      ✓ Memenuhi Syarat UKT
+                    </span>
+                  </div>
+
+                  <!-- Material 3 Linear Progress Bar -->
+                  <div class="w-full h-3 bg-[#FFF0EE] rounded-full overflow-hidden p-0.5 border border-[#D8C2BE]/30">
+                    <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 transition-all duration-500" style="width: 85%"></div>
+                  </div>
+
+                  <div class="flex items-center justify-between text-[10px] text-[#857371]">
+                    <span>17 Sesi Hadir dari 20 Sesi Total</span>
+                    <span>Ambang Batas: 16 Sesi</span>
+                  </div>
+                </div>
+
+                <div class="p-2.5 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center gap-2 text-[11px] text-emerald-950">
+                  <span class="material-symbols-outlined text-emerald-700 text-base">verified</span>
+                  <span>Selamat! Kamu berhak mengikuti Ujian Kenaikan Sabuk (UKT) bulan depan.</span>
+                </div>
+              </div>
+
+              <!-- Attendance History Chips -->
+              <div class="bg-white border border-[#D8C2BE]/40 rounded-3xl p-4 shadow-elevation-1 space-y-2.5">
+                <h4 class="text-xs font-black text-[#231918] uppercase tracking-wider">Riwayat 3 Sesi Terakhir</h4>
+                <div class="space-y-1.5">
+                  <div class="flex items-center justify-between p-2 rounded-xl bg-[#FFF8F6] text-xs">
+                    <div>
+                      <span class="font-bold text-[#231918] block">Sabtu, 17 Okt 2026</span>
+                      <span class="text-[10px] text-[#534341]">Fisik & Daya Tahan Kuda-Kuda</span>
+                    </div>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Hadir (Wajah)</span>
+                  </div>
+
+                  <div class="flex items-center justify-between p-2 rounded-xl bg-[#FFF8F6] text-xs">
+                    <div>
+                      <span class="font-bold text-[#231918] block">Rabu, 14 Okt 2026</span>
+                      <span class="text-[10px] text-[#534341]">Aplikasi Tangkisan & Kuncian</span>
+                    </div>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Hadir (QR)</span>
+                  </div>
+
+                  <div class="flex items-center justify-between p-2 rounded-xl bg-[#FFF8F6] text-xs">
+                    <div>
+                      <span class="font-bold text-[#231918] block">Sabtu, 10 Okt 2026</span>
+                      <span class="text-[10px] text-[#534341]">Uji Kelenturan & Tendangan</span>
+                    </div>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">Izin Sekolah</span>
+                  </div>
+                </div>
+              </div>
+
+            </section>
+
+            <!-- ============================================================= -->
+            <!-- 5. SCREEN: AI FACE RECOGNITION & GEOFENCE 100M SCANNER -->
+            <!-- ============================================================= -->
+            <section id="view-biometric-scanner" class="screen-view hidden space-y-4">
+              
+              <div class="text-center">
+                <div class="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-[#FFDAD5] text-primary shadow-sm mb-1">
+                  <span class="material-symbols-outlined text-2xl">face</span>
+                </div>
+                <h3 class="text-lg font-black text-[#231918]">Presensi Biometrik Wajah AI</h3>
+                <p class="text-xs text-[#534341]">Deteksi On-Device & Radius Geofence Maksimal 100m</p>
+              </div>
+
+              <!-- Geofence 100m Live Radius Card -->
+              <div class="bg-white border border-[#D8C2BE]/50 rounded-3xl p-4 shadow-elevation-1 space-y-2.5">
+                <div class="flex items-center justify-between border-b border-[#D8C2BE]/30 pb-2">
+                  <div class="flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-primary text-base">radar</span>
+                    <span class="text-xs font-black text-[#231918]">Radius Lokasi Latihan</span>
+                  </div>
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-xs">verified</span>
+                    <span>Dalam Radius (32m / 100m)</span>
+                  </span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-[11px]">
+                  <div class="p-2 bg-[#FFF8F6] rounded-xl border border-[#D8C2BE]/30">
+                    <span class="text-[10px] text-[#857371] block font-semibold">Tempat Latihan:</span>
+                    <strong class="text-[#231918] block truncate">Dojo Padepokan Utama</strong>
+                    <span class="text-[9px] font-mono text-[#857371]">-6.9147, 107.6098</span>
+                  </div>
+                  <div class="p-2 bg-[#FFF8F6] rounded-xl border border-[#D8C2BE]/30">
+                    <span class="text-[10px] text-[#857371] block font-semibold">Jarak Saat Ini:</span>
+                    <strong class="text-emerald-700 block font-black">32.4 Meter</strong>
+                    <span class="text-[9px] text-emerald-600 font-medium">Sah untuk presensi</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- AI Camera Viewfinder Card with Animated Laser Beam -->
+              <div class="bg-black rounded-3xl overflow-hidden p-3 shadow-elevation-3 relative border-2 border-primary/40">
+                <div class="relative w-full h-64 bg-slate-900 rounded-2xl overflow-hidden flex items-center justify-center">
+                  
+                  <!-- Silhouette Face Guide Overlay -->
+                  <div class="relative w-40 h-52 border-2 border-dashed border-emerald-400/80 rounded-[48px] flex flex-col items-center justify-center p-3">
+                    <span class="material-symbols-outlined text-6xl text-emerald-400/30">account_circle</span>
+                    <span class="text-[9px] font-mono text-emerald-300 bg-black/60 px-2 py-0.5 rounded-full mt-2">
+                      Posisikan Wajah di Sini
+                    </span>
+
+                    <!-- Face Landmarks Corners -->
+                    <div class="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-emerald-400"></div>
+                    <div class="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-emerald-400"></div>
+                    <div class="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-emerald-400"></div>
+                    <div class="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-emerald-400"></div>
+                  </div>
+
+                  <!-- Animated Red/Green Biometric Scanning Beam -->
+                  <div class="absolute inset-x-6 h-1 bg-gradient-to-r from-transparent via-emerald-400 to-transparent laser-scanner-beam shadow-[0_0_12px_#34D399]"></div>
+
+                  <!-- Live Model Detection Tag -->
+                  <div class="absolute top-3 left-3 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-mono text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>AI Model: face-api.js Ready</span>
+                  </div>
+
+                  <!-- Confidence Score Chip -->
+                  <div class="absolute bottom-3 right-3 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-mono text-amber-300 border border-amber-500/30">
+                    Match: 98.6% (Euclidean: 0.28)
+                  </div>
+                </div>
+
+                <!-- Capture Trigger Button -->
+                <div class="mt-3 flex items-center justify-center gap-3">
+                  <button onclick="simulateScanSuccess()" class="w-full py-3 rounded-full bg-primary hover:bg-primary-dark text-white font-black text-xs shadow-elevation-2 flex items-center justify-center gap-2 active:scale-95 transition-all">
+                    <span class="material-symbols-outlined text-lg">camera</span>
+                    <span>Verifikasi Wajah Saya Sekarang</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Scanner Mode Tabs (Face / QR / Manual) -->
+              <div class="flex items-center justify-center gap-1 bg-[#FFF0EE] p-1 rounded-full border border-[#D8C2BE]/40 text-xs font-bold">
+                <button class="flex-1 py-1.5 rounded-full bg-primary text-white shadow-2xs flex items-center justify-center gap-1">
+                  <span class="material-symbols-outlined text-xs">face</span> Wajah AI
+                </button>
+                <button onclick="switchScreen('cockpit-qr')" class="flex-1 py-1.5 rounded-full text-[#534341] hover:bg-[#FCEAE6] flex items-center justify-center gap-1">
+                  <span class="material-symbols-outlined text-xs">qr_code_scanner</span> Barcode
+                </button>
+                <button class="flex-1 py-1.5 rounded-full text-[#534341] hover:bg-[#FCEAE6] flex items-center justify-center gap-1">
+                  <span class="material-symbols-outlined text-xs">edit_note</span> Manual
+                </button>
+              </div>
+
+            </section>
+
+            <!-- ============================================================= -->
+            <!-- 6. SCREEN: LAPORAN REKAP & LEMBAR RESMI SEKOLAH -->
+            <!-- ============================================================= -->
+            <section id="view-reports" class="screen-view hidden space-y-4">
+              
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#FFDAD5] text-primary text-[10px] font-bold">
+                    <span class="material-symbols-outlined text-xs">assignment</span>
+                    Laporan Pertanggungjawaban
+                  </div>
+                  <h3 class="text-lg font-black text-[#231918] mt-1">Pusat Cetak Laporan Presensi</h3>
+                </div>
+                <button class="px-3 py-1.5 rounded-full bg-emerald-700 text-white text-xs font-bold flex items-center gap-1 shadow-xs">
+                  <span class="material-symbols-outlined text-sm">download</span> Excel
+                </button>
+              </div>
+
+              <!-- Filter Periode Card -->
+              <div class="bg-white border border-[#D8C2BE]/40 rounded-3xl p-4 shadow-elevation-1 space-y-3">
+                <div class="flex items-center justify-between border-b border-[#D8C2BE]/30 pb-2">
+                  <span class="text-xs font-black text-[#231918]">Filter Rekapitulasi</span>
+                  <div class="inline-flex p-0.5 bg-[#FFF0EE] rounded-full border border-[#D8C2BE]/40 text-[10px] font-bold">
+                    <button class="px-2.5 py-1 rounded-full bg-primary text-white">Bulanan</button>
+                    <button class="px-2.5 py-1 rounded-full text-[#534341]">Tahunan</button>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <label class="block text-[10px] font-bold text-[#534341] mb-1">Bulan</label>
+                    <select class="w-full p-2 bg-[#FFF8F6] border border-[#D8C2BE] rounded-xl text-xs font-semibold">
+                      <option>Oktober 2026</option>
+                      <option>September 2026</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-[#534341] mb-1">Tingkatan Sabuk</label>
+                    <select class="w-full p-2 bg-[#FFF8F6] border border-[#D8C2BE] rounded-xl text-xs font-semibold">
+                      <option>Semua Sabuk (Putih-Hitam)</option>
+                      <option>Sabuk Kuning</option>
+                      <option>Sabuk Hijau</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Dokumen Resmi Sheet Mockup (Print Preview Layout) -->
+              <div class="bg-white border-2 border-[#D8C2BE] rounded-3xl p-5 shadow-elevation-2 space-y-3 font-sans text-xs">
+                
+                <!-- Kop Surat Ekstrakurikuler -->
+                <div class="text-center border-b-2 border-black pb-2 space-y-0.5">
+                  <h4 class="font-black text-sm uppercase tracking-wide text-black">PERGURUAN PENCAK SILAT PUSAKA MANDIRI</h4>
+                  <h5 class="font-extrabold text-xs uppercase text-black">EKSTRAKURIKULER SMAN 1 PURWAKARTA</h5>
+                  <p class="text-[9px] text-[#534341]">Sekretariat: Jl. Raya Pembina No. 12 • NPSN: 20218890 • Telp: (0264) 889123</p>
+                </div>
+
+                <!-- Title -->
+                <div class="text-center pt-1">
+                  <h5 class="font-black text-xs text-black underline uppercase">REKAPITULASI PRESENSI & KUALIFIKASI UKT</h5>
+                  <p class="text-[10px] text-[#534341]">Periode: Oktober 2026 • Total Sesi: 8 Kali Pertemuan</p>
+                </div>
+
+                <!-- Rekap Table -->
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left text-[10px] border border-black/20">
+                    <thead class="bg-[#FFF0EE] font-bold text-black border-b border-black/20">
+                      <tr>
+                        <th class="p-1.5 border-r border-black/20">No</th>
+                        <th class="p-1.5 border-r border-black/20">Nama Pesilat</th>
+                        <th class="p-1.5 border-r border-black/20">Sabuk</th>
+                        <th class="p-1.5 border-r border-black/20 text-center">H</th>
+                        <th class="p-1.5 border-r border-black/20 text-center">%</th>
+                        <th class="p-1.5 text-center">UKT Status</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-black/10">
+                      <tr>
+                        <td class="p-1.5 border-r border-black/20 text-center">1</td>
+                        <td class="p-1.5 border-r border-black/20 font-bold">Raden Panji</td>
+                        <td class="p-1.5 border-r border-black/20">Kuning</td>
+                        <td class="p-1.5 border-r border-black/20 text-center font-bold">7</td>
+                        <td class="p-1.5 border-r border-black/20 text-center font-bold">88%</td>
+                        <td class="p-1.5 text-center font-bold text-emerald-700">LULUS SYARAT</td>
+                      </tr>
+                      <tr>
+                        <td class="p-1.5 border-r border-black/20 text-center">2</td>
+                        <td class="p-1.5 border-r border-black/20 font-bold">Dewi Permata</td>
+                        <td class="p-1.5 border-r border-black/20">Hijau</td>
+                        <td class="p-1.5 border-r border-black/20 text-center font-bold">8</td>
+                        <td class="p-1.5 border-r border-black/20 text-center font-bold">100%</td>
+                        <td class="p-1.5 text-center font-bold text-emerald-700">LULUS SYARAT</td>
+                      </tr>
+                      <tr>
+                        <td class="p-1.5 border-r border-black/20 text-center">3</td>
+                        <td class="p-1.5 border-r border-black/20 font-bold">Rian Firmansyah</td>
+                        <td class="p-1.5 border-r border-black/20">Putih</td>
+                        <td class="p-1.5 border-r border-black/20 text-center font-bold">4</td>
+                        <td class="p-1.5 border-r border-black/20 text-center font-bold text-red-600">50%</td>
+                        <td class="p-1.5 text-center font-bold text-red-600">BELUM LULUS</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Tanda Tangan Resmi (Signatures) -->
+                <div class="grid grid-cols-2 gap-4 pt-4 text-center text-[10px]">
+                  <div>
+                    <span class="block text-[#534341]">Mengetahui,</span>
+                    <strong class="block text-black">Pembina Ekstrakurikuler</strong>
+                    <div class="h-10"></div>
+                    <strong class="block text-black underline">Drs. H. Mulyadi, M.Pd</strong>
+                    <span class="block text-[9px] text-[#534341]">NIP. 19750812 200212 1 004</span>
+                  </div>
+
+                  <div>
+                    <span class="block text-[#534341]">Purwakarta, 21 Okt 2026</span>
+                    <strong class="block text-black">Pelatih Utama Silat</strong>
+                    <div class="h-10"></div>
+                    <strong class="block text-black underline">Hendra Wijaya, S.Pd</strong>
+                    <span class="block text-[9px] text-[#534341]">Pendekar Madya IPSI</span>
+                  </div>
+                </div>
+
+              </div>
+
+            </section>
+
+            <!-- ============================================================= -->
+            <!-- 7. SCREEN: DIREKTORI SABUK & ANGGOTA PESILAT -->
+            <!-- ============================================================= -->
+            <section id="view-members" class="screen-view hidden space-y-4">
+              
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-lg font-black text-[#231918]">Direktori Pesilat</h3>
+                  <p class="text-xs text-[#534341]">38 Pesilat Terdaftar dalam Pembinaan</p>
+                </div>
+                <button class="px-3 py-1.5 rounded-full bg-emerald-800 text-white text-xs font-bold flex items-center gap-1 shadow-xs">
+                  <span class="material-symbols-outlined text-sm">person_add</span> Tambah
+                </button>
+              </div>
+
+              <!-- Search & Filter Belts Pills -->
+              <div class="space-y-2">
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-[#857371]">
+                    <span class="material-symbols-outlined text-base">search</span>
+                  </span>
+                  <input type="text" placeholder="Cari nama pesilat, NISN, atau kelas..." class="w-full pl-9 pr-4 py-2 bg-white border border-[#D8C2BE] rounded-2xl text-xs font-semibold outline-none focus:border-primary">
+                </div>
+
+                <!-- Belts Filter Slider -->
+                <div class="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none text-[10px] font-bold">
+                  <button class="px-3 py-1 rounded-full bg-primary text-white shrink-0">Semua (38)</button>
+                  <button class="px-3 py-1 rounded-full bg-slate-200 text-black border border-slate-300 shrink-0">Putih (12)</button>
+                  <button class="px-3 py-1 rounded-full bg-yellow-400 text-black shrink-0">Kuning (14)</button>
+                  <button class="px-3 py-1 rounded-full bg-emerald-600 text-white shrink-0">Hijau (8)</button>
+                  <button class="px-3 py-1 rounded-full bg-blue-600 text-white shrink-0">Biru (3)</button>
+                  <button class="px-3 py-1 rounded-full bg-red-600 text-white shrink-0">Merah (1)</button>
+                </div>
+              </div>
+
+              <!-- Pesilat Cards List -->
+              <div class="space-y-2.5">
+                
+                <div class="bg-white border border-[#D8C2BE]/40 rounded-3xl p-4 shadow-elevation-1 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div class="relative">
+                      <div class="w-12 h-12 rounded-2xl bg-yellow-100 text-yellow-900 flex items-center justify-center font-black text-sm border-2 border-yellow-400">
+                        RP
+                      </div>
+                      <span class="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white" title="Face Registered"></span>
+                    </div>
+                    <div>
+                      <h4 class="text-xs font-extrabold text-[#231918]">Raden Panji Kusuma</h4>
+                      <p class="text-[10px] text-[#534341]">NISN: 00981124 • XI-IPA 2</p>
+                      <div class="flex items-center gap-1.5 mt-0.5">
+                        <span class="px-2 py-0.2 rounded-full text-[9px] font-extrabold bg-yellow-400 text-black">Sabuk Kuning</span>
+                        <span class="text-[10px] font-bold text-emerald-700">88% Kehadiran</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button class="w-8 h-8 rounded-full bg-[#FFF0EE] text-primary flex items-center justify-center hover:bg-[#FFDAD5]">
+                    <span class="material-symbols-outlined text-base">chevron_right</span>
+                  </button>
+                </div>
+
+                <div class="bg-white border border-[#D8C2BE]/40 rounded-3xl p-4 shadow-elevation-1 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div class="relative">
+                      <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-900 flex items-center justify-center font-black text-sm border-2 border-emerald-600">
+                        DP
+                      </div>
+                      <span class="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white"></span>
+                    </div>
+                    <div>
+                      <h4 class="text-xs font-extrabold text-[#231918]">Dewi Permata</h4>
+                      <p class="text-[10px] text-[#534341]">NISN: 00876451 • X-MIPA 1</p>
+                      <div class="flex items-center gap-1.5 mt-0.5">
+                        <span class="px-2 py-0.2 rounded-full text-[9px] font-extrabold bg-emerald-600 text-white">Sabuk Hijau</span>
+                        <span class="text-[10px] font-bold text-emerald-700">100% Kehadiran</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button class="w-8 h-8 rounded-full bg-[#FFF0EE] text-primary flex items-center justify-center hover:bg-[#FFDAD5]">
+                    <span class="material-symbols-outlined text-base">chevron_right</span>
+                  </button>
+                </div>
+
+              </div>
+
+            </section>
+
+            <!-- ============================================================= -->
+            <!-- 8. SCREEN: PORTAL WALI MURID (TRANSPARANSI PUBLIK) -->
+            <!-- ============================================================= -->
+            <section id="view-parent-portal" class="screen-view hidden space-y-4">
+              
+              <div class="text-center space-y-1">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary text-white shadow-elevation-1">
+                  <span class="material-symbols-outlined text-2xl">family_restroom</span>
+                </div>
+                <h3 class="text-lg font-black text-[#231918]">Portal Monitoring Wali Murid</h3>
+                <p class="text-xs text-[#534341]">Cek presensi putra/putri Anda secara transparan tanpa perlu login</p>
+              </div>
+
+              <!-- Quick NISN Lookup Form Card -->
+              <div class="bg-white border border-[#D8C2BE]/50 rounded-3xl p-4 shadow-elevation-2 space-y-3">
+                <label class="block text-[11px] font-bold text-[#534341] uppercase tracking-wider">
+                  Cari Berdasarkan NISN Siswa:
+                </label>
+                <div class="flex gap-2">
+                  <input type="text" value="00981124" class="flex-1 px-3.5 py-2.5 bg-[#FFF8F6] border border-[#D8C2BE] rounded-2xl text-xs font-mono font-bold outline-none focus:border-primary">
+                  <button class="px-4 py-2.5 rounded-2xl bg-primary text-white font-bold text-xs flex items-center gap-1">
+                    <span class="material-symbols-outlined text-base">search</span> Cek
+                  </button>
+                </div>
+              </div>
+
+              <!-- Parent Transparency Report Card -->
+              <div class="bg-white border border-[#D8C2BE]/40 rounded-3xl p-5 shadow-elevation-1 space-y-3">
+                <div class="flex items-center justify-between border-b border-[#D8C2BE]/30 pb-3">
+                  <div>
+                    <span class="text-[10px] font-bold uppercase text-primary">Data Keaktifan Siswa:</span>
+                    <h4 class="text-sm font-black text-[#231918]">Raden Panji Kusuma</h4>
+                    <p class="text-[10px] text-[#534341]">Kelas XI-IPA 2 • SMAN 1 Purwakarta</p>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-2xl font-black text-emerald-700">88%</span>
+                    <span class="block text-[9px] text-[#857371] font-semibold">Tingkat Kehadiran</span>
+                  </div>
+                </div>
+
+                <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-emerald-950 text-xs">
+                  <span class="font-bold block flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm text-emerald-700">verified</span>
+                    Status Kenaikan Sabuk:
+                  </span>
+                  <p class="text-[11px] mt-0.5 text-emerald-900 leading-relaxed">
+                    Putra Anda telah memenuhi syarat kehadiran minimum untuk mengikuti Ujian Kenaikan Sabuk (UKT) Sabuk Hijau periode semester ini.
+                  </p>
+                </div>
+
+                <div class="text-[11px] text-[#534341] space-y-1 pt-1">
+                  <div class="flex justify-between">
+                    <span>Sesi Terakhir Diikuti:</span>
+                    <strong class="text-[#231918]">Rabu, 21 Okt 2026 (16:04 WIB)</strong>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>Verifikasi Absensi:</span>
+                    <strong class="text-emerald-700">AI Wajah & Geofence (Sah)</strong>
+                  </div>
+                </div>
+              </div>
+
+            </section>
+
+          </div>
+
+          <!-- ========================================================================= -->
+          <!-- MOBILE BOTTOM NAVIGATION BAR (M3 PILL ACTIVE INDICATOR) -->
+          <!-- ========================================================================= -->
+          <nav id="mockup-bottom-nav" class="absolute bottom-0 left-0 right-0 z-40 bg-[#FFF0EE]/95 backdrop-blur-lg border-t border-[#D8C2BE]/40 px-3 py-2 flex items-center justify-around">
+            
+            <!-- Beranda -->
+            <button onclick="switchScreen('dashboard-coach')" id="nav-btn-home" class="flex flex-col items-center gap-0.5 group">
+              <div class="nav-indicator px-4 py-1 rounded-full bg-[#FFDAD5] text-[#410001] transition-all">
+                <span class="material-symbols-outlined text-lg">dashboard</span>
+              </div>
+              <span class="text-[10px] font-bold text-primary">Beranda</span>
+            </button>
+
+            <!-- Sesi Cockpit -->
+            <button onclick="switchScreen('cockpit-qr')" id="nav-btn-session" class="flex flex-col items-center gap-0.5 group">
+              <div class="nav-indicator px-4 py-1 rounded-full text-[#534341] transition-all">
+                <span class="material-symbols-outlined text-lg">calendar_month</span>
+              </div>
+              <span class="text-[10px] font-semibold text-[#534341]">Sesi</span>
+            </button>
+
+            <!-- Floating Action Button: Quick Face/QR Scan -->
+            <button onclick="switchScreen('biometric-scanner')" id="nav-btn-scan" class="flex flex-col items-center -mt-6">
+              <div class="w-13 h-13 w-[52px] h-[52px] rounded-full bg-primary text-white flex items-center justify-center shadow-elevation-3 hover:scale-105 active:scale-95 transition-all border-4 border-[#FFF8F6]">
+                <span class="material-symbols-outlined text-2xl">qr_code_scanner</span>
+              </div>
+              <span class="text-[10px] font-black text-primary mt-0.5">Scan</span>
+            </button>
+
+            <!-- Pesilat List -->
+            <button onclick="switchScreen('members')" id="nav-btn-members" class="flex flex-col items-center gap-0.5 group">
+              <div class="nav-indicator px-4 py-1 rounded-full text-[#534341] transition-all">
+                <span class="material-symbols-outlined text-lg">groups</span>
+              </div>
+              <span class="text-[10px] font-semibold text-[#534341]">Pesilat</span>
+            </button>
+
+            <!-- Laporan -->
+            <button onclick="switchScreen('reports')" id="nav-btn-reports" class="flex flex-col items-center gap-0.5 group">
+              <div class="nav-indicator px-4 py-1 rounded-full text-[#534341] transition-all">
+                <span class="material-symbols-outlined text-lg">description</span>
+              </div>
+              <span class="text-[10px] font-semibold text-[#534341]">Laporan</span>
+            </button>
+
+          </nav>
+
+        </div>
+        <!-- End Screen Canvas -->
+
+      </div>
+      <!-- End Device Outer Frame -->
+
+      <!-- Device Simulator Footer & Instructions -->
+      <div class="text-center mt-3 text-xs text-[#A89895] flex items-center justify-center gap-3">
+        <span>💡 <em>Klik tombol navigasi atau tab atas untuk mencoba seluruh interaksi & cockpit</em></span>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Interactive Modal: Presensi Sukses AI Pop-up -->
+  <div id="modal-scan-success" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm hidden transition-all">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-elevation-4 border border-[#D8C2BE]">
+      <div class="w-16 h-16 rounded-3xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto shadow-sm">
+        <span class="material-symbols-outlined text-4xl animate-bounce">check_circle</span>
+      </div>
+
+      <div>
+        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800">
+          PRESENSI BERHASIL DIVERIFIKASI
+        </span>
+        <h3 class="text-xl font-black text-[#231918] mt-2">Alif Pratama (Sabuk Hijau)</h3>
+        <p class="text-xs text-[#534341] mt-1">Presensi biometrik wajah & geofence 32m terverifikasi 100% sah pada server Django.</p>
+      </div>
+
+      <div class="p-3 bg-[#FFF8F6] rounded-2xl border border-[#D8C2BE]/40 text-xs text-left space-y-1">
+        <div class="flex justify-between">
+          <span class="text-[#857371]">Metode:</span>
+          <strong class="text-[#231918]">On-Device AI Facial Verification</strong>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-[#857371]">Waktu Presensi:</span>
+          <strong class="text-[#231918]">16:12:45 WIB</strong>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-[#857371]">Status UKT:</span>
+          <strong class="text-emerald-700 font-bold">18/20 Sesi (90%) - Memenuhi Syarat</strong>
+        </div>
+      </div>
+
+      <button onclick="closeSuccessModal()" class="w-full py-3 rounded-full bg-primary hover:bg-primary-dark text-white font-extrabold text-xs shadow-elevation-1">
+        Tutup & Kembali ke Dashboard
+      </button>
+    </div>
+  </div>
+
+  <!-- Interactive JavaScript Logic -->
+  <script>
+    // State management
+    let currentScreen = 'dashboard-coach';
+    let currentRole = 'pelatih';
+    let qrTimer = 12;
+
+    // Rolling QR interval timer simulation
+    setInterval(() => {
+      qrTimer--;
+      if (qrTimer <= 0) {
+        qrTimer = 15;
+      }
+      const timerEl = document.getElementById('qr-timer-seconds');
+      if (timerEl) {
+        timerEl.innerText = qrTimer;
+      }
+    }, 1000);
+
+    // Switch Screen View
+    function switchScreen(screenId) {
+      currentScreen = screenId;
+
+      // Hide all views
+      document.querySelectorAll('.screen-view').forEach(view => {
+        view.classList.add('hidden');
+      });
+
+      // Show targeted view
+      const targetView = document.getElementById('view-' + screenId);
+      if (targetView) {
+        targetView.classList.remove('hidden');
+      }
+
+      // Update pills
+      document.querySelectorAll('.screen-pill').forEach(pill => {
+        pill.classList.remove('bg-primary', 'shadow-elevation-1');
+        pill.classList.add('bg-white/10', 'hover:bg-white/20');
+      });
+      const activePill = document.getElementById('pill-' + screenId);
+      if (activePill) {
+        activePill.classList.remove('bg-white/10', 'hover:bg-white/20');
+        activePill.classList.add('bg-primary', 'shadow-elevation-1');
+      }
+
+      // Update Bottom Nav active indicator
+      updateBottomNavIndicators(screenId);
+
+      // Scroll canvas to top
+      const container = document.getElementById('screen-container');
+      if (container) {
+        container.scrollTop = 0;
+      }
+    }
+
+    function updateBottomNavIndicators(screenId) {
+      const navMapping = {
+        'dashboard-coach': 'nav-btn-home',
+        'dashboard-student': 'nav-btn-home',
+        'cockpit-qr': 'nav-btn-session',
+        'biometric-scanner': 'nav-btn-scan',
+        'members': 'nav-btn-members',
+        'reports': 'nav-btn-reports',
+      };
+
+      document.querySelectorAll('.nav-indicator').forEach(ind => {
+        ind.classList.remove('bg-[#FFDAD5]', 'text-[#410001]');
+        ind.classList.add('text-[#534341]');
+      });
+
+      const activeNavId = navMapping[screenId];
+      if (activeNavId) {
+        const activeNavBtn = document.getElementById(activeNavId);
+        if (activeNavBtn) {
+          const indicator = activeNavBtn.querySelector('.nav-indicator');
+          if (indicator) {
+            indicator.classList.remove('text-[#534341]');
+            indicator.classList.add('bg-[#FFDAD5]', 'text-[#410001]');
+          }
+        }
+      }
+    }
+
+    // Switch Device View (Responsive frames)
+    function setDeviceView(mode) {
+      const viewport = document.getElementById('device-viewport');
+      const outerFrame = document.getElementById('device-outer-frame');
+      const notch = document.getElementById('device-notch');
+
+      // Reset button styles
+      ['mobile', 'tablet', 'desktop'].forEach(m => {
+        const btn = document.getElementById('btn-device-' + m);
+        btn.classList.remove('bg-primary', 'text-white', 'shadow-sm');
+        btn.classList.add('text-[#D8C2BE]');
+      });
+      document.getElementById('btn-device-' + mode).classList.add('bg-primary', 'text-white', 'shadow-sm');
+      document.getElementById('btn-device-' + mode).classList.remove('text-[#D8C2BE]');
+
+      if (mode === 'mobile') {
+        viewport.className = 'w-full max-w-[410px] transition-all duration-300 ease-in-out flex flex-col';
+        outerFrame.className = 'bg-[#120F0E] p-3 sm:p-4 rounded-[44px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),0_0_0_1px_rgba(255,255,255,0.1)] border-4 border-[#3D3331] transition-all duration-300';
+        notch.style.display = 'flex';
+      } else if (mode === 'tablet') {
+        viewport.className = 'w-full max-w-[768px] transition-all duration-300 ease-in-out flex flex-col';
+        outerFrame.className = 'bg-[#120F0E] p-4 sm:p-5 rounded-[36px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] border-4 border-[#3D3331] transition-all duration-300';
+        notch.style.display = 'none';
+      } else if (mode === 'desktop') {
+        viewport.className = 'w-full max-w-[1140px] transition-all duration-300 ease-in-out flex flex-col';
+        outerFrame.className = 'bg-[#120F0E] p-4 rounded-[28px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] border-4 border-[#3D3331] transition-all duration-300';
+        notch.style.display = 'none';
+      }
+    }
+
+    // Role switcher demo simulation
+    function loginAs(role) {
+      currentRole = role;
+      const nameEl = document.getElementById('active-user-name');
+      const roleEl = document.getElementById('active-user-role');
+
+      if (role === 'pelatih') {
+        nameEl.innerText = 'Pelatih Hendra';
+        roleEl.innerText = 'PELATIH';
+        roleEl.className = 'block text-[9px] font-extrabold text-amber-800 uppercase tracking-wider';
+        switchScreen('dashboard-coach');
+      } else {
+        nameEl.innerText = 'Raden Panji';
+        roleEl.innerText = 'PESILAT';
+        roleEl.className = 'block text-[9px] font-extrabold text-emerald-800 uppercase tracking-wider';
+        switchScreen('dashboard-student');
+      }
+    }
+
+    // Interactive Student Attendance Status Toggles
+    function toggleStudentStatus(studentId, status) {
+      const group = document.getElementById('row-btn-group-' + studentId);
+      if (!group) return;
+
+      const buttons = group.querySelectorAll('.status-btn');
+      buttons.forEach(btn => {
+        btn.className = 'status-btn px-2.5 py-1 text-[10px] font-bold rounded-full text-[#534341] hover:bg-[#F7E4E1] transition-all';
+      });
+
+      const clickedBtn = event.target;
+      if (status === 'H') {
+        clickedBtn.className = 'status-btn px-2.5 py-1 text-[10px] font-black rounded-full bg-primary text-white shadow-2xs transition-all';
+      } else if (status === 'I') {
+        clickedBtn.className = 'status-btn px-2.5 py-1 text-[10px] font-black rounded-full bg-blue-600 text-white shadow-2xs transition-all';
+      } else if (status === 'S') {
+        clickedBtn.className = 'status-btn px-2.5 py-1 text-[10px] font-black rounded-full bg-amber-600 text-white shadow-2xs transition-all';
+      } else if (status === 'A') {
+        clickedBtn.className = 'status-btn px-2.5 py-1 text-[10px] font-black rounded-full bg-red-600 text-white shadow-2xs transition-all';
+      }
+    }
+
+    function markAllPresent() {
+      [1, 2, 3].forEach(id => {
+        const group = document.getElementById('row-btn-group-' + id);
+        if (group) {
+          const buttons = group.querySelectorAll('.status-btn');
+          buttons.forEach(b => b.className = 'status-btn px-2.5 py-1 text-[10px] font-bold rounded-full text-[#534341] hover:bg-[#F7E4E1]');
+          buttons[0].className = 'status-btn px-2.5 py-1 text-[10px] font-black rounded-full bg-primary text-white shadow-2xs';
+        }
+      });
+      const counterEl = document.getElementById('cockpit-counter-hadir');
+      if (counterEl) {
+        counterEl.innerText = '27';
+      }
+    }
+
+    // Simulate AI Facial Verification Scan
+    function simulateScanSuccess() {
+      const modal = document.getElementById('modal-scan-success');
+      modal.classList.remove('hidden');
+    }
+
+    function closeSuccessModal() {
+      const modal = document.getElementById('modal-scan-success');
+      modal.classList.add('hidden');
+      switchScreen('dashboard-student');
+    }
+  </script>
+
+</body>
+</html>

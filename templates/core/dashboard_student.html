@@ -1,0 +1,433 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard Pesilat - SilatTrack{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Pesilat Profile Card (Material 3 Elevated Card) -->
+  <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 sm:p-8 shadow-elevation-2">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+      
+      <div class="flex items-center gap-4">
+        <!-- Avatar / Belt Circle -->
+        <div class="relative">
+          <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-primary-container text-on-primary-container flex items-center justify-center font-black text-2xl shadow-elevation-1 border-2 border-outline-variant/50">
+            {{ request.user.first_name|first|default:request.user.username|first }}
+          </div>
+          {% if profile.sabuk_saat_ini %}
+          <div class="absolute -bottom-2 -right-2 px-2 py-0.5 rounded-full text-[10px] font-black uppercase shadow border border-outline/30" style="background-color: {{ profile.sabuk_saat_ini.warna_hex }}; color: {% if profile.sabuk_saat_ini.nama_sabuk == 'Putih' or profile.sabuk_saat_ini.nama_sabuk == 'Kuning' %}#000000{% else %}#FFFFFF{% endif %};">
+            {{ profile.sabuk_saat_ini.nama_sabuk }}
+          </div>
+          {% endif %}
+        </div>
+
+        <div>
+          <h2 class="text-xl sm:text-2xl font-black text-on-surface">
+            {{ request.user.get_full_name|default:request.user.username }}
+          </h2>
+          <p class="text-xs sm:text-sm text-on-surface-variant font-medium">
+            NISN: <span class="font-mono font-bold">{{ profile.nisn|default:"-" }}</span> • Kelas: <span class="font-bold">{{ profile.kelas_sekolah|default:"-" }}</span>
+          </p>
+          <div class="flex flex-wrap items-center gap-2 mt-2">
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-secondary-container text-on-secondary-container">
+              <span class="material-symbols-outlined text-sm">military_tech</span>
+              {{ profile.sabuk_saat_ini.nama_sabuk|default:"Sabuk Putih" }}
+            </span>
+            {% if profile.kategori_fokus %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container-high text-on-surface">
+              {{ profile.kategori_fokus.nama }}
+            </span>
+            {% endif %}
+
+            <!-- Gamifikasi Attendance Streak (PRD 3.4) -->
+            {% if streak > 0 %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs">
+              <span>🔥</span>
+              <span>Streak {{ streak }} Sesi</span>
+            </span>
+            {% endif %}
+
+            <!-- AI Face Recognition Status (PRD 3.1) -->
+            {% if profile.has_face_registered %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
+              <span class="material-symbols-outlined text-xs text-emerald-700">verified_user</span>
+              <span>Biometrik Wajah Aktif</span>
+            </span>
+            {% else %}
+            <a href="{% url 'attendance:scanner' %}" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 transition-colors" title="Daftarkan wajah sekarang">
+              <span class="material-symbols-outlined text-xs text-amber-600">how_to_reg</span>
+              <span>Daftarkan Wajah AI</span>
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons Presensi -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        <a href="{% url 'attendance:scanner' %}" class="px-5 py-3 rounded-full bg-primary hover:bg-primary-dark text-on-primary font-bold text-xs shadow-elevation-2 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-lg">face</span>
+          <span>Presensi Wajah AI</span>
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Today Active Session Alert -->
+  {% if active_session %}
+  <div class="border rounded-3xl p-6 shadow-elevation-2 transition-all {% if user_presensi_today %}bg-emerald-50/80 border-emerald-200{% else %}bg-amber-50/80 border-amber-300{% endif %}">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex items-start gap-3">
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 {% if user_presensi_today %}bg-emerald-600 text-white{% else %}bg-amber-600 text-white animate-bounce{% endif %}">
+          <span class="material-symbols-outlined text-2xl">
+            {% if user_presensi_today %}check_circle{% else %}notification_important{% endif %}
+          </span>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold uppercase tracking-wider {% if user_presensi_today %}text-emerald-800{% else %}text-amber-800{% endif %}">
+              Sesi Latihan Hari Ini
+            </span>
+            <span class="text-xs text-outline">• {{ active_session.jam_buka|time:"H:i" }} WIB</span>
+          </div>
+          <h3 class="text-lg font-black text-on-surface mt-0.5">
+            {{ active_session.get_tipe_sesi_display }}
+          </h3>
+          <p class="text-xs text-on-surface-variant mt-1">
+            {{ active_session.materi_latihan|default:"Latihan teknik & fisik." }}
+          </p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 self-end md:self-center">
+        {% if user_presensi_today %}
+        <div class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-emerald-600 text-white font-bold text-xs shadow-sm">
+          <span class="material-symbols-outlined text-base">task_alt</span>
+          <span>Status: {{ user_presensi_today.get_status_display }} ({{ user_presensi_today.get_metode_presensi_display }} • {{ user_presensi_today.waktu_presensi|time:"H:i" }})</span>
+        </div>
+        {% else %}
+        <a href="{% url 'attendance:scanner' %}" class="px-5 py-2.5 rounded-full bg-primary hover:bg-primary-dark text-on-primary font-bold text-xs shadow-elevation-1 hover:scale-105 active:scale-95 transition-all flex items-center gap-2" title="Absen menggunakan pemindai wajah Face ID">
+          <span class="material-symbols-outlined text-base">face</span>
+          <span>Presensi Wajah AI</span>
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- UKT Progression Meter & Statistics -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    
+    <!-- UKT Eligibility Card -->
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="text-base font-extrabold text-on-surface">Kualifikasi Ujian Kenaikan Sabuk (UKT)</h3>
+          <p class="text-xs text-on-surface-variant">Syarat kehadiran minimum untuk pengajuan sabuk berikutnya</p>
+        </div>
+        <div class="w-10 h-10 rounded-2xl bg-tertiary-container text-on-tertiary-container flex items-center justify-center">
+          <span class="material-symbols-outlined text-xl">workspace_premium</span>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <div class="flex items-baseline justify-between">
+          <span class="text-2xl font-black text-primary">{{ persentase_hadir }}%</span>
+          <span class="text-xs font-semibold text-on-surface-variant">Target Minimum: <strong class="text-on-surface">{{ min_kehadiran_ukt }}%</strong></span>
+        </div>
+
+        <!-- Progress Bar (M3 Linear Progress) -->
+        <div class="w-full h-3.5 bg-surface-container-highest rounded-full overflow-hidden p-0.5 border border-outline-variant/30">
+          <div class="h-full rounded-full transition-all duration-500 {% if is_eligible_ukt %}bg-emerald-500{% else %}bg-primary{% endif %}" style="width: {{ persentase_hadir }}%"></div>
+        </div>
+
+        <div class="p-3 rounded-2xl text-xs font-semibold flex items-center gap-2 {% if is_eligible_ukt %}bg-emerald-100 text-emerald-900{% else %}bg-amber-100 text-amber-900{% endif %}">
+          <span class="material-symbols-outlined text-lg">
+            {% if is_eligible_ukt %}verified{% else %}hourglass_top{% endif %}
+          </span>
+          <span>
+            {% if is_eligible_ukt %}
+              Selamat! Kamu memenuhi syarat kehadiran untuk mengikuti UKT Sabuk berikutnya.
+            {% else %}
+              Tingkatkan kehadiran latihan untuk memenuhi ambang batas UKT ({{ min_kehadiran_ukt }}%).
+            {% endif %}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attendance Breakdown Summary -->
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1 flex flex-col justify-between">
+      <div>
+        <h3 class="text-base font-extrabold text-on-surface mb-1">Ringkasan Kehadiran Kamu</h3>
+        <p class="text-xs text-on-surface-variant">Statistik akumulasi absensi eskul pencak silat</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 my-4">
+        <div class="p-3 rounded-2xl bg-surface-container-high border border-outline-variant/20 text-center">
+          <span class="text-2xl font-black text-on-surface">{{ total_hadir_member }}</span>
+          <p class="text-[11px] font-bold text-on-surface-variant uppercase mt-0.5">Sesi Hadir</p>
+        </div>
+        <div class="p-3 rounded-2xl bg-surface-container-high border border-outline-variant/20 text-center">
+          <span class="text-2xl font-black text-primary">{{ persentase_hadir }}%</span>
+          <p class="text-[11px] font-bold text-on-surface-variant uppercase mt-0.5">Persentase</p>
+        </div>
+      </div>
+
+      <!-- Submit permit button -->
+      <a href="{% url 'attendance:permit_create' %}" class="w-full py-2.5 px-4 rounded-full border border-primary text-primary hover:bg-primary-container text-xs font-bold text-center transition-all flex items-center justify-center gap-1.5">
+        <span class="material-symbols-outlined text-base">edit_document</span>
+        <span>Ajukan Surat Izin / Sakit</span>
+      </a>
+    </div>
+
+  </div>
+
+  <!-- Grafik Visual Persentase & Tren Kehadiran Pesilat -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- Card 1: Donut Chart Komposisi Kehadiran -->
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+              <span class="material-symbols-outlined text-lg">pie_chart</span>
+            </span>
+            <div>
+              <h3 class="text-base font-extrabold text-on-surface">Komposisi Presensi Latihan</h3>
+              <p class="text-xs text-on-surface-variant">Rasio Hadir, Izin, Sakit, dan Alpa</p>
+            </div>
+          </div>
+          <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface">
+            Total {{ total_sesi_dijalankan }} Sesi
+          </span>
+        </div>
+
+        <div class="relative flex items-center justify-center my-4 h-52">
+          <canvas id="studentDonutChart"></canvas>
+          <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <span class="text-2xl font-black text-primary">{{ persentase_hadir }}%</span>
+            <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Hadir</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Breakdown Badges -->
+      <div class="grid grid-cols-4 gap-2 pt-3 border-t border-outline-variant/30 text-center">
+        <div class="p-2 rounded-2xl bg-emerald-50 border border-emerald-200">
+          <div class="text-[11px] font-bold text-emerald-800">Hadir</div>
+          <div class="text-lg font-black text-emerald-700">{{ total_hadir_member }}</div>
+        </div>
+        <div class="p-2 rounded-2xl bg-blue-50 border border-blue-200">
+          <div class="text-[11px] font-bold text-blue-800">Izin</div>
+          <div class="text-lg font-black text-blue-700">{{ total_izin_member }}</div>
+        </div>
+        <div class="p-2 rounded-2xl bg-amber-50 border border-amber-200">
+          <div class="text-[11px] font-bold text-amber-800">Sakit</div>
+          <div class="text-lg font-black text-amber-700">{{ total_sakit_member }}</div>
+        </div>
+        <div class="p-2 rounded-2xl bg-red-50 border border-red-200">
+          <div class="text-[11px] font-bold text-red-800">Alpa</div>
+          <div class="text-lg font-black text-red-700">{{ total_alpa_member }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Tren Kumulatif Kehadiran vs Target UKT -->
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
+              <span class="material-symbols-outlined text-lg">show_chart</span>
+            </span>
+            <div>
+              <h3 class="text-base font-extrabold text-on-surface">Tren Kehadiran vs Target UKT</h3>
+              <p class="text-xs text-on-surface-variant">Grafik stabilitas kehadiran per sesi latihan</p>
+            </div>
+          </div>
+          <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full {% if is_eligible_ukt %}bg-emerald-100 text-emerald-900{% else %}bg-amber-100 text-amber-900{% endif %}">
+            <span class="w-2 h-2 rounded-full {% if is_eligible_ukt %}bg-emerald-500{% else %}bg-amber-500{% endif %}"></span>
+            Target UKT: {{ min_kehadiran_ukt }}%
+          </span>
+        </div>
+
+        <div class="h-56 mt-3">
+          <canvas id="studentTrendChart"></canvas>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-on-surface-variant text-center pt-2 border-t border-outline-variant/30">
+        Garis putus-putus merah merupakan ambang batas minimal kelulusan UKT ({{ min_kehadiran_ukt }}%).
+      </p>
+    </div>
+
+  </div>
+
+  <!-- Riwayat Absensi Pesilat -->
+  <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1">
+    <h3 class="text-base font-extrabold text-on-surface mb-1">Riwayat Presensi Terbaru</h3>
+    <p class="text-xs text-on-surface-variant mb-4">6 sesi latihan terakhir yang kamu ikuti</p>
+
+    <div class="space-y-2">
+      {% for item in riwayat_presensi_user %}
+      <div class="flex items-center justify-between p-3.5 rounded-2xl bg-surface-container hover:bg-surface-container-high transition-colors">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full flex items-center justify-center {% if item.status == 'HADIR' %}bg-emerald-100 text-emerald-800{% elif item.status == 'IZIN' %}bg-blue-100 text-blue-800{% else %}bg-amber-100 text-amber-800{% endif %}">
+            <span class="material-symbols-outlined text-lg">
+              {% if item.status == 'HADIR' %}check{% elif item.status == 'IZIN' %}description{% else %}medical_services{% endif %}
+            </span>
+          </div>
+          <div>
+            <div class="font-bold text-sm text-on-surface">{{ item.sesi.get_tipe_sesi_display }}</div>
+            <div class="text-xs text-outline">{{ item.sesi.tanggal|date:"l, d F Y" }} • {{ item.waktu_presensi|time:"H:i" }} WIB</div>
+          </div>
+        </div>
+        <div>
+          <span class="px-3 py-1 rounded-full text-xs font-bold {% if item.status == 'HADIR' %}bg-emerald-100 text-emerald-800{% elif item.status == 'IZIN' %}bg-blue-100 text-blue-800{% else %}bg-amber-100 text-amber-800{% endif %}">
+            {{ item.get_status_display }}
+          </span>
+        </div>
+      </div>
+      {% empty %}
+      <div class="text-center py-8 text-outline text-sm">
+        Belum ada data presensi yang tercatat.
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // 1. Donut Chart
+    const donutCtx = document.getElementById('studentDonutChart');
+    if (donutCtx) {
+      const donutData = {{ student_donut_json|safe }};
+      new Chart(donutCtx, {
+        type: 'doughnut',
+        data: {
+          labels: donutData.labels,
+          datasets: [{
+            data: donutData.data,
+            backgroundColor: [
+              '#10B981', // Hadir
+              '#3B82F6', // Izin
+              '#F59E0B', // Sakit
+              '#EF4444', // Alpa
+            ],
+            borderWidth: 2,
+            borderColor: '#FFF8F6',
+            hoverOffset: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '72%',
+          plugins: {
+            legend: {
+              display: false,
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.parsed || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                  return ` ${label}: ${value} sesi (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 2. Trend Line Chart
+    const trendCtx = document.getElementById('studentTrendChart');
+    if (trendCtx) {
+      const trendData = {{ student_trend_json|safe }};
+      new Chart(trendCtx, {
+        type: 'line',
+        data: {
+          labels: trendData.labels.length > 0 ? trendData.labels : ['Belum ada sesi'],
+          datasets: [
+            {
+              label: 'Kehadiran Kamu (%)',
+              data: trendData.cumulative_pct.length > 0 ? trendData.cumulative_pct : [0],
+              borderColor: '#8A1C14',
+              backgroundColor: 'rgba(138, 28, 20, 0.12)',
+              borderWidth: 3,
+              fill: true,
+              tension: 0.35,
+              pointBackgroundColor: '#8A1C14',
+              pointRadius: 4,
+              pointHoverRadius: 6,
+            },
+            {
+              label: 'Syarat UKT (%)',
+              data: trendData.target_ukt.length > 0 ? trendData.target_ukt : [75],
+              borderColor: '#EF4444',
+              borderWidth: 2,
+              borderDash: [5, 5],
+              fill: false,
+              pointRadius: 0,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              min: 0,
+              max: 100,
+              ticks: {
+                callback: (val) => val + '%',
+                stepSize: 25,
+                font: { size: 10 }
+              },
+              grid: {
+                color: 'rgba(133, 115, 113, 0.15)',
+              }
+            },
+            x: {
+              ticks: {
+                font: { size: 10 }
+              },
+              grid: {
+                display: false
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                boxWidth: 12,
+                font: { size: 11, weight: 'bold' }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return ` ${context.dataset.label}: ${context.parsed.y}%`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

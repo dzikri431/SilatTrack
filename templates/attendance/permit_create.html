@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Ajukan Surat Izin / Sakit - SilatTrack{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto space-y-6">
+
+  <div>
+    <a href="{% url 'core:dashboard' %}" class="inline-flex items-center gap-1 text-xs font-bold text-on-surface-variant hover:text-primary mb-2">
+      <span class="material-symbols-outlined text-sm">arrow_back</span>
+      <span>Kembali ke Beranda</span>
+    </a>
+    <h2 class="text-2xl font-black text-on-surface">Form Pengajuan Izin / Sakit</h2>
+    <p class="text-xs text-on-surface-variant">Sampaikan surat izin atau surat keterangan sakit kepada pelatih eskul</p>
+  </div>
+
+  <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 sm:p-8 shadow-elevation-1">
+    <form method="POST" enctype="multipart/form-data" class="space-y-4">
+      {% csrf_token %}
+
+      <!-- Pilih Sesi -->
+      <div>
+        <label for="id_sesi" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 ml-1">
+          Sesi Latihan
+        </label>
+        <select name="sesi_id" id="id_sesi" required class="w-full px-4 py-3 bg-surface-container-lowest border border-outline/40 focus:border-primary rounded-2xl text-sm font-semibold text-on-surface outline-none">
+          {% for s in sesi_list %}
+          <option value="{{ s.id }}">{{ s.get_tipe_sesi_display }} ({{ s.tanggal|date:"d M Y" }}) - Pelatih: {{ s.pelatih.get_full_name|default:s.pelatih.username }}</option>
+          {% empty %}
+          <option value="">Tidak ada sesi latihan yang sedang aktif</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Kategori Keterangan -->
+      <div>
+        <label for="id_status" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 ml-1">
+          Kategori Keterangan
+        </label>
+        <select name="status" id="id_status" required class="w-full px-4 py-3 bg-surface-container-lowest border border-outline/40 focus:border-primary rounded-2xl text-sm font-semibold text-on-surface outline-none">
+          <option value="IZIN">Izin (Ada keperluan keluarga / urusan sekolah)</option>
+          <option value="SAKIT">Sakit (Kondisi kesehatan tidak memungkinkan latihan)</option>
+        </select>
+      </div>
+
+      <!-- Alasan Keterangan -->
+      <div>
+        <label for="id_alasan" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 ml-1">
+          Catatan / Alasan
+        </label>
+        <textarea 
+          name="catatan_alasan" 
+          id="id_alasan" 
+          rows="3" 
+          required
+          placeholder="Tuliskan keterangan izin atau sakit..." 
+          class="w-full px-4 py-3 bg-surface-container-lowest border border-outline/40 focus:border-primary rounded-2xl text-sm font-medium text-on-surface outline-none placeholder:text-outline/70"
+        ></textarea>
+      </div>
+
+      <!-- Upload Foto Surat Dokter / Bukti -->
+      <div>
+        <label for="id_bukti" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 ml-1">
+          Foto Surat Dokter / Surat Izin Ortu (Opsional)
+        </label>
+        <input 
+          type="file" 
+          name="bukti_foto" 
+          id="id_bukti" 
+          accept="image/*,.pdf"
+          class="w-full px-4 py-2.5 bg-surface-container-lowest border border-outline/40 rounded-2xl text-xs font-medium text-on-surface file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-primary file:text-on-primary hover:file:bg-primary-dark"
+        >
+      </div>
+
+      <div class="pt-4 flex items-center justify-end gap-3">
+        <a href="{% url 'core:dashboard' %}" class="px-5 py-2.5 rounded-full bg-surface-container-high text-xs font-bold text-on-surface hover:bg-surface-container-highest transition-all">
+          Batal
+        </a>
+        <button type="submit" class="px-6 py-2.5 rounded-full bg-primary hover:bg-primary-dark text-on-primary text-xs font-bold shadow-elevation-1 flex items-center gap-1.5 transition-all">
+          <span class="material-symbols-outlined text-base">send</span>
+          <span>Kirim Permohonan Izin</span>
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+{% endblock %}

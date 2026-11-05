@@ -1,0 +1,24 @@
+<!-- QR Code Display (Statis Sesi Latihan) -->
+<div 
+  id="dynamic-qr-box" 
+  class="flex flex-col items-center justify-center p-6 bg-surface-container-lowest rounded-3xl border border-outline-variant/50 shadow-elevation-1 text-center"
+>
+  
+  <!-- QR Code SVG Container -->
+  <div class="p-4 bg-white rounded-2xl shadow-inner border border-outline-variant/30 flex items-center justify-center mb-3">
+    <div class="w-56 h-56 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full">
+      {{ svg_data|safe }}
+    </div>
+  </div>
+
+  <!-- Status Badge Aktif -->
+  <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold mb-2">
+    <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+    <span>QR Code Aktif</span>
+  </div>
+
+  <p class="text-[11px] text-on-surface-variant max-w-xs leading-relaxed">
+    Arahkan kamera HP ke kode QR di atas untuk mencatat presensi kehadiran sesi ini.
+  </p>
+
+</div>
