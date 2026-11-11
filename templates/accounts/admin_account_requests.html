@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Permohonan Akun — Admin SilatTrack{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6 py-2">
+
+  <!-- Header -->
+  <div class="flex items-center gap-4 flex-wrap">
+    <div class="w-12 h-12 rounded-2xl bg-primary-container flex items-center justify-center">
+      <span class="material-symbols-outlined text-primary text-2xl">approval</span>
+    </div>
+    <div>
+      <h1 class="text-xl font-black text-on-surface">Permohonan Pembuatan Akun</h1>
+      <p class="text-sm text-on-surface-variant mt-0.5">Tinjau dan setujui permohonan akun dari Pelatih.</p>
+    </div>
+    {% if pending_count %}
+    <span class="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-200">
+      <span class="material-symbols-outlined text-sm">hourglass_empty</span>
+      {{ pending_count }} menunggu
+    </span>
+    {% endif %}
+  </div>
+
+  <!-- Filter Tabs -->
+  <div class="flex gap-1.5 bg-surface-container-high/60 p-1.5 rounded-2xl border border-outline-variant/40 w-fit">
+    {% for s, label in statuses %}
+    <a href="?status={{ s }}" class="px-4 py-1.5 rounded-xl text-xs font-bold transition-all
+      {% if status_filter == s %}bg-primary text-on-primary shadow-sm{% else %}text-on-surface-variant hover:bg-surface-container-highest{% endif %}">
+      {{ label }}
+    </a>
+    {% endfor %}
+  </div>
+
+  {% if requests_list %}
+  <div class="space-y-3">
+    {% for req in requests_list %}
+    <div class="bg-surface-container-lowest border border-outline-variant/40 rounded-2xl p-5 flex items-start gap-4">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0
+        {% if req.status == 'PENDING' %}bg-amber-100 text-amber-700
+        {% elif req.status == 'APPROVED' %}bg-emerald-100 text-emerald-700
+        {% else %}bg-red-100 text-red-700{% endif %}">
+        <span class="material-symbols-outlined text-xl">
+          {% if req.status == 'PENDING' %}hourglass_empty{% elif req.status == 'APPROVED' %}check_circle{% else %}cancel{% endif %}
+        </span>
+      </div>
+      <div class="flex-1 min-w-0 space-y-1">
+        <div class="flex items-center gap-2 flex-wrap">
+          <p class="text-sm font-bold text-on-surface">{{ req.first_name }} {{ req.last_name }}</p>
+          <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full
+            {% if req.account_type == 'ANGGOTA' %}bg-emerald-100 text-emerald-800{% else %}bg-amber-100 text-amber-800{% endif %}">
+            {{ req.get_account_type_display }}
+          </span>
+        </div>
+        <p class="text-xs text-on-surface-variant">@{{ req.username }} {% if req.email %}· {{ req.email }}{% endif %}</p>
+        <p class="text-xs text-on-surface-variant">Diajukan oleh <span class="font-semibold text-on-surface">{{ req.requested_by.get_full_name|default:req.requested_by.username }}</span> · {{ req.created_at|date:"d M Y, H:i" }}</p>
+        {% if req.extra_data %}
+        <div class="flex flex-wrap gap-2 mt-1">
+          {% for k, v in req.extra_data.items %}{% if v %}
+          <span class="text-[10px] bg-surface-container px-2 py-0.5 rounded-lg text-on-surface-variant">{{ k }}: {{ v }}</span>
+          {% endif %}{% endfor %}
+        </div>
+        {% endif %}
+        {% if req.catatan_admin %}
+        <p class="text-xs italic text-on-surface-variant border-l-2 border-outline-variant pl-2 mt-1">{{ req.catatan_admin }}</p>
+        {% endif %}
+      </div>
+      {% if req.status == 'PENDING' %}
+      <a href="{% url 'accounts:admin_review_request' req.id %}"
+        class="flex-shrink-0 px-4 py-2 rounded-full bg-primary text-on-primary text-xs font-bold hover:bg-primary-dark transition-all shadow-sm flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-sm">rate_review</span> Tinjau
+      </a>
+      {% else %}
+      <span class="flex-shrink-0 text-xs text-on-surface-variant">{{ req.reviewed_at|date:"d M Y" }}</span>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-16 text-on-surface-variant">
+    <span class="material-symbols-outlined text-5xl opacity-30">inbox</span>
+    <p class="mt-3 text-sm font-semibold">Tidak ada permohonan dengan status ini.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Inject status choices for filter
+</script>
+{% endblock %}

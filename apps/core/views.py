@@ -1,12 +1,15 @@
 import json
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Count, Q
 from apps.accounts.models import User
 from apps.members.models import AnggotaProfile
 from apps.schedule.models import JadwalLatihan
 from apps.attendance.models import SesiLatihan, Presensi
+from apps.core.models import Sekolah, Perguruan
+
 
 
 @login_required
@@ -273,4 +276,77 @@ def pitch_presentation(request):
     Dapat diakses langsung oleh investor atau founder untuk presentasi.
     """
     return render(request, 'presentation/pitch_deck.html')
+
+
+@login_required
+def perguruan_settings(request):
+    """
+    Manajemen Identitas Perguruan Silat & Logo Aplikasi serta Logo Sekolah Mitra.
+    Hanya dapat diakses oleh Admin dan Pelatih.
+    """
+    if not (request.user.is_admin_role or request.user.is_pelatih_role):
+        messages.error(request, "Akses ditolak: Hanya Admin dan Pelatih yang dapat mengubah identitas perguruan.")
+        return redirect('core:dashboard')
+
+    perguruan = Perguruan.get_solo()
+    sekolah_list = Sekolah.objects.all().order_by('nama_sekolah')
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'update_perguruan':
+            perguruan.nama_perguruan = request.POST.get('nama_perguruan', perguruan.nama_perguruan).strip()
+            perguruan.singkatan = request.POST.get('singkatan', perguruan.singkatan).strip()
+            perguruan.semboyan = request.POST.get('semboyan', perguruan.semboyan).strip()
+            perguruan.alamat_pusat = request.POST.get('alamat_pusat', perguruan.alamat_pusat).strip()
+            perguruan.kontak = request.POST.get('kontak', perguruan.kontak).strip()
+
+            if 'logo_perguruan' in request.FILES:
+                perguruan.logo_perguruan = request.FILES['logo_perguruan']
+            elif request.POST.get('hapus_logo_perguruan') == '1':
+                perguruan.logo_perguruan = None
+
+            perguruan.save()
+            messages.success(request, "Identitas dan Logo Perguruan berhasil diperbarui! Logo terbaru otomatis diterapkan ke seluruh aplikasi.")
+            return redirect('core:perguruan_settings')
+
+        elif action == 'update_sekolah_logo':
+            sekolah_id = request.POST.get('sekolah_id')
+            sekolah_obj = get_object_or_404(Sekolah, id=sekolah_id)
+
+            if 'logo_sekolah' in request.FILES:
+                sekolah_obj.logo_sekolah = request.FILES['logo_sekolah']
+            elif request.POST.get('hapus_logo_sekolah') == '1':
+                sekolah_obj.logo_sekolah = None
+
+            if request.POST.get('nama_kepala_sekolah'):
+                sekolah_obj.nama_kepala_sekolah = request.POST.get('nama_kepala_sekolah').strip()
+            if request.POST.get('nip_kepala_sekolah'):
+                sekolah_obj.nip_kepala_sekolah = request.POST.get('nip_kepala_sekolah').strip()
+            if request.POST.get('alamat'):
+                sekolah_obj.alamat = request.POST.get('alamat').strip()
+
+            sekolah_obj.save()
+            messages.success(request, f"Logo dan data sekolah '{sekolah_obj.nama_sekolah}' berhasil diperbarui!")
+            return redirect('core:perguruan_settings')
+
+        elif action == 'create_sekolah':
+            nama = request.POST.get('nama_sekolah', '').strip()
+            if nama:
+                Sekolah.objects.create(
+                    nama_sekolah=nama,
+                    npsn=request.POST.get('npsn', '').strip(),
+                    alamat=request.POST.get('alamat', '').strip(),
+                    nama_kepala_sekolah=request.POST.get('nama_kepala_sekolah', '').strip() or "Drs. H. Mulyadi, M.M",
+                    nip_kepala_sekolah=request.POST.get('nip_kepala_sekolah', '').strip() or "19720412 199802 1 003",
+                    logo_sekolah=request.FILES.get('logo_sekolah')
+                )
+                messages.success(request, f"Sekolah mitra '{nama}' berhasil ditambahkan!")
+            return redirect('core:perguruan_settings')
+
+    return render(request, 'core/perguruan_settings.html', {
+        'perguruan': perguruan,
+        'sekolah_list': sekolah_list,
+    })
+
 

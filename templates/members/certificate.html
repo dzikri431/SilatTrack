@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+{% if is_pelatih %}Sertifikat Lisensi Pelatih - {{ target_user.get_full_name|default:target_user.username }}{% else %}Sertifikat Kompetensi Pesilat - {{ target_user.get_full_name|default:target_user.username }}{% endif %} - SilatTrack
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* Standar Print A4 Landscape */
+  @page {
+    size: A4 landscape;
+    margin: 0;
+  }
+
+  @media print {
+    body {
+      background: #ffffff !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    header, nav, footer, .no-print, .industrial-toast, #confirm-modal {
+      display: none !important;
+    }
+    main {
+      padding: 0 !important;
+      margin: 0 !important;
+      max-width: 100% !important;
+    }
+    .certificate-page {
+      width: 297mm !important;
+      height: 210mm !important;
+      max-width: 297mm !important;
+      max-height: 210mm !important;
+      margin: 0 auto !important;
+      padding: 10mm !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      page-break-after: avoid !important;
+      page-break-inside: avoid !important;
+    }
+  }
+
+  /* Ornamental Border Frame */
+  .cert-border-outer {
+    border: 5px double #b45309;
+    outline: 2px solid #78350f;
+    outline-offset: -8px;
+  }
+
+  .cert-watermark {
+    background-image: radial-gradient(circle at center, rgba(217, 119, 6, 0.05) 0%, transparent 70%);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+
+  <!-- Control & Action Bar (Hidden on Print) -->
+  <div class="no-print bg-surface-container-low border border-outline-variant/40 rounded-3xl p-4 sm:p-5 shadow-elevation-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <a href="{% if is_anggota %}{% url 'members:member_detail' target_user.id %}{% else %}{% url 'members:member_list' %}?tab=pelatih{% endif %}" class="w-10 h-10 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center transition-colors shadow-2xs" title="Kembali">
+        <span class="material-symbols-outlined text-lg">arrow_back</span>
+      </a>
+      <div>
+        <div class="flex items-center gap-2">
+          <h2 class="text-base sm:text-lg font-black text-on-surface">
+            {% if is_pelatih %}Sertifikat Lisensi Kepelatihan Resmi{% else %}Sertifikat Kompetensi & Prestasi Pesilat{% endif %}
+          </h2>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {% if is_pelatih %}bg-amber-100 text-amber-900 border border-amber-300{% else %}bg-emerald-100 text-emerald-900 border border-emerald-300{% endif %}">
+            A4 Landscape
+          </span>
+        </div>
+        <p class="text-xs text-on-surface-variant font-medium">
+          {{ target_user.get_full_name|default:target_user.username }} • No: <span class="font-mono text-primary font-bold">{{ cert_number }}</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Toolbar Buttons -->
+    <div class="flex items-center gap-2">
+      <!-- Pintasan ke ID Card -->
+      <a 
+        href="{% url 'members:id_card' target_user.id %}"
+        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-bold border border-outline-variant/30 transition-all cursor-pointer"
+        title="Lihat ID Card / KTA"
+      >
+        <span class="material-symbols-outlined text-base text-primary">badge</span>
+        <span>Lihat ID Card</span>
+      </a>
+
+      <!-- Tombol Print Sertifikat -->
+      <button 
+        type="button" 
+        onclick="window.print()"
+        class="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer"
+      >
+        <span class="material-symbols-outlined text-base">print</span>
+        <span>Cetak Sertifikat A4</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Petunjuk Cetak Sertifikat (Hidden on Print) -->
+  <div class="no-print bg-amber-50/80 border border-amber-200 rounded-2xl p-3.5 text-xs text-amber-900 flex items-start gap-2.5">
+    <span class="material-symbols-outlined text-amber-700 flex-shrink-0 text-lg">lightbulb</span>
+    <div class="space-y-0.5">
+      <p class="font-bold">Tips Mencetak Sertifikat Fisik Resmi:</p>
+      <p class="text-[11px] text-amber-800">
+        Gunakan kertas <strong>Concorde, Linen, atau Karton Jasmine tebal (220–260 gsm)</strong> berukuran <strong>A4</strong> dengan orientasi <strong>Landscape (Mendatar)</strong>. Pastikan pada dialog cetak opsi <strong>"Background graphics / Grafik latar belakang" dicentang</strong> agar ornamen emas dan cap resmi tercetak sempurna.
+      </p>
+    </div>
+  </div>
+
+  <!-- ==================== LEMBAR SERTIFIKAT A4 LANDSCAPE ==================== -->
+  <div class="flex justify-center overflow-x-auto py-2">
+    <div class="certificate-page relative w-[297mm] h-[210mm] bg-[#fffdfa] text-slate-900 p-8 sm:p-10 cert-border-outer shadow-elevation-3 rounded-xl flex flex-col justify-between overflow-hidden select-none cert-watermark">
+
+      <!-- Background Silhouette / Watermark IPSI & Silat -->
+      <div class="absolute inset-0 flex items-center justify-center opacity-[0.04] pointer-events-none">
+        <span class="material-symbols-outlined text-[360px] text-amber-900">sports_martial_arts</span>
+      </div>
+
+      <!-- Corner Ornamental Badges -->
+      <div class="absolute top-3 left-3 text-amber-700/70 font-mono text-xs select-none">❖</div>
+      <div class="absolute top-3 right-3 text-amber-700/70 font-mono text-xs select-none">❖</div>
+      <div class="absolute bottom-3 left-3 text-amber-700/70 font-mono text-xs select-none">❖</div>
+      <div class="absolute bottom-3 right-3 text-amber-700/70 font-mono text-xs select-none">❖</div>
+
+      <!-- KOP / HEADER RESMI -->
+      <div class="relative z-10 border-b-2 border-amber-800/40 pb-3">
+        <div class="flex items-center justify-between">
+          <!-- Logo Sekolah (Sisi Kiri) -->
+          <div class="flex items-center gap-3">
+            <div class="w-16 h-16 rounded-2xl bg-white p-1 border border-amber-700/30 shadow-xs flex items-center justify-center overflow-hidden">
+              {% if sekolah and sekolah.logo %}
+              <img src="{{ sekolah.logo.url }}" alt="Logo Sekolah" class="w-full h-full object-contain">
+              {% else %}
+              <img src="{% static 'img/default_sekolah_logo.svg' %}" alt="Logo Sekolah Bawaan" class="w-full h-full object-contain">
+              {% endif %}
+            </div>
+            <div class="text-left">
+              <h4 class="text-[10px] font-bold tracking-widest uppercase text-amber-900/80">
+                PENGURUS CABANG IKATAN PENCAK SILAT INDONESIA (IPSI)
+              </h4>
+              <h2 class="text-base sm:text-lg font-black uppercase text-amber-950 tracking-wide font-serif">
+                {{ sekolah.nama_sekolah|default:perguruan_info.nama_perguruan|default:"EKSTRAKURIKULER BELADIRI PENCAK SILAT" }}
+              </h2>
+              <p class="text-[9px] text-slate-600 font-medium max-w-md truncate">
+                {{ sekolah.alamat|default:perguruan_info.alamat_pusat|default:"Sekretariat Pembinaan Prestasi Seni Bela Diri dan Ketahanan Karakter" }}
+                {% if sekolah and sekolah.telepon %} • Telp: {{ sekolah.telepon }}{% endif %}
+              </p>
+            </div>
+          </div>
+
+          <!-- Logo Perguruan Silat (Sisi Kanan) -->
+          <div class="flex items-center gap-3">
+            <div class="text-right">
+              <span class="inline-block px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-widest uppercase bg-amber-100 text-amber-900 border border-amber-300">
+                {% if is_pelatih %}SERTIFIKASI PELATIH{% else %}SERTIFIKASI PRESTASI SISWA{% endif %}
+              </span>
+              <p class="text-[8px] font-mono text-slate-500 mt-0.5">{{ perguruan_info.singkatan|default:"SilatTrack" }} Verifikasi Terpadu</p>
+            </div>
+            <div class="w-16 h-16 rounded-2xl bg-white p-1 border border-amber-700/40 shadow-xs flex items-center justify-center overflow-hidden">
+              {% if perguruan_info and perguruan_info.logo_perguruan %}
+              <img src="{{ perguruan_info.logo_perguruan.url }}" alt="Logo Perguruan Silat" class="w-full h-full object-contain">
+              {% else %}
+              <img src="{% static 'img/default_perguruan_logo.svg' %}" alt="Logo Perguruan Silat" class="w-full h-full object-contain">
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- JUDUL SERTIFIKAT & NOMOR -->
+      <div class="relative z-10 text-center space-y-1 my-auto py-2">
+        <h1 class="text-2xl sm:text-3xl font-black uppercase tracking-wider text-amber-950 font-serif">
+          {% if is_pelatih %}
+            SERTIFIKAT LISENSI KEPELATIHAN
+          {% else %}
+            SERTIFIKAT KOMPETENSI & KEIKUTSERTAAN
+          {% endif %}
+        </h1>
+        <p class="text-xs sm:text-sm font-semibold tracking-wide text-amber-800 uppercase">
+          {% if is_pelatih %}
+            DEWAN GURU & PELATIH RESMI EKSTRAKURIKULER PENCAK SILAT
+          {% else %}
+            EKSTRAKURIKULER SENI BELADIRI TRADISIONAL PENCAK SILAT
+          {% endif %}
+        </p>
+        <div class="inline-flex items-center gap-2 px-3 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-[10px] font-mono font-bold text-amber-900 mt-1">
+          <span>NOMOR:</span>
+          <span>{{ cert_number }}</span>
+        </div>
+      </div>
+
+      <!-- ISI UTAMA / RECIPIENT -->
+      <div class="relative z-10 text-center space-y-2 max-w-3xl mx-auto">
+        <p class="text-xs text-slate-600 italic">
+          Diberikan dengan penuh kehormatan dan apresiasi tinggi kepada:
+        </p>
+
+        <!-- Nama Penerima -->
+        <div class="py-1">
+          <h2 class="text-2xl sm:text-3xl font-black tracking-wide text-slate-900 font-serif underline decoration-amber-600 decoration-2 underline-offset-8">
+            {{ target_user.get_full_name|default:target_user.username|upper }}
+          </h2>
+          <p class="text-xs text-amber-900 font-mono font-bold mt-2">
+            {% if is_pelatih %}
+              Nomor Registrasi Pelatih: {{ pelatih.nomor_registrasi|default:"PLT-001" }}
+            {% else %}
+              NISN: {{ anggota.nisn|default:"-" }} • Kelas: {{ anggota.kelas_sekolah|default:"-" }}
+            {% endif %}
+          </p>
+        </div>
+
+        <!-- Uraian Prestasi / Narasi -->
+        <p class="text-xs sm:text-[13px] text-slate-700 leading-relaxed max-w-2xl mx-auto font-sans">
+          {% if is_pelatih %}
+            Atas dedikasi, integritas, dan pengabdian luar biasa dalam mendidik dan membina generasi pesilat muda dengan spesialisasi <strong>{{ pelatih.spesialisasi|default:"Seni & Tanding" }}</strong>, tingkatan <strong>{{ pelatih.tingkatan_pendekar|default:"Pendekar Muda" }}</strong>, dan legalitas SK <strong>{{ pelatih.sertifikasi_sk|default:"Lisensi Resmi Perguruan" }}</strong>. Berwenang melatih, menguji kenaikan sabuk, dan mendampingi kontingen kejuaraan.
+          {% else %}
+            Atas keberhasilan menyelesaikan seluruh kurikulum latihan fisik, teknik beladiri, dan Ujian Kenaikan Tingkat (UKT) pada tingkatan <strong>Sabuk {{ anggota.sabuk_saat_ini.nama_sabuk|default:"Putih" }}</strong>, dengan tingkat kehadiran latihan <strong>{{ stats.persentase|default:0 }}%</strong> (Predikat: <strong>{{ stats.predikat|default:"BAIK" }}</strong>), serta menjunjung tinggi budi pekerti luhur dan falsafah pesilat ksatria.
+          {% endif %}
+        </p>
+      </div>
+
+      <!-- BAGIAN BAWAH: QR CODE VERIFIKASI & TANDA TANGAN RESMI -->
+      <div class="relative z-10 pt-4 border-t border-amber-800/30">
+        <div class="grid grid-cols-3 items-end gap-4 text-center">
+
+          <!-- Kiri: Penanggung Jawab / Pelatih Utama -->
+          <div class="space-y-1">
+            <p class="text-[9px] text-slate-500 uppercase tracking-wider font-semibold">
+              {% if is_pelatih %}Ketua Pembina Eskul{% else %}Pelatih Utama Eskul{% endif %}
+            </p>
+            <div class="h-16 flex items-center justify-center">
+              <span class="text-xs font-serif italic text-amber-900/60 font-bold">[ Tertanda Sah ]</span>
+            </div>
+            <p class="text-xs font-bold text-slate-900 border-t border-slate-400 pt-1 font-serif">
+              {% if is_pelatih %}
+                Pembina Ekstrakurikuler
+              {% elif coach_penanggung_jawab and coach_penanggung_jawab.user %}
+                {{ coach_penanggung_jawab.user.get_full_name|default:coach_penanggung_jawab.user.username }}
+              {% else %}
+                Dewan Pelatih Pencak Silat
+              {% endif %}
+            </p>
+            <p class="text-[9px] font-mono text-slate-500">
+              {% if is_pelatih %}
+                NIP/SK. Pembina Sekolah
+              {% elif coach_penanggung_jawab and coach_penanggung_jawab.nomor_registrasi %}
+                No. Reg: {{ coach_penanggung_jawab.nomor_registrasi }}
+              {% else %}
+                Lisensi Pelatih Silat
+              {% endif %}
+            </p>
+          </div>
+
+          <!-- Tengah: QR Code & Stempel Otentikasi -->
+          <div class="flex flex-col items-center justify-center space-y-1">
+            <div class="w-16 h-16 bg-white p-1 rounded-lg border border-amber-600/40 shadow-2xs flex items-center justify-center">
+              {% if qr_svg %}
+              <div class="w-full h-full [&>svg]:w-full [&>svg]:h-full">
+                {{ qr_svg|safe }}
+              </div>
+              {% else %}
+              <span class="material-symbols-outlined text-2xl text-slate-400">qr_code_2</span>
+              {% endif %}
+            </div>
+            <div class="text-center">
+              <span class="inline-block px-1.5 py-0.5 rounded text-[8px] font-mono font-bold bg-amber-50 text-amber-950 border border-amber-300">
+                TERVERIFIKASI SISTEM
+              </span>
+              <p class="text-[7px] text-slate-400 mt-0.5">Pindai QR untuk validasi keaslian</p>
+            </div>
+          </div>
+
+          <!-- Kanan: Kepala Sekolah / Pimpinan Institusi -->
+          <div class="space-y-1">
+            <p class="text-[9px] text-slate-500 font-mono">
+              Diterbitkan: {{ today|date:"d F Y" }}
+            </p>
+            <p class="text-[9px] text-slate-500 uppercase tracking-wider font-semibold">
+              Kepala Sekolah / Penanggung Jawab
+            </p>
+            <div class="h-16 flex items-center justify-center">
+              <span class="text-xs font-serif italic text-amber-900/60 font-bold">[ Tertanda & Cap ]</span>
+            </div>
+            <p class="text-xs font-bold text-slate-900 border-t border-slate-400 pt-1 font-serif">
+              {% if sekolah and sekolah.nama_kepala_sekolah %}
+                {{ sekolah.nama_kepala_sekolah }}
+              {% else %}
+                Kepala Sekolah
+              {% endif %}
+            </p>
+            <p class="text-[9px] font-mono text-slate-500">
+              {% if sekolah and sekolah.nip_kepala_sekolah %}
+                NIP. {{ sekolah.nip_kepala_sekolah }}
+              {% else %}
+                NIP. -
+              {% endif %}
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

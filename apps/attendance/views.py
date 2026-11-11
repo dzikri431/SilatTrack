@@ -28,8 +28,9 @@ from apps.schedule.models import JadwalLatihan
 
 @login_required
 def session_list(request):
-    tipe_filter = request.GET.get('tipe', '')
+    tipe_filter   = request.GET.get('tipe', '')
     status_filter = request.GET.get('status', '')
+    jadwal_id     = request.GET.get('jadwal_id', '')
 
     sesi_qs = SesiLatihan.objects.all().select_related('pelatih', 'jadwal')
 
@@ -41,6 +42,8 @@ def session_list(request):
         sesi_qs = sesi_qs.filter(tipe_sesi=tipe_filter)
     if status_filter:
         sesi_qs = sesi_qs.filter(status=status_filter)
+    if jadwal_id:
+        sesi_qs = sesi_qs.filter(jadwal__id=jadwal_id)
 
     pending_sessions = SesiLatihan.objects.none()
     if request.user.is_admin_role:
@@ -51,6 +54,14 @@ def session_list(request):
             pelatih=request.user
         ).select_related('pelatih')
 
+    # Nama jadwal untuk judul filter (jika ada)
+    jadwal_filter_nama = None
+    if jadwal_id:
+        from apps.schedule.models import JadwalLatihan as JadwalModel
+        j = JadwalModel.objects.filter(id=jadwal_id).first()
+        if j:
+            jadwal_filter_nama = j.nama_jadwal
+
     context = {
         'sessions': sesi_qs,
         'pending_sessions': pending_sessions,
@@ -59,6 +70,8 @@ def session_list(request):
         'status_filter': status_filter,
         'tipe_choices': SesiLatihan.TipeSesi.choices,
         'status_choices': SesiLatihan.StatusSesi.choices,
+        'jadwal_id': jadwal_id,
+        'jadwal_filter_nama': jadwal_filter_nama,
     }
     return render(request, 'attendance/session_list.html', context)
 
@@ -1393,28 +1406,48 @@ def attendance_report_index(request):
         messages.error(request, "Akses ditolak: Fitur laporan hanya untuk Admin dan Pelatih.")
         return redirect('core:dashboard')
 
-    # Fitur Simpan Pembaruan Data Tanda Tangan Kepala Sekolah ke Database
-    if request.method == 'POST' and request.POST.get('action') == 'save_kepala_sekolah':
-        sekolah_target_id = request.POST.get('sekolah_id') or request.POST.get('sekolah')
-        ks_nama = request.POST.get('kepala_sekolah', '').strip()
-        ks_nip = request.POST.get('kepala_sekolah_nip', '').strip()
-        ks_jabatan = request.POST.get('kepala_sekolah_jabatan', '').strip()
-        if sekolah_target_id:
-            target_sekolah = Sekolah.objects.filter(id=sekolah_target_id).first()
-            if target_sekolah:
-                if ks_nama:
-                    target_sekolah.nama_kepala_sekolah = ks_nama
-                if ks_nip:
-                    target_sekolah.nip_kepala_sekolah = ks_nip
-                if ks_jabatan:
-                    target_sekolah.jabatan_kepala_sekolah = ks_jabatan
-                target_sekolah.save()
-                messages.success(
-                    request,
-                    f"Data tanda tangan Kepala Sekolah untuk {target_sekolah.nama_sekolah} berhasil diperbarui dan disimpan sebagai default!"
-                )
-        else:
-            messages.info(request, "Pilih salah satu sekolah terlebih dahulu untuk menyimpan data Kepala Sekolah default.")
+    # Fitur Simpan Pembaruan Data Tanda Tangan & Logo ke Database
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'save_kepala_sekolah':
+            sekolah_target_id = request.POST.get('sekolah_id') or request.POST.get('sekolah')
+            ks_nama = request.POST.get('kepala_sekolah', '').strip()
+            ks_nip = request.POST.get('kepala_sekolah_nip', '').strip()
+            ks_jabatan = request.POST.get('kepala_sekolah_jabatan', '').strip()
+            if sekolah_target_id:
+                target_sekolah = Sekolah.objects.filter(id=sekolah_target_id).first()
+                if target_sekolah:
+                    if ks_nama:
+                        target_sekolah.nama_kepala_sekolah = ks_nama
+                    if ks_nip:
+                        target_sekolah.nip_kepala_sekolah = ks_nip
+                    if ks_jabatan:
+                        target_sekolah.jabatan_kepala_sekolah = ks_jabatan
+                    target_sekolah.save()
+                    messages.success(
+                        request,
+                        f"Data tanda tangan Kepala Sekolah untuk {target_sekolah.nama_sekolah} berhasil diperbarui dan disimpan sebagai default!"
+                    )
+            else:
+                messages.info(request, "Pilih salah satu sekolah terlebih dahulu untuk menyimpan data Kepala Sekolah default.")
+
+        elif action == 'save_report_logos':
+            from apps.core.models import Perguruan
+            sekolah_target_id = request.POST.get('sekolah_id') or request.POST.get('sekolah')
+            if 'logo_sekolah_file' in request.FILES and sekolah_target_id:
+                target_sekolah = Sekolah.objects.filter(id=sekolah_target_id).first()
+                if target_sekolah:
+                    target_sekolah.logo_sekolah = request.FILES['logo_sekolah_file']
+                    target_sekolah.save()
+            if 'logo_perguruan_file' in request.FILES:
+                perguruan = Perguruan.get_solo()
+                perguruan.logo_perguruan = request.FILES['logo_perguruan_file']
+                perguruan.save()
+
+            messages.success(request, "Logo resmi kop laporan berhasil disimpan ke sistem!")
+            next_url = request.POST.get('next')
+            if next_url and next_url.startswith('/'):
+                return redirect(next_url)
 
     context = _get_report_data(request)
     return render(request, 'attendance/report_index.html', context)
@@ -1431,6 +1464,22 @@ def attendance_report_print(request):
     if not (request.user.is_admin_role or request.user.is_pelatih_role):
         messages.error(request, "Akses ditolak: Fitur cetak laporan hanya untuk Admin dan Pelatih.")
         return redirect('core:dashboard')
+
+    if request.method == 'POST' and request.POST.get('action') == 'save_report_logos':
+        from apps.core.models import Perguruan
+        sekolah_target_id = request.POST.get('sekolah_id') or request.POST.get('sekolah')
+        if 'logo_sekolah_file' in request.FILES and sekolah_target_id:
+            target_sekolah = Sekolah.objects.filter(id=sekolah_target_id).first()
+            if target_sekolah:
+                target_sekolah.logo_sekolah = request.FILES['logo_sekolah_file']
+                target_sekolah.save()
+        if 'logo_perguruan_file' in request.FILES:
+            perguruan = Perguruan.get_solo()
+            perguruan.logo_perguruan = request.FILES['logo_perguruan_file']
+            perguruan.save()
+
+        messages.success(request, "Logo resmi kop laporan berhasil disimpan ke sistem!")
+        return redirect(request.get_full_path())
 
     context = _get_report_data(request)
     return render(request, 'attendance/report_print.html', context)

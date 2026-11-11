@@ -264,3 +264,89 @@ class MemberManagementAndDeletionTests(TestCase):
         res_sek2 = self.client.get(reverse('members:member_list') + f'?sekolah={sek2.id}')
         self.assertContains(res_sek2, 'Bambang')
         self.assertNotContains(res_sek2, 'Andi')
+
+    def test_member_id_card_view(self):
+        """Memverifikasi tampilan KTA Pesilat memuat nama, NISN, sabuk, dan kode QR."""
+        self.client.login(username='admin_boss', password='adminpassword123')
+        url = reverse('members:id_card', kwargs={'user_id': self.student_user.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Andi Pratama')
+        self.assertContains(response, '1234567890')
+        self.assertContains(response, 'Putih')
+        self.assertContains(response, '<svg')
+        self.assertContains(response, 'KARTU TANDA ANGGOTA (KTA)')
+
+    def test_coach_id_card_view(self):
+        """Memverifikasi tampilan ID Card Pelatih memuat lisensi, registrasi, dan kode QR."""
+        self.client.login(username='admin_boss', password='adminpassword123')
+        url = reverse('members:id_card', kwargs={'user_id': self.coach.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Budi Setiawan')
+        self.assertContains(response, 'REG-PLT-001')
+        self.assertContains(response, '<svg')
+        self.assertContains(response, 'KARTU LISENSI PELATIH')
+
+    def test_my_id_card_redirect(self):
+        """Memverifikasi pintasan my-card mengarahkan ke ID Card pengguna aktif."""
+        self.client.login(username='pesilat_andi', password='studentpassword123')
+        url = reverse('members:my_id_card')
+        response = self.client.get(url)
+        self.assertRedirects(response, reverse('members:id_card', kwargs={'user_id': self.student_user.id}))
+
+    def test_id_card_print_permission_restriction(self):
+        """
+        Memverifikasi bahwa anggota hanya bisa melihat pratinjau KTA tanpa tombol cetak,
+        sedangkan Pelatih dan Admin memiliki akses cetak fisik.
+        """
+        # 1. Login sebagai Anggota (Pesilat) -> Tidak boleh ada tombol cetak
+        self.client.login(username='pesilat_andi', password='studentpassword123')
+        url = reverse('members:id_card', kwargs={'user_id': self.student_user.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Mode Pratinjau')
+        self.assertNotContains(response, 'Cetak / Simpan PDF')
+
+        # 2. Login sebagai Pelatih -> Harus memiliki tombol cetak
+        self.client.login(username='coach_budi', password='coachpassword123')
+        response_coach = self.client.get(url)
+        self.assertEqual(response_coach.status_code, 200)
+        self.assertContains(response_coach, 'Cetak / Simpan PDF')
+
+        # 3. Login sebagai Admin -> Harus memiliki tombol cetak
+        self.client.login(username='admin_boss', password='adminpassword123')
+        response_admin = self.client.get(url)
+        self.assertEqual(response_admin.status_code, 200)
+        self.assertContains(response_admin, 'Cetak / Simpan PDF')
+
+    def test_member_certificate_view(self):
+        """Memverifikasi sertifikat resmi anggota menampilkan NISN, nama, nomor sertifikat dan QR Code."""
+        self.client.login(username='pesilat_andi', password='studentpassword123')
+        url = reverse('members:certificate', kwargs={'user_id': self.student_user.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Andi Pratama')
+        self.assertContains(response, '1234567890')
+        self.assertContains(response, 'SERTIFIKAT KOMPETENSI')
+        self.assertContains(response, '<svg')
+
+    def test_coach_certificate_view(self):
+        """Memverifikasi sertifikat lisensi pelatih menampilkan lisensi kepelatihan resmi."""
+        self.client.login(username='coach_budi', password='coachpassword123')
+        url = reverse('members:certificate', kwargs={'user_id': self.coach.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Budi Setiawan')
+        self.assertContains(response, 'REG-PLT-001')
+        self.assertContains(response, 'SERTIFIKAT LISENSI KEPELATIHAN')
+        self.assertContains(response, '<svg')
+
+    def test_my_certificate_redirect(self):
+        """Memverifikasi pintasan my-certificate mengarahkan ke sertifikat pengguna aktif."""
+        self.client.login(username='pesilat_andi', password='studentpassword123')
+        url = reverse('members:my_certificate')
+        response = self.client.get(url)
+        self.assertRedirects(response, reverse('members:certificate', kwargs={'user_id': self.student_user.id}))
+
+

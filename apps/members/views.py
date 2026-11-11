@@ -1,15 +1,20 @@
+import io
 import json
+import qrcode
+from qrcode.image.svg import SvgPathImage
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
 from django.views.decorators.http import require_POST
 from django.utils import timezone
+from django.urls import reverse
 
 from .models import AnggotaProfile, PelatihProfile, RiwayatKenaikanSabuk, PengajuanHapusAnggota
 from apps.core.models import TingkatSabuk, KategoriTanding, Sekolah
 from apps.attendance.models import Presensi, SesiLatihan
 from apps.accounts.models import User
+
 
 
 
@@ -487,3 +492,157 @@ def public_parent_portal(request):
         'query_nisn': query_nisn,
         'query_tgl': query_tgl,
     })
+
+
+def generate_qr_svg(content):
+    """Menghasilkan SVG string untuk QR Code tanpa ketergantungan library PIL/C DLL."""
+    try:
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=8,
+            border=1,
+            image_factory=SvgPathImage
+        )
+        qr.add_data(content)
+        qr.make(fit=True)
+        img = qr.make_image()
+        stream = io.BytesIO()
+        img.save(stream)
+        svg_str = stream.getvalue().decode('utf-8')
+        if '?>' in svg_str:
+            svg_str = svg_str.split('?>', 1)[1].strip()
+        return svg_str
+    except Exception as e:
+        return ""
+
+
+@login_required
+def member_id_card(request, user_id):
+    """
+    Menampilkan ID Card / Kartu Tanda Anggota (KTA) digital resmi.
+    Mendukung peran ANGGOTA (Pesilat) dan PELATIH (Coach).
+    """
+    target_user = get_object_or_404(User, id=user_id)
+
+    # Ambil profil terkait
+    anggota = getattr(target_user, 'anggota_profile', None)
+    pelatih = getattr(target_user, 'pelatih_profile', None)
+
+    # Sekolah rujukan (dari anggota atau sekolah aktif pertama)
+    sekolah = None
+    if anggota and anggota.sekolah:
+        sekolah = anggota.sekolah
+    else:
+        sekolah = Sekolah.objects.filter(is_aktif=True).first()
+
+    # URL verifikasi yang disematkan pada QR Code
+    verify_url = request.build_absolute_uri(reverse('members:id_card', args=[target_user.id]))
+    qr_svg = generate_qr_svg(verify_url)
+
+    # Statistik kehadiran untuk Anggota jika ada
+    stats = {}
+    if anggota:
+        total_sesi = SesiLatihan.objects.filter(status=SesiLatihan.StatusSesi.SELESAI).count()
+        hadir = anggota.riwayat_presensi.filter(status=Presensi.StatusPresensi.HADIR).count()
+        persentase = round((hadir / total_sesi * 100)) if total_sesi > 0 else 0
+        streak = anggota.calculate_attendance_streak()
+        stats = {
+            'total_sesi': total_sesi,
+            'hadir': hadir,
+            'persentase': persentase,
+            'streak': streak,
+        }
+
+    return render(request, 'members/id_card.html', {
+        'target_user': target_user,
+        'anggota': anggota,
+        'pelatih': pelatih,
+        'sekolah': sekolah,
+        'qr_svg': qr_svg,
+        'stats': stats,
+        'is_pelatih': target_user.is_pelatih_role,
+        'is_anggota': target_user.is_anggota_role,
+        'today': timezone.localdate(),
+    })
+
+
+@login_required
+def my_id_card(request):
+    """Pintasan untuk melihat ID Card milik pengguna yang sedang login."""
+    return redirect('members:id_card', user_id=request.user.id)
+
+
+@login_required
+def member_certificate(request, user_id):
+    """
+    Menampilkan Sertifikat Resmi Ekstrakurikuler Pencak Silat.
+    Mendukung Sertifikat Kompetensi Anggota (Pesilat) dan Sertifikat Lisensi Kepelatihan (Pelatih).
+    """
+    target_user = get_object_or_404(User, id=user_id)
+
+    anggota = getattr(target_user, 'anggota_profile', None)
+    pelatih = getattr(target_user, 'pelatih_profile', None)
+
+    # Sekolah rujukan
+    sekolah = None
+    if anggota and anggota.sekolah:
+        sekolah = anggota.sekolah
+    else:
+        sekolah = Sekolah.objects.filter(is_aktif=True).first()
+
+    today = timezone.localdate()
+
+    # Nomor Sertifikat Resmi Dinamis
+    if target_user.is_pelatih_role:
+        reg_clean = pelatih.nomor_registrasi.replace(' ', '-').replace('/', '-') if pelatih and pelatih.nomor_registrasi else 'PLT-001'
+        cert_number = f"SRT/PLT-IPSI/{today.year}/{reg_clean}"
+    else:
+        nisn_clean = anggota.nisn if anggota and anggota.nisn else '0000000000'
+        cert_number = f"SRT/SLT-KEMDIKBUD/{today.year}/{nisn_clean}"
+
+    # Verifikasi URL untuk QR Code
+    verify_url = request.build_absolute_uri(reverse('members:certificate', args=[target_user.id]))
+    qr_svg = generate_qr_svg(verify_url)
+
+    # Statistik kehadiran
+    stats = {}
+    if anggota:
+        total_sesi = SesiLatihan.objects.filter(status=SesiLatihan.StatusSesi.SELESAI).count()
+        hadir = anggota.riwayat_presensi.filter(status=Presensi.StatusPresensi.HADIR).count()
+        persentase = round((hadir / total_sesi * 100)) if total_sesi > 0 else 0
+        min_ukt = anggota.sabuk_saat_ini.min_kehadiran_ukt if anggota.sabuk_saat_ini else 75
+        streak = anggota.calculate_attendance_streak()
+        stats = {
+            'total_sesi': total_sesi,
+            'hadir': hadir,
+            'persentase': persentase,
+            'min_ukt': min_ukt,
+            'streak': streak,
+            'predikat': 'SANGAT BAIK' if persentase >= 85 else ('BAIK' if persentase >= 75 else 'CUKUP'),
+        }
+
+    # Pelatih penanggung jawab jika sertifikat siswa
+    coach_penanggung_jawab = PelatihProfile.objects.select_related('user').first()
+
+    return render(request, 'members/certificate.html', {
+        'target_user': target_user,
+        'anggota': anggota,
+        'pelatih': pelatih,
+        'sekolah': sekolah,
+        'coach_penanggung_jawab': coach_penanggung_jawab,
+        'cert_number': cert_number,
+        'qr_svg': qr_svg,
+        'stats': stats,
+        'is_pelatih': target_user.is_pelatih_role,
+        'is_anggota': target_user.is_anggota_role,
+        'today': today,
+    })
+
+
+@login_required
+def my_certificate(request):
+    """Pintasan untuk melihat Sertifikat milik pengguna yang sedang login."""
+    return redirect('members:certificate', user_id=request.user.id)
+
+

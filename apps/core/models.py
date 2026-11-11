@@ -47,6 +47,12 @@ class Sekolah(models.Model):
     nama_sekolah = models.CharField(max_length=150, unique=True, verbose_name="Nama Sekolah")
     npsn = models.CharField(max_length=20, blank=True, null=True, verbose_name="NPSN")
     alamat = models.TextField(blank=True, null=True, verbose_name="Alamat Sekolah")
+    logo_sekolah = models.FileField(
+        upload_to='sekolah_logos/',
+        blank=True,
+        null=True,
+        verbose_name="Logo Resmi Sekolah"
+    )
     nama_kepala_sekolah = models.CharField(
         max_length=150,
         blank=True,
@@ -78,4 +84,74 @@ class Sekolah(models.Model):
 
     def __str__(self):
         return self.nama_sekolah
+
+    @property
+    def logo(self):
+        return self.logo_sekolah
+
+
+class Perguruan(models.Model):
+    nama_perguruan = models.CharField(
+        max_length=150,
+        default="Perguruan Pencak Silat Indonesia",
+        verbose_name="Nama Perguruan / Padepokan Silat"
+    )
+    singkatan = models.CharField(
+        max_length=50,
+        default="SilatTrack",
+        verbose_name="Singkatan / Nama Brand Aplikasi",
+        help_text="Nama pendek yang tampil pada bilah navigasi dan tajuk aplikasi."
+    )
+    logo_perguruan = models.FileField(
+        upload_to='perguruan_logos/',
+        blank=True,
+        null=True,
+        verbose_name="Logo Resmi Perguruan"
+    )
+    semboyan = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+        default="Ksatria Berbudi Luhur dan Berakhlak Mulia",
+        verbose_name="Motto / Semboyan Perguruan"
+    )
+    alamat_pusat = models.TextField(
+        blank=True,
+        null=True,
+        default="Sekretariat Pusat Dewan Pendekar Pencak Silat",
+        verbose_name="Alamat Padepokan / Pusat"
+    )
+    kontak = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        default="(021) 8876-5432",
+        verbose_name="Kontak Sekretariat"
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Dibuat Pada")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Terakhir Diperbarui")
+
+    class Meta:
+        verbose_name = "Pengaturan Perguruan & Identitas Aplikasi"
+        verbose_name_plural = "Pengaturan Perguruan & Identitas Aplikasi"
+
+    def __str__(self):
+        return self.nama_perguruan
+
+    @property
+    def logo(self):
+        return self.logo_perguruan
+
+    @classmethod
+    def get_solo(cls):
+        """Mengambil data identitas perguruan tunggal atau membuat bawaan jika belum ada."""
+        obj = cls.objects.first()
+        if not obj:
+            obj = cls.objects.create(
+                nama_perguruan="Perguruan Pencak Silat Indonesia",
+                singkatan="SilatTrack",
+                semboyan="Ksatria Berbudi Luhur dan Berakhlak Mulia"
+            )
+        return obj
+
 

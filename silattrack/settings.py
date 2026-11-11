@@ -81,6 +81,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.media',
+                'apps.core.context_processors.perguruan_context',
+                'apps.accounts.context_processors.pending_account_requests',
             ],
         },
     },

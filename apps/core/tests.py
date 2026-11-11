@@ -206,3 +206,68 @@ class CoreAndAuthTests(TestCase):
         self.assertContains(response, 'memberDonutChart')
         self.assertContains(response, 'memberTrendChart')
         self.assertContains(response, 'Komposisi Presensi Pesilat')
+
+    def test_perguruan_model_singleton_and_context(self):
+        """Pastikan Perguruan.get_solo() berfungsi dan tersedia via context processor"""
+        from apps.core.models import Perguruan
+        p = Perguruan.get_solo()
+        self.assertIsNotNone(p)
+        self.assertTrue(len(p.nama_perguruan) > 0)
+
+        # Login page renders perguruan name / branding
+        response = self.client.get(reverse('accounts:login'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('perguruan_info', response.context)
+        self.assertEqual(response.context['perguruan_info'].id, p.id)
+
+    def test_perguruan_settings_permissions_and_update(self):
+        """Pastikan hanya admin & pelatih yang bisa membuka dan mengubah pengaturan perguruan"""
+        from apps.core.models import Perguruan, Sekolah
+
+        # Anggota mencoba akses -> Ditolak / redirect
+        self.client.login(username='pesilat_core_test', password='password123')
+        res_anggota = self.client.get(reverse('core:perguruan_settings'), follow=True)
+        self.assertRedirects(res_anggota, reverse('core:dashboard'))
+
+        # Admin login -> Akses diterima
+        admin_user = User.objects.create_user(
+            username='admin_perguruan',
+            password='password123',
+            role=User.Role.ADMIN
+        )
+        self.client.login(username='admin_perguruan', password='password123')
+        res_admin = self.client.get(reverse('core:perguruan_settings'))
+        self.assertEqual(res_admin.status_code, 200)
+        self.assertContains(res_admin, 'Logo & Profil Perguruan Silat')
+
+        # Update identitas perguruan
+        update_payload = {
+            'action': 'update_perguruan',
+            'nama_perguruan': 'Perguruan Silat Nusantara Jaya',
+            'singkatan': 'PSNJ',
+            'semboyan': 'Budi Pekerti Luhur',
+            'alamat_pusat': 'Jl. Pendekar No. 10',
+            'kontak': '08123456789'
+        }
+        res_post = self.client.post(reverse('core:perguruan_settings'), update_payload, follow=True)
+        self.assertEqual(res_post.status_code, 200)
+
+        p = Perguruan.get_solo()
+        self.assertEqual(p.nama_perguruan, 'Perguruan Silat Nusantara Jaya')
+        self.assertEqual(p.singkatan, 'PSNJ')
+
+    def test_report_print_includes_both_logos(self):
+        """Memverifikasi lembar cetak laporan memuat logo sekolah (kiri) dan logo perguruan (kanan)"""
+        admin_user = User.objects.create_user(
+            username='admin_report_logo',
+            password='password123',
+            role=User.Role.ADMIN
+        )
+        self.client.login(username='admin_report_logo', password='password123')
+        response = self.client.get(reverse('attendance:report_print'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="kopLogoSekolahImg"')
+        self.assertContains(response, 'id="kopLogoPerguruanImg"')
+        self.assertContains(response, 'id="editLogoModal"')
+        self.assertContains(response, 'Atur Logo Kop Surat')
+

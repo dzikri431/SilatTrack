@@ -9,7 +9,17 @@
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
       <h2 class="text-2xl sm:text-3xl font-black text-on-surface">Daftar Sesi Latihan</h2>
+      {% if jadwal_filter_nama %}
+      <div class="flex items-center gap-2 mt-1">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-container text-on-primary-container text-xs font-bold border border-primary/20">
+          <span class="material-symbols-outlined text-sm">filter_alt</span>
+          Jadwal: {{ jadwal_filter_nama }}
+        </span>
+        <a href="{% url 'attendance:session_list' %}" class="text-xs text-on-surface-variant hover:text-on-surface underline underline-offset-2 transition-colors">Hapus filter</a>
+      </div>
+      {% else %}
       <p class="text-xs sm:text-sm text-on-surface-variant">Arsip seluruh pertemuan, evaluasi kehadiran, dan laporan latihan</p>
+      {% endif %}
     </div>
 
     {% if request.user.is_admin_role or request.user.is_pelatih_role %}

@@ -11,14 +11,27 @@ ENV/
 # Django
 *.log
 local_settings.py
+db.sqlite3
 db.sqlite3-journal
 
-# Media / Static
+# Media uploads (jangan push data sensitif)
+media/face_scans/
+media/perguruan_logos/
+media/sekolah_logos/
 media/surat_izin/*
 !media/surat_izin/.gitkeep
 media/avatars/*
 !media/avatars/.gitkeep
+
+# Static collected
 staticfiles/
+static/img/
+
+# Docs build artifacts
+docs/*.docx
+docs/*.html
+docs/~$*
+test_img.*
 
 # IDE
 .vscode/

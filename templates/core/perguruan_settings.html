@@ -1,0 +1,372 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Identitas Perguruan & Logo Sekolah - {{ perguruan_info.singkatan|default:"SilatTrack" }}{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+
+  <!-- Header & Breadcrumb -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 text-xs font-bold text-on-surface-variant mb-1">
+        <a href="{% url 'core:dashboard' %}" class="hover:text-primary transition-colors">Dashboard</a>
+        <span>/</span>
+        <span class="text-primary">Pengaturan Identitas & Logo</span>
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-black text-on-surface tracking-tight">Identitas Perguruan & Logo Sekolah</h2>
+      <p class="text-xs sm:text-sm text-on-surface-variant font-medium">
+        Kelola logo resmi perguruan silat yang tampil di seluruh aplikasi, serta logo sekolah mitra untuk kop laporan resmi.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <a href="{% url 'attendance:report_index' %}" class="px-4 py-2 rounded-full bg-surface-container hover:bg-surface-container-high border border-outline-variant/30 text-on-surface text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs">
+        <span class="material-symbols-outlined text-base">description</span>
+        <span>Lihat Laporan Presensi</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- ==================== KOLOM KIRI: IDENTITAS & LOGO PERGURUAN (5 COLS) ==================== -->
+    <div class="lg:col-span-5 space-y-6">
+      <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1 space-y-5">
+        <div class="flex items-center gap-2 pb-3 border-b border-outline-variant/30 text-primary">
+          <span class="material-symbols-outlined text-2xl">sports_martial_arts</span>
+          <h3 class="text-base font-black text-on-surface">Logo & Profil Perguruan Silat</h3>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" class="space-y-4">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="update_perguruan">
+
+          <!-- Preview Logo Perguruan Saat Ini -->
+          <div class="p-4 rounded-2xl bg-surface-container border border-outline-variant/20 flex flex-col items-center text-center space-y-3">
+            <div class="w-24 h-24 rounded-3xl bg-white p-2 border-2 border-amber-600/40 shadow-elevation-1 flex items-center justify-center overflow-hidden">
+              {% if perguruan.logo_perguruan %}
+              <img src="{{ perguruan.logo_perguruan.url }}" alt="{{ perguruan.nama_perguruan }}" class="w-full h-full object-contain">
+              {% else %}
+              <img src="{% static 'img/default_perguruan_logo.svg' %}" alt="Logo Perguruan Bawaan" class="w-full h-full object-contain">
+              {% endif %}
+            </div>
+
+            <div>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold {% if perguruan.logo_perguruan %}bg-emerald-100 text-emerald-900 border border-emerald-300{% else %}bg-amber-100 text-amber-900 border border-amber-300{% endif %}">
+                {% if perguruan.logo_perguruan %}Logo Kustom Aktif{% else %}Logo Vektor Bawaan (Default){% endif %}
+              </span>
+              <p class="text-[11px] text-on-surface-variant font-medium mt-1">
+                Logo ini tampil pada bilah navigasi atas, halaman login, kop laporan, dan sertifikat resmi.
+              </p>
+            </div>
+
+            <!-- Upload Logo Baru -->
+            <div class="w-full text-left space-y-1">
+              <label class="block text-[11px] font-bold text-on-surface uppercase tracking-wider">
+                Ganti Logo Perguruan (File Gambar)
+              </label>
+              <input 
+                type="file" 
+                name="logo_perguruan" 
+                accept="image/*,.svg"
+                class="w-full text-xs text-on-surface file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-primary file:text-on-primary hover:file:bg-primary-dark cursor-pointer bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-1"
+              >
+              <p class="text-[10px] text-outline">Format: PNG transparan, JPG, WebP, atau SVG (Rasio 1:1 disarankan).</p>
+            </div>
+
+            {% if perguruan.logo_perguruan %}
+            <div class="flex items-center gap-2 pt-1">
+              <label class="inline-flex items-center gap-1.5 text-xs text-rose-700 cursor-pointer">
+                <input type="checkbox" name="hapus_logo_perguruan" value="1" class="rounded text-rose-700 focus:ring-rose-500">
+                <span>Hapus logo kustom & kembali ke logo bawaan</span>
+              </label>
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Nama Perguruan -->
+          <div>
+            <label class="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1">
+              Nama Lengkap Perguruan Silat
+            </label>
+            <input 
+              type="text" 
+              name="nama_perguruan" 
+              value="{{ perguruan.nama_perguruan }}" 
+              required
+              class="w-full px-3.5 py-2 text-xs bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-xl outline-none font-medium text-on-surface"
+              placeholder="Contoh: Perguruan Pencak Silat Satria Muda Indonesia"
+            >
+          </div>
+
+          <!-- Singkatan / Nama Brand Aplikasi -->
+          <div>
+            <label class="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1">
+              Singkatan / Nama Brand Aplikasi
+            </label>
+            <input 
+              type="text" 
+              name="singkatan" 
+              value="{{ perguruan.singkatan }}" 
+              required
+              class="w-full px-3.5 py-2 text-xs bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-xl outline-none font-medium text-on-surface"
+              placeholder="Contoh: SilatTrack / PPS-SMI"
+            >
+            <p class="text-[10px] text-outline mt-0.5">Tampil sebagai teks tajuk utama di navbar atas.</p>
+          </div>
+
+          <!-- Semboyan / Motto -->
+          <div>
+            <label class="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1">
+              Motto / Semboyan Perguruan
+            </label>
+            <input 
+              type="text" 
+              name="semboyan" 
+              value="{{ perguruan.semboyan|default:'' }}" 
+              class="w-full px-3.5 py-2 text-xs bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-xl outline-none font-medium text-on-surface"
+              placeholder="Contoh: Ksatria Berbudi Luhur dan Berakhlak Mulia"
+            >
+          </div>
+
+          <!-- Alamat Pusat & Kontak -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1">
+                Alamat Padepokan / Pusat
+              </label>
+              <textarea 
+                name="alamat_pusat" 
+                rows="2"
+                class="w-full px-3 py-1.5 text-xs bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-xl outline-none font-medium text-on-surface"
+                placeholder="Alamat sekretariat..."
+              >{{ perguruan.alamat_pusat|default:'' }}</textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1">
+                Kontak Sekretariat
+              </label>
+              <input 
+                type="text" 
+                name="kontak" 
+                value="{{ perguruan.kontak|default:'' }}" 
+                class="w-full px-3 py-2 text-xs bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-xl outline-none font-medium text-on-surface"
+                placeholder="(021) 8876-5432"
+              >
+            </div>
+          </div>
+
+          <button 
+            type="submit" 
+            class="w-full py-2.5 rounded-full bg-primary hover:bg-primary-dark text-on-primary text-xs font-bold shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+          >
+            <span class="material-symbols-outlined text-base">save</span>
+            <span>Simpan Identitas Perguruan</span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ==================== KOLOM KANAN: MANAJEMEN LOGO SEKOLAH MITRA (7 COLS) ==================== -->
+    <div class="lg:col-span-7 space-y-6">
+      
+      <!-- List Sekolah Mitra -->
+      <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-1 space-y-5">
+        <div class="flex items-center justify-between pb-3 border-b border-outline-variant/30">
+          <div class="flex items-center gap-2 text-primary">
+            <span class="material-symbols-outlined text-2xl">school</span>
+            <h3 class="text-base font-black text-on-surface">Daftar Sekolah Mitra & Logo Resmi</h3>
+          </div>
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-surface-container-high text-on-surface">
+            {{ sekolah_list.count }} Sekolah Terdaftar
+          </span>
+        </div>
+
+        <p class="text-xs text-on-surface-variant font-medium">
+          Setiap sekolah mitra memiliki logo resmi tersendiri yang akan dicetak di sisi kiri <strong>Kop Laporan Presensi</strong> dan <strong>Sertifikat Siswa</strong> sesuai sekolah siswa yang bersangkutan.
+        </p>
+
+        <!-- Cards Per Sekolah -->
+        <div class="space-y-4">
+          {% for sek in sekolah_list %}
+          <div class="p-4 rounded-2xl bg-surface-container border border-outline-variant/30 space-y-3" x-data="{ showEdit: false }">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-start gap-3">
+                <!-- Logo Preview Box -->
+                <div class="w-14 h-14 rounded-2xl bg-white p-1 border border-outline-variant/40 shadow-2xs flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {% if sek.logo_sekolah %}
+                  <img src="{{ sek.logo_sekolah.url }}" alt="{{ sek.nama_sekolah }}" class="w-full h-full object-contain">
+                  {% else %}
+                  <img src="{% static 'img/default_sekolah_logo.svg' %}" alt="Logo Sekolah Bawaan" class="w-full h-full object-contain">
+                  {% endif %}
+                </div>
+
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h4 class="font-black text-sm text-on-surface">{{ sek.nama_sekolah }}</h4>
+                    {% if sek.is_aktif %}
+                    <span class="px-2 py-0.2 rounded-full text-[9px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">Aktif</span>
+                    {% endif %}
+                  </div>
+                  <p class="text-xs text-outline font-mono mt-0.5">NPSN: {{ sek.npsn|default:"-" }}</p>
+                  <p class="text-[11px] text-on-surface-variant mt-1">
+                    Kepala Sekolah: <strong>{{ sek.nama_kepala_sekolah|default:"(Belum diset)" }}</strong>
+                    {% if sek.nip_kepala_sekolah %}(NIP. {{ sek.nip_kepala_sekolah }}){% endif %}
+                  </p>
+                </div>
+              </div>
+
+              <button 
+                type="button" 
+                @click="showEdit = !showEdit"
+                class="px-3 py-1.5 rounded-full text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 transition-all cursor-pointer flex items-center gap-1"
+              >
+                <span class="material-symbols-outlined text-sm">edit</span>
+                <span x-text="showEdit ? 'Tutup' : 'Ubah Logo'">Ubah Logo</span>
+              </button>
+            </div>
+
+            <!-- Form Edit Logo Sekolah (Toggleable) -->
+            <div x-show="showEdit" x-cloak class="pt-3 border-t border-outline-variant/30 space-y-3">
+              <form method="POST" enctype="multipart/form-data" class="space-y-3">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_sekolah_logo">
+                <input type="hidden" name="sekolah_id" value="{{ sek.id }}">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-[10px] font-bold text-on-surface uppercase tracking-wider mb-1">
+                      Unggah File Logo Sekolah Baru
+                    </label>
+                    <input 
+                      type="file" 
+                      name="logo_sekolah" 
+                      accept="image/*,.svg"
+                      class="w-full text-xs text-on-surface file:mr-2 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-[11px] file:font-bold file:bg-primary file:text-on-primary hover:file:bg-primary-dark cursor-pointer bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-1"
+                    >
+                  </div>
+
+                  <div>
+                    <label class="block text-[10px] font-bold text-on-surface uppercase tracking-wider mb-1">
+                      Nama Kepala Sekolah (TTD Laporan)
+                    </label>
+                    <input 
+                      type="text" 
+                      name="nama_kepala_sekolah" 
+                      value="{{ sek.nama_kepala_sekolah|default:'' }}" 
+                      class="w-full px-3 py-1.5 text-xs bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-xl outline-none font-medium text-on-surface"
+                    >
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-[10px] font-bold text-on-surface uppercase tracking-wider mb-1">
+                      NIP Kepala Sekolah
+                    </label>
+                    <input 
+                      type="text" 
+                      name="nip_kepala_sekolah" 
+                      value="{{ sek.nip_kepala_sekolah|default:'' }}" 
+                      class="w-full px-3 py-1.5 text-xs bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-xl outline-none font-medium text-on-surface font-mono"
+                    >
+                  </div>
+
+                  <div>
+                    <label class="block text-[10px] font-bold text-on-surface uppercase tracking-wider mb-1">
+                      Alamat Sekolah
+                    </label>
+                    <input 
+                      type="text" 
+                      name="alamat" 
+                      value="{{ sek.alamat|default:'' }}" 
+                      class="w-full px-3 py-1.5 text-xs bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-xl outline-none font-medium text-on-surface"
+                    >
+                  </div>
+                </div>
+
+                {% if sek.logo_sekolah %}
+                <label class="inline-flex items-center gap-1.5 text-xs text-rose-700 cursor-pointer">
+                  <input type="checkbox" name="hapus_logo_sekolah" value="1" class="rounded text-rose-700 focus:ring-rose-500">
+                  <span>Hapus logo kustom sekolah & kembali ke logo bawaan</span>
+                </label>
+                {% endif %}
+
+                <div class="flex items-center justify-end gap-2 pt-1">
+                  <button type="button" @click="showEdit = false" class="px-3 py-1.5 rounded-full text-xs font-bold text-on-surface-variant hover:bg-surface-container-high">Batal</button>
+                  <button type="submit" class="px-4 py-1.5 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-xs">Simpan Perubahan</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          {% empty %}
+          <div class="py-8 text-center text-outline text-xs">
+            Belum ada sekolah mitra yang terdaftar. Tambahkan sekolah baru pada form di bawah.
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Form Tambah Sekolah Mitra Baru -->
+        <div class="pt-4 border-t border-outline-variant/30" x-data="{ showAdd: false }">
+          <button 
+            type="button" 
+            @click="showAdd = !showAdd"
+            class="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline cursor-pointer"
+          >
+            <span class="material-symbols-outlined text-base">add_circle</span>
+            <span x-text="showAdd ? 'Tutup Formulir Tambah Sekolah' : '+ Tambah Sekolah Mitra Baru'">+ Tambah Sekolah Mitra Baru</span>
+          </button>
+
+          <form x-show="showAdd" x-cloak method="POST" enctype="multipart/form-data" class="mt-3 p-4 rounded-2xl bg-surface-container border border-outline-variant/30 space-y-3">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_sekolah">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-on-surface mb-1">Nama Sekolah</label>
+                <input type="text" name="nama_sekolah" required class="w-full px-3 py-1.5 text-xs bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-xl outline-none" placeholder="SMKN 1 Rongga">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-on-surface mb-1">NPSN</label>
+                <input type="text" name="npsn" class="w-full px-3 py-1.5 text-xs bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-xl outline-none" placeholder="20271234">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-on-surface mb-1">Alamat Sekolah</label>
+              <input type="text" name="alamat" class="w-full px-3 py-1.5 text-xs bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-xl outline-none" placeholder="Jl. Raya Bojong No. 45">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-on-surface mb-1">Nama Kepala Sekolah</label>
+                <input type="text" name="nama_kepala_sekolah" class="w-full px-3 py-1.5 text-xs bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-xl outline-none" placeholder="Drs. H. Mulyadi, M.M">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-on-surface mb-1">NIP Kepala Sekolah</label>
+                <input type="text" name="nip_kepala_sekolah" class="w-full px-3 py-1.5 text-xs bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-xl outline-none font-mono" placeholder="19720412 199802 1 003">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-on-surface mb-1">File Logo Sekolah (Opsional)</label>
+              <input type="file" name="logo_sekolah" accept="image/*,.svg" class="w-full text-xs text-on-surface file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-primary file:text-on-primary">
+            </div>
+
+            <div class="flex justify-end pt-1">
+              <button type="submit" class="px-5 py-2 rounded-full bg-primary hover:bg-primary-dark text-on-primary text-xs font-bold shadow-xs">
+                Simpan Sekolah Baru
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

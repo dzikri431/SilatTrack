@@ -321,6 +321,16 @@
             {% endif %}
           {% endif %}
 
+          <a href="{% url 'members:id_card' m.user_id %}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 transition-all shadow-2xs" title="Lihat Kartu Anggota (KTA)">
+            <span class="material-symbols-outlined text-xs">badge</span>
+            <span>KTA</span>
+          </a>
+
+          <a href="{% url 'members:certificate' m.user_id %}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold text-amber-800 bg-amber-100/60 hover:bg-amber-200/80 border border-amber-300/60 transition-all shadow-2xs" title="Lihat Sertifikat Siswa">
+            <span class="material-symbols-outlined text-xs">workspace_premium</span>
+            <span>Sertifikat</span>
+          </a>
+
           <a href="{% url 'members:member_detail' m.user_id %}" class="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline">
             <span>Profil</span>
             <span class="material-symbols-outlined text-sm">chevron_right</span>
@@ -396,10 +406,16 @@
           {{ c.sertifikasi_sk|default:"Lisensi Resmi" }}
         </span>
 
-        <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-900 bg-amber-50 px-2 py-0.5 rounded-full">
-          <span class="material-symbols-outlined text-xs">verified</span>
-          <span>Aktif Melatih</span>
-        </span>
+        <div class="flex items-center gap-1.5">
+          <a href="{% url 'members:id_card' c.user_id %}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 transition-all shadow-2xs" title="Lihat ID Card Pelatih">
+            <span class="material-symbols-outlined text-xs">badge</span>
+            <span>ID Card</span>
+          </a>
+          <a href="{% url 'members:certificate' c.user_id %}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-300 transition-all shadow-2xs" title="Lihat Sertifikat Lisensi">
+            <span class="material-symbols-outlined text-xs">workspace_premium</span>
+            <span>Sertifikat</span>
+          </a>
+        </div>
       </div>
 
     </div>

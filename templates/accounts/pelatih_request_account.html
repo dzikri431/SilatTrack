@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Ajukan Permohonan Akun — SilatTrack{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6 py-2">
+
+  <!-- Page Header -->
+  <div class="flex items-center gap-4">
+    <div class="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+      <span class="material-symbols-outlined text-amber-700 text-2xl">person_add</span>
+    </div>
+    <div>
+      <h1 class="text-xl font-black text-on-surface">Ajukan Permohonan Akun</h1>
+      <p class="text-sm text-on-surface-variant mt-0.5">Permohonan akan dikirim ke Admin untuk disetujui sebelum akun aktif.</p>
+    </div>
+    <a href="{% url 'accounts:my_account_requests' %}" class="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-full bg-surface-container text-on-surface-variant hover:text-on-surface text-xs font-semibold transition-all">
+      <span class="material-symbols-outlined text-base">history</span>
+      Riwayat Saya
+    </a>
+  </div>
+
+  <!-- Info Banner -->
+  <div class="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
+    <span class="material-symbols-outlined text-amber-600 mt-0.5">info</span>
+    <div>
+      <p class="text-sm font-bold text-amber-900">Permohonan memerlukan persetujuan Admin</p>
+      <p class="text-xs text-amber-800 mt-0.5">Akun belum aktif sampai Admin / Pembina Eskul menyetujui permohonan ini. Kamu bisa pantau statusnya di halaman Riwayat.</p>
+    </div>
+  </div>
+
+  <!-- Tab: Tipe Akun -->
+  <div x-data="{ tab: '{{ active_tab|default:'ANGGOTA' }}' }" class="space-y-6">
+    <div class="flex gap-2 bg-surface-container-high/60 p-1.5 rounded-2xl border border-outline-variant/40 w-fit">
+      <button type="button" @click="tab='ANGGOTA'"
+        :class="tab==='ANGGOTA' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest'"
+        class="px-5 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2">
+        <span class="material-symbols-outlined text-base">sports_martial_arts</span> Anggota / Pesilat
+      </button>
+      <button type="button" @click="tab='PELATIH'"
+        :class="tab==='PELATIH' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest'"
+        class="px-5 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2">
+        <span class="material-symbols-outlined text-base">sports</span> Pelatih
+      </button>
+    </div>
+
+    <!-- Form -->
+    <form method="post" enctype="multipart/form-data" class="space-y-5">
+      {% csrf_token %}
+      <input type="hidden" name="account_type" :value="tab">
+
+      <!-- Data Akun Dasar -->
+      <div class="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-6 space-y-4">
+        <h3 class="text-sm font-black text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-lg">manage_accounts</span> Data Akun Login
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant mb-1.5">Nama Depan *</label>
+            <input type="text" name="first_name" value="{{ form_data.first_name|default:'' }}" required
+              class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/60 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant mb-1.5">Nama Belakang</label>
+            <input type="text" name="last_name" value="{{ form_data.last_name|default:'' }}"
+              class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/60 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant mb-1.5">Username *</label>
+            <input type="text" name="username" value="{{ form_data.username|default:'' }}" required
+              class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/60 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant mb-1.5">No. WhatsApp</label>
+            <input type="text" name="phone_number" value="{{ form_data.phone_number|default:'' }}"
+              class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/60 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant mb-1.5">Kata Sandi *</label>
+            <input type="password" name="password" required minlength="6"
+              class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/60 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant mb-1.5">Konfirmasi Kata Sandi *</label>
+            <input type="password" name="password_confirm" required minlength="6"
+              class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/60 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Anggota -->
+      <div x-show="tab==='ANGGOTA'" class="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-6 space-y-4">
+        <h3 class="text-sm font-black text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-lg">sports_martial_arts</span> Data Pesilat
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant mb-1.5">NISN (10 digit) *</label>
+            <input type="text" name="nisn" value="{{ form_data.nisn|default:'' }}" maxlength="10" inputmode="numeric"
+              class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/60 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant mb-1.5">Kelas & Jurusan *</label>
+            <input type="text" name="kelas_sekolah" value="{{ form_data.kelas_sekolah|default:'' }}" placeholder="cth: X IPA 1"
+              class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/60 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant mb-1.5">Jenis Kelamin</label>
+            <select name="jenis_kelamin" class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/60 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+              <option value="L" {% if form_data.jenis_kelamin == 'L' %}selected{% endif %}>Laki-laki</option>
+              <option value="P" {% if form_data.jenis_kelamin == 'P' %}selected{% endif %}>Perempuan</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant mb-1.5">Tanggal Lahir</label>
+            <input type="date" name="tanggal_lahir" value="{{ form_data.tanggal_lahir|default:'' }}"
+              class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/60 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant mb-1.5">Sekolah</label>
+            <select name="sekolah_id" class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/60 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+              <option value="">— Pilih Sekolah —</option>
+              {% for s in sekolah_list %}<option value="{{ s.id }}" {% if form_data.sekolah_id == s.id|stringformat:"s" %}selected{% endif %}>{{ s.nama_sekolah }}</option>{% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant mb-1.5">Atau Nama Sekolah Baru</label>
+            <input type="text" name="nama_sekolah_baru" value="{{ form_data.nama_sekolah_baru|default:'' }}"
+              class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/60 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant mb-1.5">Sabuk Saat Ini</label>
+            <select name="sabuk_id" class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/60 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+              <option value="">— Pilih Sabuk —</option>
+              {% for s in sabuk_list %}<option value="{{ s.id }}">{{ s.nama_sabuk }}</option>{% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant mb-1.5">Nama Wali</label>
+            <input type="text" name="nama_wali" value="{{ form_data.nama_wali|default:'' }}"
+              class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/60 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant mb-1.5">No. HP Wali</label>
+            <input type="text" name="no_hp_wali" value="{{ form_data.no_hp_wali|default:'' }}"
+              class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/60 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Pelatih -->
+      <div x-show="tab==='PELATIH'" class="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-6 space-y-4">
+        <h3 class="text-sm font-black text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-lg">sports</span> Data Pelatih
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant mb-1.5">No. Registrasi / Lisensi *</label>
+            <input type="text" name="nomor_registrasi" value="{{ form_data.nomor_registrasi|default:'' }}"
+              class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/60 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant mb-1.5">Tingkatan Pendekar</label>
+            <input type="text" name="tingkatan_pendekar" value="{{ form_data.tingkatan_pendekar|default:'' }}"
+              class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/60 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant mb-1.5">Spesialisasi</label>
+            <input type="text" name="spesialisasi" value="{{ form_data.spesialisasi|default:'' }}"
+              class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/60 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant mb-1.5">Sertifikasi / No. SK</label>
+            <input type="text" name="sertifikasi_sk" value="{{ form_data.sertifikasi_sk|default:'' }}"
+              class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/60 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="flex justify-end gap-3">
+        <a href="{% url 'core:dashboard' %}" class="px-5 py-2.5 rounded-full text-sm font-bold bg-surface-container text-on-surface-variant hover:text-on-surface transition-all">Batal</a>
+        <button type="submit" class="px-6 py-2.5 rounded-full text-sm font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-all flex items-center gap-2">
+          <span class="material-symbols-outlined text-base">send</span> Kirim Permohonan
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import TingkatSabuk, KategoriTanding, Sekolah
+from .models import TingkatSabuk, KategoriTanding, Sekolah, Perguruan
 
 
 @admin.register(TingkatSabuk)
@@ -16,7 +16,13 @@ class KategoriTandingAdmin(admin.ModelAdmin):
 
 @admin.register(Sekolah)
 class SekolahAdmin(admin.ModelAdmin):
-    list_display = ('nama_sekolah', 'npsn', 'nama_kepala_sekolah', 'nip_kepala_sekolah', 'is_aktif')
+    list_display = ('nama_sekolah', 'npsn', 'nama_kepala_sekolah', 'nip_kepala_sekolah', 'logo_sekolah', 'is_aktif')
     search_fields = ('nama_sekolah', 'npsn', 'nama_kepala_sekolah')
     list_filter = ('is_aktif',)
+
+
+@admin.register(Perguruan)
+class PerguruanAdmin(admin.ModelAdmin):
+    list_display = ('nama_perguruan', 'singkatan', 'logo_perguruan', 'kontak')
+
 

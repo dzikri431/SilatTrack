@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Masuk - SilatTrack{% endblock %}
 
@@ -11,11 +12,22 @@
       
       <!-- Brand Header -->
       <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-primary text-on-primary shadow-elevation-2 mb-3">
-          <span class="material-symbols-outlined text-3xl">sports_kabaddi</span>
+        <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-white p-2 border-2 border-primary/30 shadow-elevation-2 mb-3 overflow-hidden">
+          {% if perguruan_info and perguruan_info.logo_perguruan %}
+          <img src="{{ perguruan_info.logo_perguruan.url }}" alt="{{ perguruan_info.nama_perguruan }}" class="w-full h-full object-contain">
+          {% else %}
+          <img src="{% static 'img/default_perguruan_logo.svg' %}" alt="Logo Perguruan" class="w-full h-full object-contain">
+          {% endif %}
         </div>
-        <h2 class="text-2xl font-extrabold text-on-surface tracking-tight">SilatTrack</h2>
-        <p class="text-sm font-medium text-on-surface-variant mt-1">Sistem Absensi Ekstrakurikuler Pencak Silat</p>
+        <h2 class="text-2xl font-extrabold text-on-surface tracking-tight">
+          {{ perguruan_info.singkatan|default:"SilatTrack" }}
+        </h2>
+        <p class="text-xs sm:text-sm font-semibold text-primary mt-1">
+          {{ perguruan_info.nama_perguruan|default:"Sistem Absensi Ekstrakurikuler Pencak Silat" }}
+        </p>
+        {% if perguruan_info.semboyan %}
+        <p class="text-[11px] italic text-outline mt-0.5 font-medium">"{{ perguruan_info.semboyan }}"</p>
+        {% endif %}
       </div>
 
       <!-- Login Form -->

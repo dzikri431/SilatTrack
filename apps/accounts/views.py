@@ -3,8 +3,9 @@ from django.contrib.auth import authenticate, login, logout, update_session_auth
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.utils import timezone
 
-from .models import User
+from .models import User, AccountRequest
 from apps.core.models import TingkatSabuk, KategoriTanding, Sekolah
 from apps.members.models import AnggotaProfile, PelatihProfile
 
@@ -50,11 +51,12 @@ def register_view(request):
 @login_required
 def admin_create_user(request):
     """
-    Fitur Pembuatan Akun Pelatih dan Anggota khusus Admin / Pembina Eskul.
-    Mendukung pembuatan akun User sekaligus profil lengkap (PelatihProfile / AnggotaProfile).
+    Pembuatan Akun:
+    - Admin → langsung buat akun aktif
+    - Pelatih → buat permohonan (AccountRequest) menunggu persetujuan Admin
     """
-    if not request.user.is_admin_role:
-        messages.error(request, "Akses ditolak. Fitur pembuatan akun hanya dapat diakses oleh Admin / Pembina Eskul.")
+    if not request.user.is_admin_role and not request.user.is_pelatih_role:
+        messages.error(request, "Akses ditolak.")
         return redirect('core:dashboard')
 
     sabuk_list = TingkatSabuk.objects.all().order_by('urutan_tingkat')
@@ -405,3 +407,266 @@ def profile_view(request):
         'kategori_list': kategori_list,
     }
     return render(request, 'accounts/profile.html', context)
+
+
+# ─────────────────────────────────────────────────────────────
+# PELATIH: Ajukan Permohonan Pembuatan Akun
+# ─────────────────────────────────────────────────────────────
+
+@login_required
+def pelatih_request_account(request):
+    """
+    Pelatih mengajukan permohonan pembuatan akun Anggota (atau Pelatih lain).
+    Permohonan harus disetujui Admin sebelum akun dibuat.
+    """
+    from .models import AccountRequest
+
+    if not request.user.is_pelatih_role:
+        messages.error(request, "Akses ditolak.")
+        return redirect('core:dashboard')
+
+    sabuk_list    = TingkatSabuk.objects.all().order_by('urutan_tingkat')
+    kategori_list = KategoriTanding.objects.all().order_by('nama')
+    sekolah_list  = Sekolah.objects.filter(is_aktif=True).order_by('nama_sekolah')
+
+    if request.method == 'POST':
+        account_type     = request.POST.get('account_type', 'ANGGOTA').upper()
+        username         = request.POST.get('username', '').strip()
+        password         = request.POST.get('password', '').strip()
+        password_confirm = request.POST.get('password_confirm', '').strip()
+        first_name       = request.POST.get('first_name', '').strip()
+        last_name        = request.POST.get('last_name', '').strip()
+        email            = request.POST.get('email', '').strip()
+        phone_number     = request.POST.get('phone_number', '').strip()
+
+        ctx = {
+            'sabuk_list': sabuk_list, 'kategori_list': kategori_list,
+            'sekolah_list': sekolah_list, 'form_data': request.POST,
+            'active_tab': account_type,
+        }
+
+        # Validasi dasar
+        if not username or not password or not first_name:
+            messages.error(request, "Username, Kata Sandi, dan Nama Depan wajib diisi.")
+            return render(request, 'accounts/pelatih_request_account.html', ctx)
+
+        if password != password_confirm:
+            messages.error(request, "Konfirmasi kata sandi tidak cocok.")
+            return render(request, 'accounts/pelatih_request_account.html', ctx)
+
+        if len(password) < 6:
+            messages.error(request, "Kata sandi minimal 6 karakter.")
+            return render(request, 'accounts/pelatih_request_account.html', ctx)
+
+        if User.objects.filter(username=username).exists():
+            messages.error(request, f"Username '{username}' sudah digunakan.")
+            return render(request, 'accounts/pelatih_request_account.html', ctx)
+
+        if AccountRequest.objects.filter(username=username, status=AccountRequest.Status.PENDING).exists():
+            messages.error(request, f"Sudah ada permohonan pending untuk username '{username}'.")
+            return render(request, 'accounts/pelatih_request_account.html', ctx)
+
+        # Kumpulkan extra_data sesuai tipe akun
+        extra = {}
+        if account_type == 'PELATIH':
+            nomor_registrasi = request.POST.get('nomor_registrasi', '').strip()
+            if not nomor_registrasi:
+                messages.error(request, "Nomor Registrasi / Lisensi Pelatih wajib diisi.")
+                return render(request, 'accounts/pelatih_request_account.html', ctx)
+            extra = {
+                'nomor_registrasi':  nomor_registrasi,
+                'tingkatan_pendekar': request.POST.get('tingkatan_pendekar', '').strip(),
+                'spesialisasi':       request.POST.get('spesialisasi', '').strip(),
+                'sertifikasi_sk':     request.POST.get('sertifikasi_sk', '').strip(),
+            }
+        else:
+            nisn         = request.POST.get('nisn', '').strip()
+            kelas_sekolah = request.POST.get('kelas_sekolah', '').strip()
+            if not nisn or not kelas_sekolah:
+                messages.error(request, "NISN dan Kelas wajib diisi.")
+                return render(request, 'accounts/pelatih_request_account.html', ctx)
+            if len(nisn) != 10 or not nisn.isdigit():
+                messages.error(request, "NISN harus 10 digit angka.")
+                return render(request, 'accounts/pelatih_request_account.html', ctx)
+            if AnggotaProfile.objects.filter(nisn=nisn).exists():
+                messages.error(request, f"NISN '{nisn}' sudah terdaftar.")
+                return render(request, 'accounts/pelatih_request_account.html', ctx)
+            extra = {
+                'nisn':          nisn,
+                'kelas_sekolah': kelas_sekolah,
+                'jenis_kelamin': request.POST.get('jenis_kelamin', 'L'),
+                'tanggal_lahir': request.POST.get('tanggal_lahir', ''),
+                'sekolah_id':    request.POST.get('sekolah_id', ''),
+                'nama_sekolah_baru': request.POST.get('nama_sekolah_baru', '').strip(),
+                'sabuk_id':      request.POST.get('sabuk_id', ''),
+                'kategori_id':   request.POST.get('kategori_id', ''),
+                'nama_wali':     request.POST.get('nama_wali', '').strip(),
+                'no_hp_wali':    request.POST.get('no_hp_wali', '').strip(),
+            }
+
+        # Simpan password terenkripsi
+        temp_user = User()
+        temp_user.set_password(password)
+        hashed = temp_user.password
+
+        AccountRequest.objects.create(
+            requested_by  = request.user,
+            account_type  = account_type,
+            username      = username,
+            first_name    = first_name,
+            last_name     = last_name,
+            email         = email,
+            phone_number  = phone_number,
+            password_hash = hashed,
+            extra_data    = extra,
+        )
+
+        messages.success(request,
+            f"Permohonan akun untuk '{first_name} {last_name}' berhasil dikirim dan menunggu persetujuan Admin.")
+        return redirect('accounts:my_account_requests')
+
+    return render(request, 'accounts/pelatih_request_account.html', {
+        'sabuk_list':    sabuk_list,
+        'kategori_list': kategori_list,
+        'sekolah_list':  sekolah_list,
+        'active_tab':    'ANGGOTA',
+    })
+
+
+@login_required
+def my_account_requests(request):
+    """Pelatih melihat riwayat permohonan akun yang dia ajukan."""
+    from .models import AccountRequest
+    if not request.user.is_pelatih_role:
+        return redirect('core:dashboard')
+    requests_list = AccountRequest.objects.filter(requested_by=request.user).order_by('-created_at')
+    return render(request, 'accounts/my_account_requests.html', {'requests_list': requests_list})
+
+
+# ─────────────────────────────────────────────────────────────
+# ADMIN: Kelola Permohonan Akun dari Pelatih
+# ─────────────────────────────────────────────────────────────
+
+@login_required
+def admin_account_requests(request):
+    """Admin melihat semua permohonan akun yang masuk dari Pelatih."""
+    from .models import AccountRequest
+    if not request.user.is_admin_role:
+        messages.error(request, "Akses ditolak.")
+        return redirect('core:dashboard')
+
+    status_filter = request.GET.get('status', 'PENDING')
+    qs = AccountRequest.objects.select_related('requested_by', 'reviewed_by')
+    if status_filter in ('PENDING', 'APPROVED', 'REJECTED'):
+        qs = qs.filter(status=status_filter)
+
+    pending_count = AccountRequest.objects.filter(status=AccountRequest.Status.PENDING).count()
+    return render(request, 'accounts/admin_account_requests.html', {
+        'requests_list':  qs,
+        'status_filter':  status_filter,
+        'pending_count':  pending_count,
+        'statuses': [
+            ('PENDING',  'Menunggu'),
+            ('APPROVED', 'Disetujui'),
+            ('REJECTED', 'Ditolak'),
+        ],
+    })
+
+
+@login_required
+def admin_review_request(request, request_id):
+    """Admin menyetujui atau menolak satu permohonan akun."""
+    from .models import AccountRequest
+
+    if not request.user.is_admin_role:
+        messages.error(request, "Akses ditolak.")
+        return redirect('core:dashboard')
+
+    acc_req = get_object_or_404(AccountRequest, id=request_id, status=AccountRequest.Status.PENDING)
+
+    if request.method == 'POST':
+        action        = request.POST.get('action')          # 'approve' | 'reject'
+        catatan_admin = request.POST.get('catatan_admin', '').strip()
+
+        if action == 'reject':
+            acc_req.status        = AccountRequest.Status.REJECTED
+            acc_req.catatan_admin = catatan_admin
+            acc_req.reviewed_by   = request.user
+            acc_req.reviewed_at   = timezone.now()
+            acc_req.save()
+            messages.warning(request, f"Permohonan akun '{acc_req.first_name} {acc_req.last_name}' ditolak.")
+            return redirect('accounts:admin_account_requests')
+
+        if action == 'approve':
+            # Cek duplikat username lagi (mungkin sudah dibuat saat pending)
+            if User.objects.filter(username=acc_req.username).exists():
+                messages.error(request, f"Username '{acc_req.username}' sudah ada. Tolak permohonan ini.")
+                return redirect('accounts:admin_account_requests')
+
+            try:
+                with transaction.atomic():
+                    extra = acc_req.extra_data
+
+                    new_user = User(
+                        username     = acc_req.username,
+                        email        = acc_req.email,
+                        first_name   = acc_req.first_name,
+                        last_name    = acc_req.last_name,
+                        role         = acc_req.account_type,
+                        phone_number = acc_req.phone_number,
+                        password     = acc_req.password_hash,  # sudah terenkripsi
+                    )
+                    new_user.save()
+
+                    if acc_req.account_type == 'PELATIH':
+                        PelatihProfile.objects.create(
+                            user                = new_user,
+                            nomor_registrasi    = extra.get('nomor_registrasi', ''),
+                            tingkatan_pendekar  = extra.get('tingkatan_pendekar', ''),
+                            spesialisasi        = extra.get('spesialisasi', ''),
+                            sertifikasi_sk      = extra.get('sertifikasi_sk', ''),
+                        )
+                    else:
+                        # Tentukan sekolah
+                        sekolah_obj = None
+                        nama_baru = extra.get('nama_sekolah_baru', '')
+                        sekolah_id = extra.get('sekolah_id', '')
+                        if nama_baru:
+                            sekolah_obj, _ = Sekolah.objects.get_or_create(nama_sekolah=nama_baru)
+                        elif sekolah_id:
+                            sekolah_obj = Sekolah.objects.filter(id=sekolah_id).first()
+                        if not sekolah_obj:
+                            sekolah_obj = Sekolah.objects.filter(is_aktif=True).first()
+
+                        sabuk_obj    = TingkatSabuk.objects.filter(id=extra.get('sabuk_id')).first() if extra.get('sabuk_id') else TingkatSabuk.objects.order_by('urutan_tingkat').first()
+                        kategori_obj = KategoriTanding.objects.filter(id=extra.get('kategori_id')).first() if extra.get('kategori_id') else None
+
+                        AnggotaProfile.objects.create(
+                            user                = new_user,
+                            nisn                = extra.get('nisn', ''),
+                            sekolah             = sekolah_obj,
+                            jenis_kelamin       = extra.get('jenis_kelamin', 'L'),
+                            tanggal_lahir       = extra.get('tanggal_lahir') or None,
+                            kelas_sekolah       = extra.get('kelas_sekolah', ''),
+                            sabuk_saat_ini      = sabuk_obj,
+                            kategori_fokus      = kategori_obj,
+                            nama_wali           = extra.get('nama_wali', ''),
+                            no_hp_wali          = extra.get('no_hp_wali', ''),
+                            status_keanggotaan  = AnggotaProfile.MembershipStatus.AKTIF,
+                        )
+
+                    acc_req.status        = AccountRequest.Status.APPROVED
+                    acc_req.catatan_admin = catatan_admin
+                    acc_req.reviewed_by   = request.user
+                    acc_req.reviewed_at   = timezone.now()
+                    acc_req.save()
+
+                messages.success(request,
+                    f"Akun '{new_user.get_full_name() or new_user.username}' berhasil dibuat dan disetujui!")
+                return redirect('accounts:admin_account_requests')
+
+            except Exception as e:
+                messages.error(request, f"Gagal membuat akun: {str(e)}")
+                return redirect('accounts:admin_account_requests')
+
+    return render(request, 'accounts/admin_review_request.html', {'acc_req': acc_req})

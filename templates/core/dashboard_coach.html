@@ -20,23 +20,6 @@
       </p>
     </div>
 
-    <!-- Quick Action Button -->
-    <div class="flex flex-wrap items-center gap-2">
-      {% if request.user.is_admin_role %}
-      <a href="{% url 'accounts:admin_create_user' %}" class="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-bold shadow-elevation-1 hover:shadow-elevation-2 active:scale-95 transition-all">
-        <span class="material-symbols-outlined text-lg">person_add</span>
-        <span>Buat Akun Pelatih / Anggota</span>
-      </a>
-      {% endif %}
-      <a href="{% url 'attendance:report_index' %}" class="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-surface-container-highest hover:bg-primary-container text-on-surface text-sm font-bold border border-outline-variant/40 shadow-elevation-1 hover:scale-105 active:scale-95 transition-all">
-        <span class="material-symbols-outlined text-lg">print</span>
-        <span>Cetak Laporan</span>
-      </a>
-      <a href="{% url 'attendance:session_create' %}" class="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-primary hover:bg-primary-dark text-on-primary text-sm font-bold shadow-elevation-1 hover:shadow-elevation-2 active:scale-95 transition-all">
-        <span class="material-symbols-outlined text-lg">add_circle</span>
-        <span>Buka Sesi Baru</span>
-      </a>
-    </div>
   </div>
 
   <!-- Pending Approvals Alert Banner -->
