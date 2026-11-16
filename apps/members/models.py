@@ -202,3 +202,58 @@ class PengajuanHapusAnggota(models.Model):
     def __str__(self):
         return f"Pengajuan Hapus {self.anggota.user.get_full_name()} oleh {self.diajukan_oleh.get_full_name()} ({self.get_status_display()})"
 
+
+class CertificateCustomization(models.Model):
+    """
+    Data kustomisasi sertifikat resmi per pengguna.
+    Memungkinkan Admin dan Pelatih mengedit judul, nomor, narasi prestasi, tanggal terbit,
+    serta tanda tangan penanggung jawab pada lembar sertifikat.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='certificate_custom',
+        verbose_name="Pengguna Pemilik Sertifikat"
+    )
+
+    # Identitas Surat / Nomor & Judul
+    nomor_sertifikat = models.CharField(max_length=120, blank=True, verbose_name="Nomor Sertifikat")
+    judul_sertifikat = models.CharField(max_length=150, blank=True, verbose_name="Judul Sertifikat")
+    subjudul_sertifikat = models.CharField(max_length=200, blank=True, verbose_name="Subjudul / Kategori Eskul")
+    kategori_badge = models.CharField(max_length=100, blank=True, verbose_name="Badge Sertifikasi")
+
+    # Narasi & Konten Utama
+    narasi_prestasi = models.TextField(blank=True, verbose_name="Uraian Prestasi / Narasi Sertifikat")
+    tanggal_terbit = models.DateField(blank=True, null=True, verbose_name="Tanggal Terbit Sertifikat")
+
+    # Kustomisasi Tanda Tangan
+    penandatangan_kiri_jabatan = models.CharField(max_length=100, blank=True, verbose_name="Jabatan Penandatangan Kiri")
+    penandatangan_kiri_nama = models.CharField(max_length=150, blank=True, verbose_name="Nama Penandatangan Kiri")
+    penandatangan_kiri_sub = models.CharField(max_length=100, blank=True, verbose_name="No. Reg / NIP / Keterangan Kiri")
+
+    penandatangan_tengah_jabatan = models.CharField(max_length=100, blank=True, verbose_name="Jabatan Penandatangan Tengah")
+    penandatangan_tengah_nama = models.CharField(max_length=150, blank=True, verbose_name="Nama Penandatangan Tengah")
+    penandatangan_tengah_sub = models.CharField(max_length=100, blank=True, verbose_name="Keterangan / SK Tengah")
+
+    penandatangan_kanan_jabatan = models.CharField(max_length=100, blank=True, verbose_name="Jabatan Penandatangan Kanan")
+    penandatangan_kanan_nama = models.CharField(max_length=150, blank=True, verbose_name="Nama Penandatangan Kanan")
+    penandatangan_kanan_sub = models.CharField(max_length=100, blank=True, verbose_name="NIP / Keterangan Kanan")
+
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='certificates_edited',
+        verbose_name="Terakhir Diedit Oleh"
+    )
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Waktu Terakhir Disimpan")
+
+    class Meta:
+        verbose_name = "Kustomisasi Sertifikat"
+        verbose_name_plural = "Daftar Kustomisasi Sertifikat"
+
+    def __str__(self):
+        return f"Kustomisasi Sertifikat: {self.user.get_full_name() or self.user.username}"
+

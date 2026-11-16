@@ -270,13 +270,6 @@ def dashboard(request):
         })
         return render(request, 'core/dashboard_student.html', context)
 
-def pitch_presentation(request):
-    """
-    Tampilan presentasi slide interaktif untuk calon investor (pitch deck).
-    Dapat diakses langsung oleh investor atau founder untuk presentasi.
-    """
-    return render(request, 'presentation/pitch_deck.html')
-
 
 @login_required
 def perguruan_settings(request):

@@ -10,7 +10,7 @@ from django.views.decorators.http import require_POST
 from django.utils import timezone
 from django.urls import reverse
 
-from .models import AnggotaProfile, PelatihProfile, RiwayatKenaikanSabuk, PengajuanHapusAnggota
+from .models import AnggotaProfile, PelatihProfile, RiwayatKenaikanSabuk, PengajuanHapusAnggota, CertificateCustomization
 from apps.core.models import TingkatSabuk, KategoriTanding, Sekolah
 from apps.attendance.models import Presensi, SesiLatihan
 from apps.accounts.models import User
@@ -563,6 +563,7 @@ def member_id_card(request, user_id):
         'stats': stats,
         'is_pelatih': target_user.is_pelatih_role,
         'is_anggota': target_user.is_anggota_role,
+        'is_admin': target_user.is_admin_role,
         'today': timezone.localdate(),
     })
 
@@ -625,19 +626,180 @@ def member_certificate(request, user_id):
     # Pelatih penanggung jawab jika sertifikat siswa
     coach_penanggung_jawab = PelatihProfile.objects.select_related('user').first()
 
+    # Pembina / Admin penanggung jawab
+    pembina_penanggung_jawab = User.objects.filter(role=User.Role.ADMIN).order_by('first_name', 'username').first()
+
+    # Kustomisasi sertifikat (jika sudah pernah disimpan)
+    cert_custom = CertificateCustomization.objects.filter(user=target_user).first()
+
+    # Nilai default sebelum kustomisasi
+    default_judul = (
+        "PIAGAM PENGHARGAAN PEMBINA ESKUL" if target_user.is_admin_role else (
+            "SERTIFIKAT LISENSI KEPELATIHAN" if target_user.is_pelatih_role else "SERTIFIKAT KOMPETENSI & KEIKUTSERTAAN"
+        )
+    )
+    default_subjudul = (
+        "PEMBINA & PENGELOLA UTAMA EKSTRAKURIKULER PENCAK SILAT" if target_user.is_admin_role else (
+            "DEWAN GURU & PELATIH RESMI EKSTRAKURIKULER PENCAK SILAT" if target_user.is_pelatih_role else "EKSTRAKURIKULER SENI BELADIRI TRADISIONAL PENCAK SILAT"
+        )
+    )
+    default_badge = (
+        "PENGHARGAAN PEMBINA" if target_user.is_admin_role else (
+            "SERTIFIKASI PELATIH" if target_user.is_pelatih_role else "SERTIFIKASI PRESTASI SISWA"
+        )
+    )
+
+    if target_user.is_admin_role:
+        default_narasi = (
+            "Atas dedikasi, kepemimpinan, dan bimbingan yang luar biasa dalam memajukan ekstrakurikuler seni beladiri tradisional Pencak Silat, "
+            "membina karakter generasi muda pesilat yang tangguh, berbudi pekerti luhur, dan berprestasi, serta menjaga kelancaran tata kelola dan administrasi kegiatan eskul."
+        )
+    elif target_user.is_pelatih_role:
+        spesialisasi = pelatih.spesialisasi if pelatih and pelatih.spesialisasi else "Seni & Tanding"
+        tingkatan = pelatih.tingkatan_pendekar if pelatih and pelatih.tingkatan_pendekar else "Pendekar Muda"
+        sk = pelatih.sertifikasi_sk if pelatih and pelatih.sertifikasi_sk else "Lisensi Resmi Perguruan"
+        default_narasi = (
+            f"Atas dedikasi, integritas, dan pengabdian luar biasa dalam mendidik dan membina generasi pesilat muda dengan spesialisasi {spesialisasi}, "
+            f"tingkatan {tingkatan}, dan legalitas SK {sk}. Berwenang melatih, menguji kenaikan sabuk, dan mendampingi kontingen kejuaraan."
+        )
+    else:
+        sabuk_nama = anggota.sabuk_saat_ini.nama_sabuk if (anggota and anggota.sabuk_saat_ini) else "Putih"
+        kehadiran_pct = stats.get('persentase', 0)
+        predikat = stats.get('predikat', 'BAIK')
+        default_narasi = (
+            f"Atas keberhasilan menyelesaikan seluruh kurikulum latihan fisik, teknik beladiri, dan Ujian Kenaikan Tingkat (UKT) pada tingkatan Sabuk {sabuk_nama}, "
+            f"dengan tingkat kehadiran latihan {kehadiran_pct}% (Predikat: {predikat}), serta menjunjung tinggi budi pekerti luhur dan falsafah pesilat ksatria."
+        )
+
+    # Nilai final (pakai custom jika ada, atau fallback ke default)
+    final_cert_number = cert_custom.nomor_sertifikat if (cert_custom and cert_custom.nomor_sertifikat) else cert_number
+    final_judul = cert_custom.judul_sertifikat if (cert_custom and cert_custom.judul_sertifikat) else default_judul
+    final_subjudul = cert_custom.subjudul_sertifikat if (cert_custom and cert_custom.subjudul_sertifikat) else default_subjudul
+    final_badge = cert_custom.kategori_badge if (cert_custom and cert_custom.kategori_badge) else default_badge
+    final_narasi = cert_custom.narasi_prestasi if (cert_custom and cert_custom.narasi_prestasi) else default_narasi
+    final_tanggal = cert_custom.tanggal_terbit if (cert_custom and cert_custom.tanggal_terbit) else today
+
+    # Penandatangan Kiri Default
+    if target_user.is_admin_role:
+        default_kiri_jabatan = "Dewan Guru / Pengurus Cabang IPSI"
+        default_kiri_nama = coach_penanggung_jawab.user.get_full_name() if (coach_penanggung_jawab and coach_penanggung_jawab.user) else "Dewan Guru Silat"
+        default_kiri_sub = "Pengcab IPSI"
+    elif target_user.is_pelatih_role:
+        default_kiri_jabatan = "Pembina Ekstrakurikuler"
+        default_kiri_nama = pembina_penanggung_jawab.get_full_name() if pembina_penanggung_jawab else "Pembina Ekstrakurikuler"
+        default_kiri_sub = "SK. Pembina Ekstrakurikuler"
+    else:
+        default_kiri_jabatan = "Pelatih Utama Eskul"
+        default_kiri_nama = coach_penanggung_jawab.user.get_full_name() if (coach_penanggung_jawab and coach_penanggung_jawab.user) else "Dewan Pelatih Silat"
+        default_kiri_sub = f"No. Reg: {coach_penanggung_jawab.nomor_registrasi}" if (coach_penanggung_jawab and coach_penanggung_jawab.nomor_registrasi) else "Lisensi Resmi Pelatih"
+
+    # Penandatangan Tengah Default (untuk sertifikat anggota)
+    default_tengah_jabatan = "Pembina Ekstrakurikuler"
+    default_tengah_nama = pembina_penanggung_jawab.get_full_name() if pembina_penanggung_jawab else "Pembina Eskul Pencak Silat"
+    default_tengah_sub = f"SK. Pembina Eskul • {pembina_penanggung_jawab.phone_number}" if (pembina_penanggung_jawab and pembina_penanggung_jawab.phone_number) else "SK. Pembina Ekstrakurikuler"
+
+    # Penandatangan Kanan Default (Kepala Sekolah)
+    default_kanan_jabatan = "Kepala Sekolah / Penanggung Jawab" if not target_user.is_admin_role else "Kepala Sekolah"
+    default_kanan_nama = sekolah.nama_kepala_sekolah if (sekolah and sekolah.nama_kepala_sekolah) else "Kepala Sekolah"
+    default_kanan_sub = f"NIP. {sekolah.nip_kepala_sekolah}" if (sekolah and sekolah.nip_kepala_sekolah) else "NIP. -"
+
+    final_kiri_jabatan = cert_custom.penandatangan_kiri_jabatan if (cert_custom and cert_custom.penandatangan_kiri_jabatan) else default_kiri_jabatan
+    final_kiri_nama = cert_custom.penandatangan_kiri_nama if (cert_custom and cert_custom.penandatangan_kiri_nama) else default_kiri_nama
+    final_kiri_sub = cert_custom.penandatangan_kiri_sub if (cert_custom and cert_custom.penandatangan_kiri_sub) else default_kiri_sub
+
+    final_tengah_jabatan = cert_custom.penandatangan_tengah_jabatan if (cert_custom and cert_custom.penandatangan_tengah_jabatan) else default_tengah_jabatan
+    final_tengah_nama = cert_custom.penandatangan_tengah_nama if (cert_custom and cert_custom.penandatangan_tengah_nama) else default_tengah_nama
+    final_tengah_sub = cert_custom.penandatangan_tengah_sub if (cert_custom and cert_custom.penandatangan_tengah_sub) else default_tengah_sub
+
+    final_kanan_jabatan = cert_custom.penandatangan_kanan_jabatan if (cert_custom and cert_custom.penandatangan_kanan_jabatan) else default_kanan_jabatan
+    final_kanan_nama = cert_custom.penandatangan_kanan_nama if (cert_custom and cert_custom.penandatangan_kanan_nama) else default_kanan_nama
+    final_kanan_sub = cert_custom.penandatangan_kanan_sub if (cert_custom and cert_custom.penandatangan_kanan_sub) else default_kanan_sub
+
+    # Izin mengedit: hanya Admin dan Pelatih
+    can_edit = request.user.is_admin_role or request.user.is_pelatih_role
+
     return render(request, 'members/certificate.html', {
         'target_user': target_user,
         'anggota': anggota,
         'pelatih': pelatih,
         'sekolah': sekolah,
         'coach_penanggung_jawab': coach_penanggung_jawab,
-        'cert_number': cert_number,
+        'pembina_penanggung_jawab': pembina_penanggung_jawab,
+        'cert_number': final_cert_number,
+        'cert_judul': final_judul,
+        'cert_subjudul': final_subjudul,
+        'cert_badge': final_badge,
+        'cert_narasi': final_narasi,
+        'cert_tanggal': final_tanggal,
+        'kiri_jabatan': final_kiri_jabatan,
+        'kiri_nama': final_kiri_nama,
+        'kiri_sub': final_kiri_sub,
+        'tengah_jabatan': final_tengah_jabatan,
+        'tengah_nama': final_tengah_nama,
+        'tengah_sub': final_tengah_sub,
+        'kanan_jabatan': final_kanan_jabatan,
+        'kanan_nama': final_kanan_nama,
+        'kanan_sub': final_kanan_sub,
+        'cert_custom': cert_custom,
+        'can_edit': can_edit,
         'qr_svg': qr_svg,
         'stats': stats,
         'is_pelatih': target_user.is_pelatih_role,
         'is_anggota': target_user.is_anggota_role,
+        'is_admin': target_user.is_admin_role,
         'today': today,
     })
+
+
+@login_required
+@require_POST
+def member_certificate_save(request, user_id):
+    """Menyimpan hasil kustomisasi sertifikat resmi ke database."""
+    if not (request.user.is_admin_role or request.user.is_pelatih_role):
+        messages.error(request, "Akses ditolak: Hanya Admin atau Pelatih yang dapat mengedit sertifikat.")
+        return redirect('members:certificate', user_id=user_id)
+
+    target_user = get_object_or_404(User, id=user_id)
+    action = request.POST.get('action', 'save')
+
+    if action == 'reset':
+        CertificateCustomization.objects.filter(user=target_user).delete()
+        messages.success(request, "Sertifikat berhasil direset kembali ke format standar sistem.")
+        return redirect('members:certificate', user_id=user_id)
+
+    cert_custom, _ = CertificateCustomization.objects.get_or_create(user=target_user)
+    cert_custom.nomor_sertifikat = request.POST.get('nomor_sertifikat', '').strip()
+    cert_custom.judul_sertifikat = request.POST.get('judul_sertifikat', '').strip()
+    cert_custom.subjudul_sertifikat = request.POST.get('subjudul_sertifikat', '').strip()
+    cert_custom.kategori_badge = request.POST.get('kategori_badge', '').strip()
+    cert_custom.narasi_prestasi = request.POST.get('narasi_prestasi', '').strip()
+
+    tanggal_str = request.POST.get('tanggal_terbit', '').strip()
+    if tanggal_str:
+        try:
+            cert_custom.tanggal_terbit = timezone.datetime.strptime(tanggal_str, '%Y-%m-%d').date()
+        except ValueError:
+            cert_custom.tanggal_terbit = None
+    else:
+        cert_custom.tanggal_terbit = None
+
+    cert_custom.penandatangan_kiri_jabatan = request.POST.get('penandatangan_kiri_jabatan', '').strip()
+    cert_custom.penandatangan_kiri_nama = request.POST.get('penandatangan_kiri_nama', '').strip()
+    cert_custom.penandatangan_kiri_sub = request.POST.get('penandatangan_kiri_sub', '').strip()
+
+    cert_custom.penandatangan_tengah_jabatan = request.POST.get('penandatangan_tengah_jabatan', '').strip()
+    cert_custom.penandatangan_tengah_nama = request.POST.get('penandatangan_tengah_nama', '').strip()
+    cert_custom.penandatangan_tengah_sub = request.POST.get('penandatangan_tengah_sub', '').strip()
+
+    cert_custom.penandatangan_kanan_jabatan = request.POST.get('penandatangan_kanan_jabatan', '').strip()
+    cert_custom.penandatangan_kanan_nama = request.POST.get('penandatangan_kanan_nama', '').strip()
+    cert_custom.penandatangan_kanan_sub = request.POST.get('penandatangan_kanan_sub', '').strip()
+
+    cert_custom.updated_by = request.user
+    cert_custom.save()
+
+    messages.success(request, "Perubahan sertifikat berhasil disimpan ke sistem!")
+    return redirect('members:certificate', user_id=user_id)
 
 
 @login_required

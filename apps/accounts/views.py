@@ -5,13 +5,28 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.utils import timezone
 
-from .models import User, AccountRequest
+from .models import User, AccountRequest, PasswordResetToken
 from apps.core.models import TingkatSabuk, KategoriTanding, Sekolah
 from apps.members.models import AnggotaProfile, PelatihProfile
 
 
+# ─────────────────────────────────────────────────────────────
+# HALAMAN PILIH LOGIN (landing)
+# ─────────────────────────────────────────────────────────────
 
-def login_view(request):
+def login_select_view(request):
+    """Halaman pilih peran sebelum login."""
+    if request.user.is_authenticated:
+        return redirect('core:dashboard')
+    return render(request, 'accounts/login_select.html')
+
+
+# ─────────────────────────────────────────────────────────────
+# LOGIN TERPISAH PER PERAN
+# ─────────────────────────────────────────────────────────────
+
+def _do_login(request, expected_role, template_name, role_label):
+    """Helper bersama untuk ketiga login view."""
     if request.user.is_authenticated:
         return redirect('core:dashboard')
 
@@ -21,19 +36,160 @@ def login_view(request):
 
         user = authenticate(request, username=username, password=password)
         if user is not None:
+            # Validasi peran
+            if expected_role == 'ADMIN':
+                if not user.is_admin_role:
+                    messages.error(request, f"Akun ini bukan akun {role_label}.")
+                    return render(request, template_name)
+            elif user.role != expected_role:
+                messages.error(request, f"Akun ini bukan akun {role_label}.")
+                return render(request, template_name)
             login(request, user)
             messages.success(request, f"Selamat datang kembali, Pendekar {user.get_full_name() or user.username}!")
             return redirect('core:dashboard')
         else:
             messages.error(request, "Username atau kata sandi yang kamu masukkan salah.")
 
-    return render(request, 'accounts/login.html')
+    return render(request, template_name)
+
+
+def login_view(request):
+    """Login default — redirect ke halaman pilih peran."""
+    return login_select_view(request)
+
+
+def login_admin_view(request):
+    return _do_login(request, 'ADMIN', 'accounts/login_admin.html', 'Admin / Pembina')
+
+
+def login_pelatih_view(request):
+    return _do_login(request, 'PELATIH', 'accounts/login_pelatih.html', 'Pelatih')
+
+
+def login_anggota_view(request):
+    return _do_login(request, 'ANGGOTA', 'accounts/login_anggota.html', 'Anggota')
+
 
 
 def logout_view(request):
     logout(request)
     messages.info(request, "Kamu telah berhasil keluar dari sistem.")
     return redirect('accounts:login')
+
+
+# ─────────────────────────────────────────────────────────────
+# LUPA KATA SANDI — Minta token reset dari Admin
+# ─────────────────────────────────────────────────────────────
+
+def forgot_password_view(request):
+    """
+    Halaman lupa kata sandi: user memasukkan username mereka.
+    Sistem menampilkan instruksi untuk menghubungi Admin agar
+    Admin membuatkan token reset.
+    """
+    if request.user.is_authenticated:
+        return redirect('core:dashboard')
+
+    role = request.GET.get('role', 'anggota')  # 'admin' | 'pelatih' | 'anggota'
+    submitted = False
+    found_user = None
+
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        role = request.POST.get('role', 'anggota')
+        submitted = True
+        found_user = User.objects.filter(username=username).first()
+        # Selalu tampilkan pesan sukses (security: tidak bocorkan keberadaan akun)
+
+    return render(request, 'accounts/forgot_password.html', {
+        'role': role,
+        'submitted': submitted,
+        'found_user': found_user,
+    })
+
+
+def reset_password_view(request, token):
+    """
+    Halaman reset kata sandi menggunakan token yang diberikan Admin.
+    """
+    if request.user.is_authenticated:
+        return redirect('core:dashboard')
+
+    reset_obj = PasswordResetToken.objects.filter(token=token).first()
+
+    if not reset_obj or not reset_obj.is_valid:
+        messages.error(request, "Link reset kata sandi tidak valid atau sudah kedaluwarsa. Minta token baru dari Admin.")
+        return redirect('accounts:login')
+
+    if request.method == 'POST':
+        new_password = request.POST.get('new_password', '').strip()
+        confirm_password = request.POST.get('confirm_password', '').strip()
+
+        if len(new_password) < 6:
+            messages.error(request, "Kata sandi minimal 6 karakter.")
+            return render(request, 'accounts/reset_password.html', {'token': token, 'reset_obj': reset_obj})
+
+        if new_password != confirm_password:
+            messages.error(request, "Konfirmasi kata sandi tidak cocok.")
+            return render(request, 'accounts/reset_password.html', {'token': token, 'reset_obj': reset_obj})
+
+        user = reset_obj.user
+        user.set_password(new_password)
+        user.save()
+        reset_obj.is_used = True
+        reset_obj.save()
+
+        messages.success(request, "Kata sandi berhasil direset! Silakan masuk dengan kata sandi baru.")
+        # Redirect ke login sesuai role
+        role = user.role
+        if role == User.Role.ADMIN or user.is_superuser:
+            return redirect('accounts:login_admin')
+        elif role == User.Role.PELATIH:
+            return redirect('accounts:login_pelatih')
+        else:
+            return redirect('accounts:login_anggota')
+
+    return render(request, 'accounts/reset_password.html', {'token': token, 'reset_obj': reset_obj})
+
+
+# ─────────────────────────────────────────────────────────────
+# ADMIN: Kelola Token Reset Kata Sandi
+# ─────────────────────────────────────────────────────────────
+
+@login_required
+def admin_reset_tokens_view(request):
+    """Admin membuat dan melihat token reset kata sandi untuk user lain."""
+    if not request.user.is_admin_role:
+        messages.error(request, "Akses ditolak.")
+        return redirect('core:dashboard')
+
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        target_user = User.objects.filter(id=user_id).first()
+        if not target_user:
+            messages.error(request, "Pengguna tidak ditemukan.")
+            return redirect('accounts:admin_reset_tokens')
+
+        # Nonaktifkan token lama yang belum dipakai
+        PasswordResetToken.objects.filter(user=target_user, is_used=False).update(is_used=True)
+
+        # Buat token baru
+        new_token = PasswordResetToken(user=target_user, created_by=request.user)
+        new_token.save()
+        messages.success(
+            request,
+            f"Token reset berhasil dibuat untuk {target_user.get_full_name() or target_user.username}. "
+            f"Bagikan link berikut: /auth/reset-password/{new_token.token}/"
+        )
+        return redirect('accounts:admin_reset_tokens')
+
+    # Tampilkan semua token aktif dan semua user (kecuali admin yang login)
+    tokens = PasswordResetToken.objects.select_related('user', 'created_by').order_by('-created_at')[:50]
+    users = User.objects.exclude(id=request.user.id).order_by('role', 'first_name')
+    return render(request, 'accounts/admin_reset_tokens.html', {
+        'tokens': tokens,
+        'users': users,
+    })
 
 
 def register_view(request):

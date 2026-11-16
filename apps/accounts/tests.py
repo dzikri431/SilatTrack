@@ -47,9 +47,9 @@ class AuthenticationAndAdminUserCreationTests(TestCase):
 
     def test_login_page_renders_without_demo_and_register(self):
         """Form login tidak lagi menampilkan tombol akun demo dan link pendaftaran mandiri."""
-        response = self.client.get(reverse('accounts:login'))
+        response = self.client.get(reverse('accounts:login_anggota'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Masuk Sistem')
+        self.assertContains(response, 'Masuk')
         self.assertContains(response, 'Username / NISN')
         self.assertContains(response, 'Kata Sandi')
 

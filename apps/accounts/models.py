@@ -1,4 +1,5 @@
 import uuid
+import secrets
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
@@ -105,4 +106,46 @@ class AccountRequest(models.Model):
 
     def __str__(self):
         return f"[{self.get_status_display()}] {self.first_name} {self.last_name} ({self.get_account_type_display()}) — oleh {self.requested_by}"
+
+
+class PasswordResetToken(models.Model):
+    """
+    Token untuk reset kata sandi yang dibuat oleh Admin.
+    Anggota / Pelatih mendapatkan token ini dari Admin secara langsung (offline / WA).
+    """
+    id         = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user       = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reset_tokens', verbose_name="Pengguna")
+    token      = models.CharField(max_length=64, unique=True, verbose_name="Token Reset")
+    created_at = models.DateTimeField(default=timezone.now, verbose_name="Dibuat Pada")
+    expires_at = models.DateTimeField(verbose_name="Kedaluwarsa Pada")
+    is_used    = models.BooleanField(default=False, verbose_name="Sudah Digunakan")
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='reset_tokens_created',
+        verbose_name="Dibuat oleh Admin"
+    )
+
+    class Meta:
+        verbose_name = "Token Reset Kata Sandi"
+        verbose_name_plural = "Daftar Token Reset Kata Sandi"
+        ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        if not self.token:
+            self.token = secrets.token_urlsafe(32)
+        if not self.expires_at:
+            self.expires_at = timezone.now() + timezone.timedelta(hours=24)
+        super().save(*args, **kwargs)
+
+    @property
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+    @property
+    def is_valid(self):
+        return not self.is_used and not self.is_expired
+
+    def __str__(self):
+        return f"Token reset untuk {self.user} (valid: {self.is_valid})"
 

@@ -133,7 +133,15 @@
       vertical-align: middle;
     }
     [x-cloak] { display: none !important; }
+
+    /* Print Optimization Global */
+    @media print {
+      header, nav, aside, footer, .no-print, .industrial-toast, #confirm-modal, [class*="mobileDrawer"], button[title="Panel Admin"] {
+        display: none !important;
+      }
+    }
   </style>
+  {% block extra_head %}{% endblock %}
 </head>
 <body x-data class="h-full flex flex-col font-sans text-on-surface bg-surface antialiased" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
 
@@ -193,14 +201,6 @@
         <a href="{% url 'core:perguruan_settings' %}" class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors {% if 'perguruan' in request.path %}bg-primary text-on-primary shadow-sm{% else %}text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300{% endif %} inline-flex items-center gap-1.5" title="Kelola Logo Perguruan & Sekolah">
           <span class="material-symbols-outlined text-sm">shield</span>
           <span>Logo Perguruan</span>
-        </a>
-        <a href="{% url 'members:public_parent_portal' %}" class="px-3 py-1.5 rounded-full text-xs font-bold transition-colors {% if 'transparansi' in request.path %}bg-primary text-on-primary shadow-sm{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest{% endif %} inline-flex items-center gap-1" title="Portal Wali Murid">
-          <span class="material-symbols-outlined text-sm">family_restroom</span>
-          <span>Portal Wali</span>
-        </a>
-        <a href="{% url 'core:presentation' %}" target="_blank" title="Presentasi Investor" class="px-3.5 py-1.5 rounded-full text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 transition-colors inline-flex items-center gap-1.5">
-          <span class="material-symbols-outlined text-sm">slideshow</span>
-          <span>Pitch Deck</span>
         </a>
         {% endif %}
       </nav>
@@ -543,6 +543,16 @@
           <span x-show="!collapsed" class="ml-auto bg-amber-400 text-amber-900 text-[10px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0">{{ pending_account_requests_count }}</span>
           {% endif %}
         </a>
+
+        <!-- Reset Kata Sandi (Admin only) -->
+        <a href="{% url 'accounts:admin_reset_tokens' %}"
+           :title="collapsed ? 'Reset Kata Sandi' : ''"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all group
+                  {% if 'reset-tokens' in request.path %}text-white font-bold{% else %}text-white/80 hover:text-white hover:bg-white/15{% endif %}"
+           :class="collapsed ? 'justify-center px-0' : ''">
+          <span class="material-symbols-outlined text-xl flex-shrink-0 {% if 'reset-tokens' in request.path %}material-symbols-filled{% endif %}">lock_reset</span>
+          <span x-show="!collapsed" x-transition class="text-sm font-semibold truncate">Reset Kata Sandi</span>
+        </a>
         {% endif %}
 
         <!-- Buat Akun (Pelatih: ajukan permohonan ke Admin) -->
@@ -603,19 +613,6 @@
           {% endif %}
         </a>
 
-        <!-- Portal Wali Murid -->
-        <a href="{% url 'members:public_parent_portal' %}"
-           :title="collapsed ? 'Portal Wali' : ''"
-           class="flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all group
-                  {% if 'transparansi' in request.path %}text-white font-bold{% else %}text-white/80 hover:text-white hover:bg-white/15{% endif %}"
-           :class="collapsed ? 'justify-center px-0' : ''">
-          <span class="material-symbols-outlined text-xl flex-shrink-0 {% if 'transparansi' in request.path %}material-symbols-filled{% endif %}">family_restroom</span>
-          <span x-show="!collapsed" x-transition class="text-sm font-semibold truncate">Portal Wali</span>
-          {% if 'transparansi' in request.path %}
-          <span x-show="!collapsed" class="ml-auto w-1.5 h-1.5 rounded-full bg-white flex-shrink-0"></span>
-          {% endif %}
-        </a>
-
         <!-- Divider -->
         <div class="h-px bg-white/10 my-1 mx-2"></div>
         <p x-show="!collapsed" x-transition class="text-white/40 text-[10px] font-black uppercase tracking-widest px-3 py-1">Pengaturan</p>
@@ -631,16 +628,6 @@
           {% if 'perguruan' in request.path %}
           <span x-show="!collapsed" class="ml-auto w-1.5 h-1.5 rounded-full bg-white flex-shrink-0"></span>
           {% endif %}
-        </a>
-
-        <!-- Pitch Deck -->
-        <a href="{% url 'core:presentation' %}" target="_blank"
-           :title="collapsed ? 'Pitch Deck' : ''"
-           class="flex items-center gap-3 px-3 py-2.5 rounded-2xl text-white/80 hover:text-white hover:bg-white/15 transition-all group"
-           :class="collapsed ? 'justify-center px-0' : ''">
-          <span class="material-symbols-outlined text-xl flex-shrink-0">slideshow</span>
-          <span x-show="!collapsed" x-transition class="text-sm font-semibold truncate">Pitch Deck</span>
-          <span x-show="!collapsed" class="ml-auto material-symbols-outlined text-xs text-white/40 flex-shrink-0">open_in_new</span>
         </a>
 
         {% endwith %}
@@ -677,12 +664,12 @@
     <!-- Mobile Admin/Pelatih Drawer Trigger Button (fab-style, bottom-left) -->
     <div
       x-data="{ mobileDrawer: false }"
-      class="md:hidden"
+      class="md:hidden no-print"
     >
       <!-- FAB Trigger -->
       <button
         @click="mobileDrawer = true"
-        class="fixed bottom-20 left-4 z-40 w-14 h-14 rounded-full shadow-elevation-3 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+        class="no-print fixed bottom-20 left-4 z-40 w-14 h-14 rounded-full shadow-elevation-3 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
         style="background: linear-gradient(135deg,#8A1C14,#7D5800);"
         title="Panel Admin"
       >
@@ -797,10 +784,6 @@
             <span class="material-symbols-outlined text-xl {% if 'reports' in request.path %}material-symbols-filled{% endif %}">description</span>
             <span class="text-sm font-semibold">Laporan Absensi</span>
           </a>
-          <a href="{% url 'members:public_parent_portal' %}" class="flex items-center gap-3 px-3 py-3 rounded-2xl {% if 'transparansi' in request.path %}bg-white/20 text-white font-bold{% else %}text-white/80 hover:text-white hover:bg-white/15{% endif %} transition-all">
-            <span class="material-symbols-outlined text-xl {% if 'transparansi' in request.path %}material-symbols-filled{% endif %}">family_restroom</span>
-            <span class="text-sm font-semibold">Portal Wali</span>
-          </a>
 
           <div class="h-px bg-white/10 my-2 mx-2"></div>
           <p class="text-white/40 text-[10px] font-black uppercase tracking-widest px-2 py-1">Pengaturan</p>
@@ -808,11 +791,6 @@
           <a href="{% url 'core:perguruan_settings' %}" class="flex items-center gap-3 px-3 py-3 rounded-2xl {% if 'perguruan' in request.path %}bg-white/20 text-white font-bold{% else %}text-white/80 hover:text-white hover:bg-white/15{% endif %} transition-all">
             <span class="material-symbols-outlined text-xl {% if 'perguruan' in request.path %}material-symbols-filled{% endif %}">shield</span>
             <span class="text-sm font-semibold">Identitas Perguruan</span>
-          </a>
-          <a href="{% url 'core:presentation' %}" target="_blank" class="flex items-center gap-3 px-3 py-3 rounded-2xl text-white/80 hover:text-white hover:bg-white/15 transition-all">
-            <span class="material-symbols-outlined text-xl">slideshow</span>
-            <span class="text-sm font-semibold">Pitch Deck</span>
-            <span class="ml-auto material-symbols-outlined text-xs text-white/40">open_in_new</span>
           </a>
 
           {% endwith %}

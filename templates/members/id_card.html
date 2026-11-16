@@ -1,14 +1,24 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}
-{% if is_pelatih %}ID Card Pelatih - {{ target_user.get_full_name|default:target_user.username }}{% else %}KTA Pesilat - {{ target_user.get_full_name|default:target_user.username }}{% endif %} - SilatTrack
+{% if is_admin %}ID Card Admin - {{ target_user.get_full_name|default:target_user.username }}{% elif is_pelatih %}ID Card Pelatih - {{ target_user.get_full_name|default:target_user.username }}{% else %}KTA Pesilat - {{ target_user.get_full_name|default:target_user.username }}{% endif %} - SilatTrack
 {% endblock %}
 
 {% block extra_head %}
 <style>
   /* Print Optimization: Hanya cetak ID Card */
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
   {% if request.user.is_admin_role or request.user.is_pelatih_role %}
   @media print {
+    @page {
+      size: A4 portrait;
+      margin: 10mm;
+    }
     body {
       background: #ffffff !important;
       padding: 0 !important;
@@ -16,13 +26,14 @@
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
     }
-    header, nav, footer, .no-print, .industrial-toast, #confirm-modal {
+    header, nav, aside, footer, .no-print, .industrial-toast, #confirm-modal, [class*="mobileDrawer"], button[title="Panel Admin"] {
       display: none !important;
     }
     main {
       padding: 0 !important;
       margin: 0 !important;
       max-width: 100% !important;
+      width: 100% !important;
     }
     .print-container {
       display: flex !important;
@@ -75,16 +86,16 @@
   <!-- Control & Action Bar (Hidden on Print) -->
   <div class="no-print bg-surface-container-low border border-outline-variant/40 rounded-3xl p-4 sm:p-5 shadow-elevation-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div class="flex items-center gap-3">
-      <a href="{% if is_anggota %}{% url 'members:member_detail' target_user.id %}{% else %}{% url 'members:member_list' %}?tab=pelatih{% endif %}" class="w-10 h-10 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center transition-colors shadow-2xs" title="Kembali">
+      <a href="{% if is_anggota %}{% url 'members:member_detail' target_user.id %}{% elif is_admin %}{% url 'core:dashboard' %}{% else %}{% url 'members:member_list' %}?tab=pelatih{% endif %}" class="w-10 h-10 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center transition-colors shadow-2xs" title="Kembali">
         <span class="material-symbols-outlined text-lg">arrow_back</span>
       </a>
       <div>
         <div class="flex items-center gap-2">
           <h2 class="text-base sm:text-lg font-black text-on-surface">
-            {% if is_pelatih %}ID Card Resmi Pelatih Silat{% else %}Kartu Tanda Anggota (KTA) Pesilat{% endif %}
+            {% if is_admin %}ID Card Resmi Admin / Pembina{% elif is_pelatih %}ID Card Resmi Pelatih Silat{% else %}Kartu Tanda Anggota (KTA) Pesilat{% endif %}
           </h2>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {% if is_pelatih %}bg-amber-100 text-amber-900 border border-amber-300{% else %}bg-emerald-100 text-emerald-900 border border-emerald-300{% endif %}">
-            {% if is_pelatih %}Pelatih Berlisensi{% else %}Pesilat Aktif{% endif %}
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {% if is_admin %}bg-primary/15 text-primary border border-primary/30{% elif is_pelatih %}bg-amber-100 text-amber-900 border border-amber-300{% else %}bg-emerald-100 text-emerald-900 border border-emerald-300{% endif %}">
+            {% if is_admin %}Admin / Pembina{% elif is_pelatih %}Pelatih Berlisensi{% else %}Pesilat Aktif{% endif %}
           </span>
         </div>
         <p class="text-xs text-on-surface-variant font-medium">
@@ -123,7 +134,8 @@
         </button>
       </div>
 
-      <!-- Tombol Lihat Sertifikat Resmi -->
+      <!-- Tombol Lihat Sertifikat Resmi (Pesilat / Pelatih) -->
+      {% if not is_admin %}
       <a 
         href="{% url 'members:certificate' target_user.id %}"
         class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer"
@@ -132,6 +144,7 @@
         <span class="material-symbols-outlined text-base">workspace_premium</span>
         <span>Lihat Sertifikat</span>
       </a>
+      {% endif %}
 
       <!-- Tombol Print: Khusus Admin & Pelatih -->
       {% if request.user.is_admin_role or request.user.is_pelatih_role %}
@@ -161,9 +174,13 @@
       x-show="cardSide === 'both' || cardSide === 'front'"
       class="id-card-wrapper relative w-[340px] sm:w-[380px] h-[220px] sm:h-[240px] rounded-2xl overflow-hidden shadow-elevation-3 border-2 border-amber-500/60 bg-gradient-to-br from-[#7f1d1d] via-[#5c1313] to-[#2b0808] text-white flex flex-col justify-between p-4 select-none"
     >
-      <!-- Background Watermark Pattern -->
-      <div class="absolute inset-0 opacity-10 pointer-events-none flex items-center justify-center">
+      <!-- Background Watermark Pattern: Logo Perguruan Silat -->
+      <div class="absolute inset-0 opacity-20 pointer-events-none flex items-center justify-center">
+        {% if perguruan_info and perguruan_info.logo_perguruan %}
+        <img src="{{ perguruan_info.logo_perguruan.url }}" alt="Watermark Perguruan" class="w-[170px] h-[170px] sm:w-[190px] sm:h-[190px] object-contain mix-blend-screen drop-shadow-md">
+        {% else %}
         <span class="material-symbols-outlined text-[180px]">sports_martial_arts</span>
+        {% endif %}
       </div>
 
       <!-- Golden Corner Accents -->
@@ -178,7 +195,7 @@
           </div>
           <div>
             <h3 class="text-[11px] font-black uppercase tracking-wider text-amber-300 leading-tight">
-              {% if is_pelatih %}KARTU LISENSI PELATIH{% else %}KARTU TANDA ANGGOTA (KTA){% endif %}
+              {% if is_admin %}KARTU IDENTITAS ADMIN / PEMBINA{% elif is_pelatih %}KARTU LISENSI PELATIH{% else %}KARTU TANDA ANGGOTA (KTA){% endif %}
             </h3>
             <p class="text-[9px] font-bold text-white/80 leading-tight truncate max-w-[210px]">
               {{ sekolah.nama_sekolah|default:"EKSTRAKURIKULER PENCAK SILAT" }}
@@ -188,7 +205,7 @@
 
         <div class="text-right">
           <span class="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider bg-amber-400/20 text-amber-300 border border-amber-400/40">
-            {% if is_pelatih %}PELATIH RESMI{% else %}PENDEKAR SILAT{% endif %}
+            {% if is_admin %}PEMBINA ESKUL{% elif is_pelatih %}PELATIH RESMI{% else %}PENDEKAR SILAT{% endif %}
           </span>
         </div>
       </div>
@@ -226,7 +243,9 @@
               {{ target_user.get_full_name|default:target_user.username }}
             </h4>
             <p class="text-[9px] font-mono text-amber-200/90 mt-0.5 truncate">
-              {% if is_pelatih %}
+              {% if is_admin %}
+                ID: <strong>ADMIN-{{ target_user.id|stringformat:"s"|slice:":8"|upper }}</strong>
+              {% elif is_pelatih %}
                 No. Reg: <strong>{{ pelatih.nomor_registrasi|default:"PEL-IPSI-REG" }}</strong>
               {% else %}
                 NISN: <strong>{{ anggota.nisn|default:"-" }}</strong>
@@ -236,7 +255,16 @@
 
           <!-- Parameter Khusus Berdasarkan Peran -->
           <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] text-white/90 pt-0.5 border-t border-white/10">
-            {% if is_pelatih %}
+            {% if is_admin %}
+              <div class="truncate">
+                <span class="text-white/60 block text-[8px] uppercase">Jabatan:</span>
+                <span class="font-bold text-amber-300 truncate block">Admin / Pembina</span>
+              </div>
+              <div class="truncate">
+                <span class="text-white/60 block text-[8px] uppercase">Wewenang:</span>
+                <span class="font-bold truncate block">Pengelola Sistem</span>
+              </div>
+            {% elif is_pelatih %}
               <div class="truncate">
                 <span class="text-white/60 block text-[8px] uppercase">Gelar:</span>
                 <span class="font-bold text-amber-300 truncate block">{{ pelatih.tingkatan_pendekar|default:"Pendekar Muda" }}</span>
@@ -290,22 +318,43 @@
       x-show="cardSide === 'both' || cardSide === 'back'"
       class="id-card-wrapper relative w-[340px] sm:w-[380px] h-[220px] sm:h-[240px] rounded-2xl overflow-hidden shadow-elevation-3 border-2 border-amber-500/60 bg-gradient-to-br from-[#1e293b] via-[#0f172a] to-[#020617] text-white flex flex-col justify-between p-4 select-none"
     >
-      <!-- Background Shield Graphic -->
-      <div class="absolute inset-0 opacity-5 pointer-events-none flex items-center justify-center">
-        <span class="material-symbols-outlined text-[190px]">shield</span>
+      <!-- Background Watermark Pattern: Logo Sekolah Mitra -->
+      <div class="absolute inset-0 opacity-15 pointer-events-none flex items-center justify-center">
+        {% if sekolah and sekolah.logo %}
+        <img src="{{ sekolah.logo.url }}" alt="Watermark Sekolah" class="w-[170px] h-[170px] sm:w-[190px] sm:h-[190px] object-contain mix-blend-screen drop-shadow-md">
+        {% else %}
+        <img src="{% static 'img/default_sekolah_logo.svg' %}" alt="Logo Sekolah Bawaan" class="w-[170px] h-[170px] sm:w-[190px] sm:h-[190px] object-contain mix-blend-screen drop-shadow-md">
+        {% endif %}
       </div>
 
       <!-- Header Belakang -->
       <div class="relative z-10 text-center border-b border-white/10 pb-1.5">
         <h4 class="text-[10px] font-black uppercase tracking-wider text-amber-400">
-          {% if is_pelatih %}KODE ETIK KEPELATIHAN PENCAK SILAT{% else %}PANCA PRASETYA PENDEKAR SILAT{% endif %}
+          {% if is_admin %}TUGAS & WEWENANG PEMBINA ESKUL{% elif is_pelatih %}KODE ETIK KEPELATIHAN PENCAK SILAT{% else %}PANCA PRASETYA PENDEKAR SILAT{% endif %}
         </h4>
         <p class="text-[8px] text-white/70 font-medium">Nilai Luhur Perguruan & Ikatan Pencak Silat Indonesia (IPSI)</p>
       </div>
 
       <!-- Butir Janji Pesilat / Kode Etik Pelatih -->
       <div class="relative z-10 text-[8px] sm:text-[8.5px] text-white/90 leading-snug space-y-1 my-auto px-1">
-        {% if is_pelatih %}
+        {% if is_admin %}
+        <div class="flex items-start gap-1.5">
+          <span class="text-amber-400 font-black">1.</span>
+          <span>Bertanggung jawab penuh atas pengelolaan sistem absensi dan data anggota eskul.</span>
+        </div>
+        <div class="flex items-start gap-1.5">
+          <span class="text-amber-400 font-black">2.</span>
+          <span>Berwenang membuat, mengedit, dan menonaktifkan akun Pelatih dan Anggota.</span>
+        </div>
+        <div class="flex items-start gap-1.5">
+          <span class="text-amber-400 font-black">3.</span>
+          <span>Mengawasi dan memvalidasi kegiatan latihan serta laporan kehadiran.</span>
+        </div>
+        <div class="flex items-start gap-1.5">
+          <span class="text-amber-400 font-black">4.</span>
+          <span>Menjaga kerahasiaan data, integritas sistem, dan kelancaran operasional eskul.</span>
+        </div>
+        {% elif is_pelatih %}
         <div class="flex items-start gap-1.5">
           <span class="text-amber-400 font-black">1.</span>
           <span>Berjiwa ksatria, menjunjung tinggi sportivitas, dan berbudi pekerti luhur.</span>

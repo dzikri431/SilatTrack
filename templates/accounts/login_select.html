@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Masuk - SilatTrack{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center py-8 px-4">
+  <div class="w-full max-w-sm">
+
+    <!-- Brand Header -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-white p-2 border-2 border-primary/30 shadow-elevation-2 mb-3 overflow-hidden">
+        {% if perguruan_info and perguruan_info.logo_perguruan %}
+        <img src="{{ perguruan_info.logo_perguruan.url }}" alt="{{ perguruan_info.nama_perguruan }}" class="w-full h-full object-contain">
+        {% else %}
+        <img src="{% static 'img/default_perguruan_logo.svg' %}" alt="Logo Perguruan" class="w-full h-full object-contain">
+        {% endif %}
+      </div>
+      <h1 class="text-2xl font-extrabold text-on-surface tracking-tight">
+        {{ perguruan_info.singkatan|default:"SilatTrack" }}
+      </h1>
+      <p class="text-xs sm:text-sm font-semibold text-primary mt-1">
+        {{ perguruan_info.nama_perguruan|default:"Sistem Absensi Ekstrakurikuler Pencak Silat" }}
+      </p>
+      {% if perguruan_info.semboyan %}
+      <p class="text-[11px] italic text-outline mt-0.5 font-medium">"{{ perguruan_info.semboyan }}"</p>
+      {% endif %}
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="mb-4 space-y-2">
+      {% for message in messages %}
+      <div class="px-4 py-3 rounded-2xl text-sm font-medium
+        {% if message.tags == 'error' %}bg-error/10 text-error border border-error/30
+        {% elif message.tags == 'success' %}bg-green-50 text-green-700 border border-green-200
+        {% else %}bg-primary/10 text-primary border border-primary/30{% endif %}">
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Pilih Peran -->
+    <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 shadow-elevation-2">
+      <p class="text-center text-sm font-semibold text-on-surface-variant mb-5">Masuk sebagai:</p>
+
+      <div class="space-y-3">
+
+        <!-- Admin -->
+        <a href="{% url 'accounts:login_admin' %}"
+           class="flex items-center gap-4 w-full px-5 py-4 rounded-2xl bg-primary text-on-primary hover:bg-primary-dark active:scale-[0.98] transition-all shadow-elevation-1 hover:shadow-elevation-2 group">
+          <span class="material-symbols-outlined text-2xl">admin_panel_settings</span>
+          <div class="flex-1 text-left">
+            <p class="font-bold text-sm">Admin / Pembina</p>
+            <p class="text-xs opacity-80">Kelola sistem & anggota</p>
+          </div>
+          <span class="material-symbols-outlined text-lg opacity-70 group-hover:translate-x-1 transition-transform">arrow_forward</span>
+        </a>
+
+        <!-- Pelatih -->
+        <a href="{% url 'accounts:login_pelatih' %}"
+           class="flex items-center gap-4 w-full px-5 py-4 rounded-2xl bg-secondary text-on-secondary hover:opacity-90 active:scale-[0.98] transition-all shadow-elevation-1 hover:shadow-elevation-2 group">
+          <span class="material-symbols-outlined text-2xl">sports_martial_arts</span>
+          <div class="flex-1 text-left">
+            <p class="font-bold text-sm">Pelatih / Coach</p>
+            <p class="text-xs opacity-80">Kelola absensi & latihan</p>
+          </div>
+          <span class="material-symbols-outlined text-lg opacity-70 group-hover:translate-x-1 transition-transform">arrow_forward</span>
+        </a>
+
+        <!-- Anggota -->
+        <a href="{% url 'accounts:login_anggota' %}"
+           class="flex items-center gap-4 w-full px-5 py-4 rounded-2xl bg-surface-container border border-outline-variant/50 text-on-surface hover:bg-surface-container-high active:scale-[0.98] transition-all shadow-elevation-1 hover:shadow-elevation-2 group">
+          <span class="material-symbols-outlined text-2xl text-primary">person</span>
+          <div class="flex-1 text-left">
+            <p class="font-bold text-sm">Anggota / Siswa</p>
+            <p class="text-xs text-on-surface-variant">Lihat absensi & jadwal</p>
+          </div>
+          <span class="material-symbols-outlined text-lg text-outline group-hover:translate-x-1 transition-transform">arrow_forward</span>
+        </a>
+
+      </div>
+    </div>
+
+    <p class="text-center text-xs text-outline mt-6">SilatTrack • DATH Stack & Google Material Design 3</p>
+  </div>
+</div>
+{% endblock %}
