@@ -256,15 +256,15 @@ def member_edit(request, user_id):
         return redirect('members:member_detail', user_id=user_id)
 
     if nisn:
-        if len(nisn) != 10 or not nisn.isdigit():
+        if len(nisn) < 4 or len(nisn) > 20:
             messages.error(
                 request,
-                "NISN harus terdiri dari tepat 10 digit angka sesuai standar resmi Kementerian Pendidikan Pusat (Kemdikbudristek) untuk sinkronisasi nilai e-Rapor."
+                "NIS harus terdiri dari 4 sampai 20 karakter alfanumerik (misal: 242510145)."
             )
             return redirect('members:member_detail', user_id=user_id)
 
         if nisn != profile.nisn and AnggotaProfile.objects.filter(nisn=nisn).exclude(user_id=user.id).exists():
-            messages.error(request, f"NISN '{nisn}' sudah terdaftar untuk siswa lain.")
+            messages.error(request, f"NIS '{nisn}' sudah terdaftar untuk siswa lain.")
             return redirect('members:member_detail', user_id=user_id)
 
     try:

@@ -350,7 +350,7 @@ def admin_create_user(request):
             status_keanggotaan = request.POST.get('status_keanggotaan', AnggotaProfile.MembershipStatus.AKTIF)
 
             if not nisn or not kelas_sekolah:
-                messages.error(request, "NISN dan Kelas & Jurusan wajib diisi.")
+                messages.error(request, "NIS dan Kelas & Jurusan wajib diisi.")
                 return render(request, 'accounts/admin_create_user.html', {
                     'sabuk_list': sabuk_list,
                     'kategori_list': kategori_list,
@@ -359,10 +359,10 @@ def admin_create_user(request):
                     'active_tab': account_type,
                 })
 
-            if len(nisn) != 10 or not nisn.isdigit():
+            if len(nisn) < 4 or len(nisn) > 20:
                 messages.error(
                     request,
-                    "NISN harus terdiri dari tepat 10 digit angka sesuai standar resmi Kementerian Pendidikan Pusat (Kemdikbudristek) untuk sinkronisasi nilai e-Rapor."
+                    "NIS harus terdiri dari 4 sampai 20 karakter alfanumerik (misal: 242510145)."
                 )
                 return render(request, 'accounts/admin_create_user.html', {
                     'sabuk_list': sabuk_list,
@@ -373,7 +373,7 @@ def admin_create_user(request):
                 })
 
             if AnggotaProfile.objects.filter(nisn=nisn).exists():
-                messages.error(request, f"NISN '{nisn}' sudah terdaftar dalam sistem.")
+                messages.error(request, f"NIS '{nisn}' sudah terdaftar dalam sistem.")
                 return render(request, 'accounts/admin_create_user.html', {
                     'sabuk_list': sabuk_list,
                     'kategori_list': kategori_list,
@@ -424,7 +424,7 @@ def admin_create_user(request):
                     )
 
                 school_info = f" ({sekolah_obj.nama_sekolah})" if sekolah_obj else ""
-                messages.success(request, f"Akun Anggota Pesilat '{new_user.get_full_name() or new_user.username}' (NISN: {nisn}){school_info} berhasil dibuat!")
+                messages.success(request, f"Akun Anggota Pesilat '{new_user.get_full_name() or new_user.username}' (NIS: {nisn}){school_info} berhasil dibuat!")
                 return redirect('members:member_list')
 
             except Exception as e:
@@ -502,7 +502,7 @@ def profile_view(request):
                 kategori_id = request.POST.get('kategori_id')
 
                 if nisn and nisn != anggota_profile.nisn and AnggotaProfile.objects.filter(nisn=nisn).exclude(user_id=user.id).exists():
-                    messages.error(request, f"NISN '{nisn}' sudah terdaftar untuk siswa lain.")
+                    messages.error(request, f"NIS '{nisn}' sudah terdaftar untuk siswa lain.")
                     return redirect('accounts:profile')
 
                 if nisn:
@@ -639,13 +639,13 @@ def pelatih_request_account(request):
             nisn         = request.POST.get('nisn', '').strip()
             kelas_sekolah = request.POST.get('kelas_sekolah', '').strip()
             if not nisn or not kelas_sekolah:
-                messages.error(request, "NISN dan Kelas wajib diisi.")
+                messages.error(request, "NIS dan Kelas wajib diisi.")
                 return render(request, 'accounts/pelatih_request_account.html', ctx)
-            if len(nisn) != 10 or not nisn.isdigit():
-                messages.error(request, "NISN harus 10 digit angka.")
+            if len(nisn) < 4 or len(nisn) > 20:
+                messages.error(request, "NIS harus terdiri dari 4 sampai 20 karakter alfanumerik (misal: 242510145).")
                 return render(request, 'accounts/pelatih_request_account.html', ctx)
             if AnggotaProfile.objects.filter(nisn=nisn).exists():
-                messages.error(request, f"NISN '{nisn}' sudah terdaftar.")
+                messages.error(request, f"NIS '{nisn}' sudah terdaftar.")
                 return render(request, 'accounts/pelatih_request_account.html', ctx)
             extra = {
                 'nisn':          nisn,

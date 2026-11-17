@@ -284,7 +284,7 @@
                   <a href="{% url 'members:member_detail' m.anggota.user.id %}" class="font-bold text-on-surface hover:text-primary hover:underline block leading-tight">
                     {{ m.anggota.user.get_full_name|default:m.anggota.user.username }}
                   </a>
-                  <span class="text-[11px] text-outline">NISN: {{ m.anggota.nisn|default:"-" }} • {{ m.anggota.kelas_sekolah|default:"-" }}</span>
+                  <span class="text-[11px] text-outline">NIS: {{ m.anggota.nisn|default:"-" }} • {{ m.anggota.kelas_sekolah|default:"-" }}</span>
                 </div>
               </div>
             </td>

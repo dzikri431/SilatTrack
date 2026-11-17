@@ -96,8 +96,8 @@
         </h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-bold text-on-surface-variant mb-1.5">NISN (10 digit) *</label>
-            <input type="text" name="nisn" value="{{ form_data.nisn|default:'' }}" maxlength="10" inputmode="numeric"
+            <label class="block text-xs font-bold text-on-surface-variant mb-1.5">NIS (Nomor Induk Siswa) *</label>
+            <input type="text" name="nisn" value="{{ form_data.nisn|default:'' }}" maxlength="20" placeholder="cth: 242510145"
               class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/60 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
           </div>
           <div>

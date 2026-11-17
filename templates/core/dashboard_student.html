@@ -27,7 +27,7 @@
             {{ request.user.get_full_name|default:request.user.username }}
           </h2>
           <p class="text-xs sm:text-sm text-on-surface-variant font-medium">
-            NISN: <span class="font-mono font-bold">{{ profile.nisn|default:"-" }}</span> • Kelas: <span class="font-bold">{{ profile.kelas_sekolah|default:"-" }}</span>
+            NIS: <span class="font-mono font-bold">{{ profile.nisn|default:"-" }}</span> • Kelas: <span class="font-bold">{{ profile.kelas_sekolah|default:"-" }}</span>
           </p>
           <div class="flex flex-wrap items-center gap-2 mt-2">
             <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-secondary-container text-on-secondary-container">

@@ -5,8 +5,8 @@ from django.db import models
 from apps.core.models import TingkatSabuk, KategoriTanding, Sekolah
 
 nisn_validator = RegexValidator(
-    regex=r'^\d{10}$',
-    message="NISN harus tepat 10 digit angka sesuai standar resmi Kementerian Pendidikan (Kemdikbudristek)."
+    regex=r'^[A-Za-z0-9\-\.]{4,20}$',
+    message="NIS harus terdiri dari 4 sampai 20 karakter alfanumerik (misal: 242510145)."
 )
 
 
@@ -28,11 +28,11 @@ class AnggotaProfile(models.Model):
         verbose_name="Akun Pengguna"
     )
     nisn = models.CharField(
-        max_length=10,
+        max_length=20,
         unique=True,
         validators=[nisn_validator],
-        verbose_name="NISN (10 Digit Kemendikbud)",
-        help_text="10 digit Nomor Induk Siswa Nasional resmi Kemdikbudristek untuk sinkronisasi nilai e-Rapor sekolah."
+        verbose_name="NIS / ID Anggota",
+        help_text="Nomor Induk Siswa (NIS) atau ID Anggota resmi (misal: 242510145)."
     )
     sekolah = models.ForeignKey(
         Sekolah,

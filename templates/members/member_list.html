@@ -64,7 +64,7 @@
         <div>
           <div class="flex items-center gap-2">
             <span class="font-bold text-xs text-slate-900">{{ req.anggota.user.get_full_name|default:req.anggota.user.username }}</span>
-            <span class="text-[11px] font-mono text-outline">NISN: {{ req.anggota.nisn }} • {{ req.anggota.kelas_sekolah }}</span>
+            <span class="text-[11px] font-mono text-outline">NIS: {{ req.anggota.nisn }} • {{ req.anggota.kelas_sekolah }}</span>
           </div>
           <p class="text-xs text-slate-700 mt-1">
             <strong>Alasan:</strong> "{{ req.alasan }}"
@@ -237,7 +237,7 @@
           <h3 class="font-extrabold text-sm text-on-surface truncate">
             {{ m.user.get_full_name|default:m.user.username }}
           </h3>
-          <p class="text-xs text-outline font-mono">{{ m.nisn }} • {{ m.kelas_sekolah }}</p>
+          <p class="text-xs text-outline font-mono"><span class="font-sans font-medium text-[11px]">NIS:</span> {{ m.nisn }} • {{ m.kelas_sekolah }}</p>
           {% if m.sekolah %}
           <div class="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary-container/30 text-primary font-bold text-[10px] border border-primary/20 truncate max-w-full" title="{{ m.sekolah.nama_sekolah }}">
             <span class="material-symbols-outlined text-xs">school</span>

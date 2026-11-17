@@ -186,7 +186,7 @@
             {{ profile.user.get_full_name|default:profile.user.username }}
           </h2>
           <p class="text-xs sm:text-sm text-on-surface-variant flex items-center gap-1.5 flex-wrap">
-            <span>NISN: <strong class="font-mono text-on-surface">{{ profile.nisn }}</strong></span>
+            <span>NIS: <strong class="font-mono text-on-surface">{{ profile.nisn }}</strong></span>
             <span>•</span>
             <span>Kelas: <strong class="text-on-surface">{{ profile.kelas_sekolah }}</strong></span>
             {% if profile.sekolah %}
@@ -460,9 +460,9 @@
             </div>
           </div>
           <div>
-            <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">NISN Kemdikbudristek (10 Digit) *</label>
-            <input type="text" name="nisn" value="{{ profile.nisn }}" required maxlength="10" minlength="10" pattern="[0-9]{10}" inputmode="numeric" placeholder="10 Digit Angka" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline/30 rounded-xl text-xs font-mono font-semibold outline-none focus:border-primary">
-            <p class="text-[10px] text-outline mt-0.5">Wajib tepat 10 digit angka Dapodik.</p>
+            <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">NIS (Nomor Induk Siswa) *</label>
+            <input type="text" name="nisn" value="{{ profile.nisn }}" required maxlength="20" placeholder="Contoh: 242510145" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline/30 rounded-xl text-xs font-mono font-semibold outline-none focus:border-primary">
+            <p class="text-[10px] text-outline mt-0.5">Nomor Induk Siswa (NIS) atau ID pesilat.</p>
           </div>
           <div>
             <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">Kelas & Jurusan *</label>

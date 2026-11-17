@@ -327,7 +327,7 @@
           <!-- NISN / ID Anggota -->
           <div>
             <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 ml-1">
-              NISN Kemdikbudristek (10 Digit) <span class="text-error">*</span>
+              NIS / ID Anggota <span class="text-error">*</span>
             </label>
             <div class="relative">
               <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-outline">
@@ -338,15 +338,13 @@
                 name="nisn" 
                 :required="accountType === 'ANGGOTA'"
                 value="{{ form_data.nisn|default:'' }}"
-                maxlength="10"
-                minlength="10"
-                pattern="[0-9]{10}"
-                inputmode="numeric"
-                placeholder="10 Digit Angka (Contoh: 0081234567)"
+                maxlength="20"
+                minlength="4"
+                placeholder="Nomor Induk Siswa (Contoh: 242510145)"
                 class="w-full pl-10 pr-4 py-2.5 bg-surface-container-lowest border border-outline/30 focus:border-primary rounded-2xl text-xs font-medium text-on-surface outline-none font-mono tracking-wider"
               >
             </div>
-            <p class="text-[10px] text-outline mt-1 ml-1">10 digit angka resmi Dapodik Kemdikbudristek (memudahkan integrasi raport eskul).</p>
+            <p class="text-[10px] text-outline mt-1 ml-1">Nomor Induk Siswa (NIS) atau ID keanggotaan silat resmi.</p>
           </div>
 
           <!-- Kelas Sekolah -->
