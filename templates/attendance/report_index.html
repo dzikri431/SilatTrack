@@ -516,6 +516,7 @@
             <th class="py-3 px-3">Tipe Sesi</th>
             <th class="py-3 px-3">Pelatih Pengampu</th>
             <th class="py-3 px-3">Materi yang Diajarkan</th>
+            <th class="py-3 px-3 text-center">Foto Kegiatan</th>
             <th class="py-3 px-3 text-center">Pesilat Hadir</th>
           </tr>
         </thead>
@@ -529,7 +530,22 @@
             <td class="py-3 px-3 font-semibold text-on-surface">{{ s.get_tipe_sesi_display }}</td>
             <td class="py-3 px-3 text-on-surface-variant">{{ s.pelatih.get_full_name|default:s.pelatih.username }}</td>
             <td class="py-3 px-3 text-xs text-on-surface max-w-md">
-              {{ s.materi_latihan|default:"Latihan rutin teknik dan fisik." }}
+              <div>{{ s.materi_latihan|default:"Latihan rutin teknik dan fisik." }}</div>
+              {% if s.keterangan_foto %}
+              <div class="text-[11px] text-primary font-medium mt-1 italic">
+                Ket: {{ s.keterangan_foto }}
+              </div>
+              {% endif %}
+            </td>
+            <td class="py-3 px-3 text-center">
+              {% if s.foto_kegiatan %}
+              <a href="{{ s.foto_kegiatan.url }}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold hover:bg-emerald-200 transition-colors">
+                <span class="material-symbols-outlined text-xs">image</span>
+                <span>Lihat Foto</span>
+              </a>
+              {% else %}
+              <span class="text-outline text-[11px] italic">-</span>
+              {% endif %}
             </td>
             <td class="py-3 px-3 text-center font-bold text-primary">
               {{ s.total_hadir }}
@@ -537,7 +553,7 @@
           </tr>
           {% empty %}
           <tr>
-            <td colspan="5" class="text-center py-8 text-outline">
+            <td colspan="6" class="text-center py-8 text-outline">
               Belum ada sesi latihan yang diselenggarakan pada periode ini.
             </td>
           </tr>

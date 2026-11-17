@@ -27,8 +27,61 @@
   </div>
 
   <div class="bg-surface-container-low border border-outline-variant/40 rounded-3xl p-6 sm:p-8 shadow-elevation-1">
-    <form method="POST" class="space-y-4">
+    <form method="POST" class="space-y-4" x-data="{
+      isDetectingGps: false,
+      gpsDetected: false,
+      gpsLat: '',
+      gpsLng: '',
+      gpsStatusText: '',
+      detectGps() {
+        if (!navigator.geolocation) {
+          this.gpsStatusText = 'Browser tidak mendukung GPS.';
+          return;
+        }
+        this.isDetectingGps = true;
+        this.gpsStatusText = 'Mendeteksi titik koordinat Anda...';
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            this.gpsLat = pos.coords.latitude.toFixed(8);
+            this.gpsLng = pos.coords.longitude.toFixed(8);
+            this.gpsDetected = true;
+            this.isDetectingGps = false;
+            this.gpsStatusText = 'Koordinat tempat latihan terkunci (' + pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6) + ')';
+          },
+          (err) => {
+            this.isDetectingGps = false;
+            this.gpsStatusText = 'Gagal mendeteksi lokasi GPS (' + (err.message || 'Izin ditolak') + ').';
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+      },
+      init() {
+        this.detectGps();
+      }
+    }">
       {% csrf_token %}
+
+      <!-- Hidden GPS inputs untuk menangkap posisi aktual pelatih / admin -->
+      <input type="hidden" name="latitude_aktual" :value="gpsLat">
+      <input type="hidden" name="longitude_aktual" :value="gpsLng">
+
+      <!-- GPS Detection Indicator Banner -->
+      <div class="p-3 rounded-2xl border transition-all text-xs flex items-center justify-between gap-2"
+           :class="gpsDetected ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800'">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-lg animate-spin" x-show="isDetectingGps">sync</span>
+          <span class="material-symbols-outlined text-lg text-emerald-700" x-show="!isDetectingGps && gpsDetected">my_location</span>
+          <span class="material-symbols-outlined text-lg text-amber-700" x-show="!isDetectingGps && !gpsDetected">location_searching</span>
+          <div>
+            <strong class="font-bold block" x-text="gpsDetected ? 'Titik Lokasi Sesi Otomatis Terhubung' : 'Deteksi GPS Tempat Latihan'"></strong>
+            <span class="text-[11px]" x-text="gpsStatusText || 'Mengambil koordinat Anda sebagai titik pusat radius presensi siswa...'"></span>
+          </div>
+        </div>
+        <button type="button" @click="detectGps()" class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-surface-container-lowest border border-outline-variant/40 hover:bg-surface-container shadow-2xs cursor-pointer flex items-center gap-1">
+          <span class="material-symbols-outlined text-xs">refresh</span>
+          <span>Refresh GPS</span>
+        </button>
+      </div>
 
       <!-- Tipe Sesi & Jadwal Rutin (Acuan) -->
       <div x-data="{

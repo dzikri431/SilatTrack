@@ -473,7 +473,12 @@
               <td class="py-1.5 px-2 border-r border-gray-200 font-semibold">{{ s.get_tipe_sesi_display }}</td>
               <td class="py-1.5 px-2 border-r border-gray-200">{{ s.pelatih.get_full_name|default:s.pelatih.username }}</td>
               <td class="py-1.5 px-3 border-r border-gray-200 text-gray-700">
-                {{ s.materi_latihan|default:"Latihan rutin teknik, fisik, dan pembinaan sabuk." }}
+                <div>{{ s.materi_latihan|default:"Latihan rutin teknik, fisik, dan pembinaan sabuk." }}</div>
+                {% if s.keterangan_foto %}
+                <div class="text-[10px] text-gray-500 italic mt-0.5 font-medium">
+                  Ket. Dokumentasi: {{ s.keterangan_foto }}
+                </div>
+                {% endif %}
               </td>
               <td class="py-1.5 px-2 text-center font-bold text-[#8A1C14]">
                 {{ s.total_hadir }} siswa
@@ -489,6 +494,45 @@
           </tbody>
         </table>
       </div>
+    </div>
+
+    <!-- Bagian 3: Galeri Foto Dokumentasi Kegiatan Sesi Latihan -->
+    <div class="page-break-inside-avoid my-6">
+      <div class="flex items-center justify-between mb-2">
+        <h4 class="text-xs font-black uppercase tracking-wider text-gray-900">
+          3. Dokumentasi Visual Kegiatan Sesi Latihan
+        </h4>
+        <span class="text-[11px] text-gray-500">Bukti Pelaksanaan Resmi Eskul</span>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {% for s in sesi_list %}
+        {% if s.foto_kegiatan %}
+        <div class="border border-gray-300 rounded-lg p-2 bg-gray-50/50 text-center flex flex-col justify-between">
+          <div class="aspect-video w-full rounded overflow-hidden bg-gray-200 border border-gray-300 mb-1.5 flex items-center justify-center">
+            <img src="{{ s.foto_kegiatan.url }}" alt="Dokumentasi {{ s.tanggal|date:'d/m/Y' }}" class="w-full h-full object-cover">
+          </div>
+          <div>
+            <p class="text-[10px] font-bold text-gray-900 leading-tight">
+              {{ s.get_tipe_sesi_display }} • {{ s.tanggal|date:"d M Y" }}
+            </p>
+            {% if s.keterangan_foto %}
+            <p class="text-[9px] text-gray-600 italic mt-0.5 leading-snug line-clamp-2">
+              {{ s.keterangan_foto }}
+            </p>
+            {% else %}
+            <p class="text-[9px] text-gray-500 mt-0.5">
+              Lokasi: {{ s.lokasi_efektif }}
+            </p>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+      {% with has_any_photo=False %}
+      {% for s in sesi_list %}{% if s.foto_kegiatan %}{% with has_any_photo=True %}{% endwith %}{% endif %}{% endfor %}
+      {% endwith %}
     </div>
 
     <!-- Lembar Pengesahan Tanda Tangan Resmi (3 Kolom) -->

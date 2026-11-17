@@ -16,6 +16,7 @@ urlpatterns = [
     path('sessions/<uuid:session_id>/bulk-mark-all/', views.bulk_mark_all_present, name='bulk_mark_all'),
     path('sessions/<uuid:session_id>/export-excel/', views.export_attendance_excel, name='export_attendance_excel'),
     path('sessions/<uuid:session_id>/upload-photo/', views.session_upload_photo, name='session_upload_photo'),
+    path('sessions/<uuid:session_id>/update-gps/', views.session_update_gps, name='session_update_gps'),
     
     # Presensi Siswa: AI Biometric Face Scanner, Barcode, & Input Manual Mandiri
     path('scanner/', views.scanner_view, name='scanner'),

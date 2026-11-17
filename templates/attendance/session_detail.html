@@ -145,6 +145,19 @@
         <span class="text-outline">•</span>
         <span>Materi: {{ sesi.materi_latihan }}</span>
         {% endif %}
+        {% if sesi.latitude_aktual and sesi.longitude_aktual %}
+        <span class="text-outline">•</span>
+        <span class="inline-flex items-center gap-1 text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+          <span class="material-symbols-outlined text-xs">my_location</span>
+          <span>GPS Terkunci ({{ sesi.latitude_aktual|floatformat:4 }}, {{ sesi.longitude_aktual|floatformat:4 }})</span>
+        </span>
+        {% else %}
+        <span class="text-outline">•</span>
+        <span class="inline-flex items-center gap-1 text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+          <span class="material-symbols-outlined text-xs">location_off</span>
+          <span>GPS Belum Dikunci</span>
+        </span>
+        {% endif %}
       </div>
     </div>
 
@@ -162,6 +175,44 @@
         <span class="material-symbols-outlined text-base">download</span>
         <span>Unduh Excel (.xlsx)</span>
       </a>
+
+      <!-- Sinkronkan GPS Pelatih/Admin ke Sesi Ini -->
+      <form id="form-update-gps" method="POST" action="{% url 'attendance:session_update_gps' sesi.id %}" x-data="{
+        isLocating: false,
+        updateLocation() {
+          if (!navigator.geolocation) {
+            alert('Browser Anda tidak mendukung geolokasi GPS.');
+            return;
+          }
+          this.isLocating = true;
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              document.getElementById('input-session-lat').value = pos.coords.latitude.toFixed(8);
+              document.getElementById('input-session-lng').value = pos.coords.longitude.toFixed(8);
+              document.getElementById('form-update-gps').submit();
+            },
+            (err) => {
+              this.isLocating = false;
+              alert('Gagal mengambil posisi GPS: ' + (err.message || 'Izin lokasi belum diberikan.'));
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+          );
+        }
+      }">
+        {% csrf_token %}
+        <input type="hidden" name="latitude" id="input-session-lat">
+        <input type="hidden" name="longitude" id="input-session-lng">
+        <button 
+          type="button" 
+          @click="updateLocation()"
+          :disabled="isLocating"
+          class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold shadow-xs transition-all cursor-pointer disabled:opacity-50"
+          title="Kunci posisi tempat latihan saat ini memakai koordinat GPS perangkat Anda"
+        >
+          <span class="material-symbols-outlined text-base" :class="isLocating ? 'animate-spin' : ''" x-text="isLocating ? 'sync' : 'my_location'">my_location</span>
+          <span x-text="isLocating ? 'Mengunci GPS...' : '{% if sesi.latitude_aktual %}Perbarui Titik GPS Sesi{% else %}Kunci GPS Tempat Latihan{% endif %}'"></span>
+        </button>
+      </form>
 
       <!-- Tandai Semua Hadir (Opsi Input Manual Pelatih) -->
       {% if sesi.status == 'DIBUKA' %}

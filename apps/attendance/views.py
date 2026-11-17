@@ -135,6 +135,21 @@ def session_create(request):
         else:
             jam_buka = timezone.now()
 
+        # Koordinat GPS Pelatih / Tempat Latihan (jika ditangkap dari browser pelatih/admin)
+        pelatih_lat_str = request.POST.get('latitude_aktual', '').strip()
+        pelatih_lng_str = request.POST.get('longitude_aktual', '').strip()
+        pelatih_lat = None
+        pelatih_lng = None
+        if pelatih_lat_str and pelatih_lng_str:
+            try:
+                pelatih_lat = float(pelatih_lat_str)
+                pelatih_lng = float(pelatih_lng_str)
+            except (ValueError, TypeError):
+                pass
+        elif jadwal and jadwal.latitude and jadwal.longitude:
+            pelatih_lat = float(jadwal.latitude)
+            pelatih_lng = float(jadwal.longitude)
+
         if request.user.is_admin_role:
             # Admin dapat langsung membuka sesi latihan aktif
             sesi = SesiLatihan.objects.create(
@@ -142,6 +157,8 @@ def session_create(request):
                 jadwal=jadwal,
                 tipe_sesi=tipe_sesi,
                 nama_lokasi=nama_lokasi,
+                latitude_aktual=pelatih_lat,
+                longitude_aktual=pelatih_lng,
                 jam_mulai=jam_mulai_obj,
                 jam_selesai=jam_selesai_obj,
                 materi_latihan=materi,
@@ -164,6 +181,8 @@ def session_create(request):
                 jadwal=jadwal,
                 tipe_sesi=tipe_sesi,
                 nama_lokasi=nama_lokasi,
+                latitude_aktual=pelatih_lat,
+                longitude_aktual=pelatih_lng,
                 jam_mulai=jam_mulai_obj,
                 jam_selesai=jam_selesai_obj,
                 materi_latihan=materi,
@@ -346,6 +365,36 @@ def session_delete(request, session_id):
 
 @login_required
 @require_POST
+def session_update_gps(request, session_id):
+    """
+    Memperbarui titik koordinat GPS tempat latihan sesi berdasarkan lokasi aktual Pelatih/Admin saat ini.
+    """
+    if not (request.user.is_admin_role or request.user.is_pelatih_role):
+        return HttpResponse("Akses ditolak", status=403)
+
+    sesi = get_object_or_404(SesiLatihan, id=session_id)
+    lat_str = request.POST.get('latitude', '').strip()
+    lng_str = request.POST.get('longitude', '').strip()
+
+    if lat_str and lng_str:
+        try:
+            sesi.latitude_aktual = float(lat_str)
+            sesi.longitude_aktual = float(lng_str)
+            sesi.save(update_fields=['latitude_aktual', 'longitude_aktual'])
+            messages.success(
+                request,
+                f"Lokasi GPS tempat latihan berhasil disinkronkan ke posisi Anda ({sesi.latitude_aktual:.6f}, {sesi.longitude_aktual:.6f})!"
+            )
+        except (ValueError, TypeError):
+            messages.error(request, "Format koordinat GPS tidak valid.")
+    else:
+        messages.error(request, "Gagal mendapatkan koordinat GPS. Pastikan izin lokasi browser aktif.")
+
+    return redirect('attendance:session_detail', session_id=sesi.id)
+
+
+@login_required
+@require_POST
 def session_upload_photo(request, session_id):
     """
     Unggah atau perbarui foto dokumentasi kegiatan sesi latihan (Admin dan Pelatih).
@@ -371,8 +420,12 @@ def session_upload_photo(request, session_id):
             sesi.foto_kegiatan = foto
         if keterangan:
             sesi.keterangan_foto = keterangan
-        sesi.save()
-        messages.success(request, "Laporan foto kegiatan sesi latihan berhasil diperbarui!")
+        
+        if not foto and not keterangan:
+            messages.warning(request, "Silakan pilih file foto kegiatan terlebih dahulu.")
+        else:
+            sesi.save()
+            messages.success(request, "Laporan foto kegiatan sesi latihan berhasil disimpan!")
 
     return redirect('attendance:session_detail', session_id=session_id)
 
@@ -529,10 +582,11 @@ def scanner_view(request):
     face_descriptor_json = json.dumps(anggota.face_descriptor) if (anggota and anggota.has_face_registered) else 'null'
     face_registered_at = anggota.face_registered_at if anggota else None
 
-    # Koordinat acuan tempat latihan: SMKN 1 Rongga
+    # Koordinat acuan tempat latihan (mengikuti GPS pelatih/admin yang tersimpan pada sesi)
     dojo_lat = DEFAULT_DOJO_LAT
     dojo_lng = DEFAULT_DOJO_LNG
     lokasi_nama = DEFAULT_DOJO_NAME
+    max_radius = 100
     if active_session:
         if active_session.latitude_aktual and active_session.longitude_aktual:
             dojo_lat = float(active_session.latitude_aktual)
@@ -540,11 +594,12 @@ def scanner_view(request):
         elif active_session.jadwal and active_session.jadwal.latitude and active_session.jadwal.longitude:
             dojo_lat = float(active_session.jadwal.latitude)
             dojo_lng = float(active_session.jadwal.longitude)
+        if active_session.jadwal and active_session.jadwal.radius_toleransi_meter:
+            max_radius = active_session.jadwal.radius_toleransi_meter
         if active_session.nama_lokasi:
             lokasi_nama = active_session.nama_lokasi
         elif active_session.jadwal and active_session.jadwal.nama_lokasi:
             lokasi_nama = active_session.jadwal.nama_lokasi
-
 
     context = {
         'active_session': active_session,
@@ -555,7 +610,7 @@ def scanner_view(request):
         'dojo_lat_unlocalized': f"{dojo_lat:.6f}",
         'dojo_lng_unlocalized': f"{dojo_lng:.6f}",
         'lokasi_nama': lokasi_nama,
-        'max_radius_meter': 100,
+        'max_radius_meter': max_radius,
         'anggota': anggota,
         'has_face_registered': has_face_registered,
         'face_descriptor_json': face_descriptor_json,
@@ -599,18 +654,21 @@ def self_checkin_submit(request):
         messages.error(request, "Tidak ada sesi latihan yang sedang dibuka saat ini.")
         return redirect('attendance:scanner')
 
-    # Validasi Radius Lokasi (100 Meter)
+    # Validasi Radius Lokasi (Sesuai Radius Toleransi Sesi / Jadwal)
     user_lat_str = request.POST.get('user_latitude', '').strip()
     user_lng_str = request.POST.get('user_longitude', '').strip()
 
     target_lat = DEFAULT_DOJO_LAT
     target_lng = DEFAULT_DOJO_LNG
+    max_radius = 100
     if sesi.latitude_aktual and sesi.longitude_aktual:
         target_lat = float(sesi.latitude_aktual)
         target_lng = float(sesi.longitude_aktual)
     elif sesi.jadwal and sesi.jadwal.latitude and sesi.jadwal.longitude:
         target_lat = float(sesi.jadwal.latitude)
         target_lng = float(sesi.jadwal.longitude)
+    if sesi.jadwal and sesi.jadwal.radius_toleransi_meter:
+        max_radius = sesi.jadwal.radius_toleransi_meter
 
     user_lat = None
     user_lng = None
@@ -619,9 +677,9 @@ def self_checkin_submit(request):
             user_lat = float(user_lat_str)
             user_lng = float(user_lng_str)
             dist_meters = calculate_haversine_distance(target_lat, target_lng, user_lat, user_lng)
-            if dist_meters > 100:
+            if dist_meters > max_radius:
                 if not settings.DEBUG:
-                    msg = f"Presensi ditolak! Posisi Anda ({dist_meters} meter) berada di luar batas radius 100 meter dari tempat latihan."
+                    msg = f"Presensi ditolak! Posisi Anda ({dist_meters} meter) berada di luar batas radius {max_radius} meter dari tempat latihan."
                     if request.htmx:
                         return render(request, 'attendance/partials/_scan_result.html', {
                             'success': False,
@@ -633,7 +691,7 @@ def self_checkin_submit(request):
             pass
     else:
         if not settings.DEBUG:
-            msg = "Presensi gagal: Konfirmasi lokasi GPS wajib diizinkan untuk memastikan posisi Anda berada dalam radius 100 meter tempat latihan."
+            msg = f"Presensi gagal: Konfirmasi lokasi GPS wajib diizinkan untuk memastikan posisi Anda berada dalam radius {max_radius} meter tempat latihan."
             if request.htmx:
                 return render(request, 'attendance/partials/_scan_result.html', {
                     'success': False,
@@ -767,18 +825,21 @@ def submit_qr_scan(request):
             'message': err_msg
         })
 
-    # Validasi Radius Lokasi (100 Meter)
+    # Validasi Radius Lokasi (Sesuai Radius Toleransi Sesi / Jadwal)
     user_lat_str = request.POST.get('user_latitude', '').strip()
     user_lng_str = request.POST.get('user_longitude', '').strip()
 
     target_lat = DEFAULT_DOJO_LAT
     target_lng = DEFAULT_DOJO_LNG
+    max_radius = 100
     if sesi.latitude_aktual and sesi.longitude_aktual:
         target_lat = float(sesi.latitude_aktual)
         target_lng = float(sesi.longitude_aktual)
     elif sesi.jadwal and sesi.jadwal.latitude and sesi.jadwal.longitude:
         target_lat = float(sesi.jadwal.latitude)
         target_lng = float(sesi.jadwal.longitude)
+    if sesi.jadwal and sesi.jadwal.radius_toleransi_meter:
+        max_radius = sesi.jadwal.radius_toleransi_meter
 
     user_lat = None
     user_lng = None
@@ -787,11 +848,11 @@ def submit_qr_scan(request):
             user_lat = float(user_lat_str)
             user_lng = float(user_lng_str)
             dist_meters = calculate_haversine_distance(target_lat, target_lng, user_lat, user_lng)
-            if dist_meters > 100:
+            if dist_meters > max_radius:
                 if not settings.DEBUG:
                     return render(request, 'attendance/partials/_scan_result.html', {
                         'success': False,
-                        'message': f'Presensi ditolak! Posisi Anda ({dist_meters} meter) berada di luar batas radius 100 meter dari tempat latihan.'
+                        'message': f'Presensi ditolak! Posisi Anda ({dist_meters} meter) berada di luar batas radius {max_radius} meter dari tempat latihan.'
                     })
         except (ValueError, TypeError):
             pass
@@ -799,7 +860,7 @@ def submit_qr_scan(request):
         if not settings.DEBUG:
             return render(request, 'attendance/partials/_scan_result.html', {
                 'success': False,
-                'message': 'Presensi gagal: Konfirmasi lokasi GPS wajib diaktifkan untuk memastikan posisi Anda dalam radius 100 meter tempat latihan.'
+                'message': f'Presensi gagal: Konfirmasi lokasi GPS wajib diaktifkan untuk memastikan posisi Anda dalam radius {max_radius} meter tempat latihan.'
             })
 
     # Catat Presensi
@@ -870,18 +931,21 @@ def submit_face_scan(request):
             'message': 'Tidak ada sesi latihan yang sedang dibuka saat ini.'
         })
 
-    # 1. Validasi Radius Lokasi (Maksimal 100 Meter)
+    # 1. Validasi Radius Lokasi (Sesuai Radius Toleransi Sesi / Jadwal)
     user_lat_str = request.POST.get('user_latitude', '').strip()
     user_lng_str = request.POST.get('user_longitude', '').strip()
 
     target_lat = DEFAULT_DOJO_LAT
     target_lng = DEFAULT_DOJO_LNG
+    max_radius = 100
     if sesi.latitude_aktual and sesi.longitude_aktual:
         target_lat = float(sesi.latitude_aktual)
         target_lng = float(sesi.longitude_aktual)
     elif sesi.jadwal and sesi.jadwal.latitude and sesi.jadwal.longitude:
         target_lat = float(sesi.jadwal.latitude)
         target_lng = float(sesi.jadwal.longitude)
+    if sesi.jadwal and sesi.jadwal.radius_toleransi_meter:
+        max_radius = sesi.jadwal.radius_toleransi_meter
 
     user_lat = None
     user_lng = None
@@ -890,11 +954,11 @@ def submit_face_scan(request):
             user_lat = float(user_lat_str)
             user_lng = float(user_lng_str)
             dist_meters = calculate_haversine_distance(target_lat, target_lng, user_lat, user_lng)
-            if dist_meters > 100:
+            if dist_meters > max_radius:
                 if not settings.DEBUG:
                     return render(request, 'attendance/partials/_scan_result.html', {
                         'success': False,
-                        'message': f'Presensi Biometrik ditolak! Posisi Anda ({dist_meters} meter) berada di luar batas radius 100 meter dari tempat latihan.'
+                        'message': f'Presensi Biometrik ditolak! Posisi Anda ({dist_meters} meter) berada di luar batas radius {max_radius} meter dari tempat latihan.'
                     })
         except (ValueError, TypeError):
             pass
@@ -902,7 +966,7 @@ def submit_face_scan(request):
         if not settings.DEBUG:
             return render(request, 'attendance/partials/_scan_result.html', {
                 'success': False,
-                'message': 'Presensi gagal: Konfirmasi lokasi GPS wajib diaktifkan untuk memastikan posisi Anda dalam radius 100 meter tempat latihan.'
+                'message': f'Presensi gagal: Konfirmasi lokasi GPS wajib diaktifkan untuk memastikan posisi Anda dalam radius {max_radius} meter tempat latihan.'
             })
 
     # 2. Parsing Biometric Descriptor (128-d Vector)
