@@ -29,8 +29,8 @@ def member_list(request):
     query = request.GET.get('q', '').strip()
     tab = request.GET.get('tab', 'anggota').strip()
 
-    members = AnggotaProfile.objects.all().select_related('user', 'sabuk_saat_ini', 'kategori_fokus', 'sekolah')
-    coaches = PelatihProfile.objects.all().select_related('user')
+    members = AnggotaProfile.objects.all().select_related('user', 'sabuk_saat_ini', 'kategori_fokus', 'sekolah').order_by('user__first_name', 'user__last_name', 'user__username')
+    coaches = PelatihProfile.objects.all().select_related('user').order_by('user__first_name', 'user__last_name', 'user__username')
 
     if sabuk_id:
         members = members.filter(sabuk_saat_ini_id=sabuk_id)

@@ -201,11 +201,11 @@ def session_detail(request, session_id):
         messages.error(request, "Sesi latihan ini belum disetujui atau dibuka oleh admin/pelatih.")
         return redirect('attendance:session_list')
 
-    # Ambil seluruh pesilat aktif (dengan relasi sekolah)
+    # Ambil seluruh pesilat aktif (dengan relasi sekolah) diurutkan alfabetis A-Z nama
     sekolah_id = request.GET.get('sekolah', '').strip()
     pesilat_qs = AnggotaProfile.objects.filter(
         status_keanggotaan=AnggotaProfile.MembershipStatus.AKTIF
-    ).select_related('user', 'sabuk_saat_ini', 'kategori_fokus', 'sekolah').order_by('sekolah__nama_sekolah', 'kelas_sekolah', 'user__first_name')
+    ).select_related('user', 'sabuk_saat_ini', 'kategori_fokus', 'sekolah').order_by('user__first_name', 'user__last_name', 'user__username')
 
     if sekolah_id and sekolah_id.lower() not in ('none', 'null', 'undefined', ''):
         if sekolah_id.isdigit():
@@ -1189,10 +1189,10 @@ def _get_report_data(request):
         else:
             selected_sekolah = sekolah_list.filter(nama_sekolah__iexact=sekolah_id).first()
 
-    # Seluruh pesilat aktif (terfilter sekolah jika dipilih)
+    # Seluruh pesilat aktif (terfilter sekolah jika dipilih) diurutkan alfabetis A-Z
     members = AnggotaProfile.objects.filter(
         status_keanggotaan=AnggotaProfile.MembershipStatus.AKTIF
-    ).select_related('user', 'sabuk_saat_ini', 'kategori_fokus', 'sekolah').order_by('sabuk_saat_ini__urutan_tingkat', 'user__first_name')
+    ).select_related('user', 'sabuk_saat_ini', 'kategori_fokus', 'sekolah').order_by('user__first_name', 'user__last_name', 'user__username')
 
     if selected_sekolah:
         members = members.filter(sekolah=selected_sekolah)

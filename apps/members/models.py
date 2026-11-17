@@ -86,7 +86,7 @@ class AnggotaProfile(models.Model):
     class Meta:
         verbose_name = "Profil Pesilat"
         verbose_name_plural = "Daftar Anggota Pesilat"
-        ordering = ['kelas_sekolah', 'user__first_name']
+        ordering = ['user__first_name', 'user__last_name', 'user__username']
 
     def __str__(self):
         return f"{self.user.get_full_name() or self.user.username} ({self.nisn}) - {self.sabuk_saat_ini.nama_sabuk if self.sabuk_saat_ini else 'Belum ada sabuk'}"
@@ -127,6 +127,7 @@ class PelatihProfile(models.Model):
     class Meta:
         verbose_name = "Profil Pelatih"
         verbose_name_plural = "Daftar Pelatih"
+        ordering = ['user__first_name', 'user__last_name', 'user__username']
 
     def __str__(self):
         return f"{self.user.get_full_name() or self.user.username} - {self.tingkatan_pendekar or 'Pelatih'}"

@@ -103,7 +103,7 @@ def dashboard(request):
         # Member Attendance Monitoring List (Dipantau langsung oleh Admin)
         all_active_members = AnggotaProfile.objects.filter(
             status_keanggotaan=AnggotaProfile.MembershipStatus.AKTIF
-        ).select_related('user', 'sabuk_saat_ini', 'kategori_fokus')
+        ).select_related('user', 'sabuk_saat_ini', 'kategori_fokus').order_by('user__first_name', 'user__last_name', 'user__username')
 
         member_monitoring = []
         for m in all_active_members:
